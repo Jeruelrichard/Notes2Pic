@@ -23,8 +23,6 @@ const starterPost = {
   avatar: '',
   text:
     'Building in public is not about performing productivity. It is about leaving a clear trail of what you are learning, shipping, changing, and becoming.',
-  timestampDate: '',
-  timestampTime: '',
   stats: '12 replies / 48 reposts / 219 likes',
   watermark: 'notes2pics',
 }
@@ -38,6 +36,7 @@ const starterMediumPost = {
 
 const profileStorageKey = 'notes2pics.profiles'
 const exportTimeoutMs = 15000
+const shortPostCharacterLimit = 300
 
 function initials(name) {
   return name
@@ -46,43 +45,6 @@ function initials(name) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join('')
-}
-
-function getLocalDateTime() {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-
-  return {
-    date: `${year}-${month}-${day}`,
-    time: `${hours}:${minutes}`,
-  }
-}
-
-function formatTimestamp(dateValue, timeValue) {
-  if (!dateValue && !timeValue) return 'Today'
-  if (!dateValue) return timeValue
-
-  const [year, month, day] = dateValue.split('-').map(Number)
-  const [hours = 0, minutes = 0] = timeValue ? timeValue.split(':').map(Number) : []
-  const date = new Date(year, month - 1, day, hours, minutes)
-  const dateText = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(date)
-
-  if (!timeValue) return dateText
-
-  const timeText = new Intl.DateTimeFormat(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date)
-
-  return `${dateText} at ${timeText}`
 }
 
 function readSavedProfiles() {
@@ -145,6 +107,19 @@ function wrapCanvasText(context, text, maxWidth, maxLines) {
   return visibleLines
 }
 
+function getShortPostTextStyle(text, aspect) {
+  const explicitLines = text.split('\n').length
+  const visualLineEstimate = Math.ceil(text.length / (aspect === 'square' ? 25 : 31))
+  const estimatedLines = Math.max(explicitLines, visualLineEstimate)
+  const baseSize = aspect === 'square' ? 24 : 28
+  const sizeByCharacters = text.length > 210 ? baseSize - 4 : text.length > 150 ? baseSize - 2 : baseSize
+  const sizeByLines = estimatedLines > 12 ? 15 : estimatedLines > 9 ? 17 : estimatedLines > 7 ? 19 : sizeByCharacters
+
+  return {
+    fontSize: `${Math.max(13, Math.min(sizeByCharacters, sizeByLines))}px`,
+  }
+}
+
 function App() {
   const exportRef = useRef(null)
   const [contentMode, setContentMode] = useState('short')
@@ -159,7 +134,6 @@ function App() {
 
   const isMediumMode = contentMode === 'medium'
   const currentAspect = aspectOptions[aspect]
-  const displayTimestamp = formatTimestamp(post.timestampDate, post.timestampTime)
   const exportBackground = isMediumMode
     ? mediumPost.theme === 'dark'
       ? '#000000'
@@ -168,9 +142,14 @@ function App() {
 
   const charCount = isMediumMode ? mediumPost.text.length : post.text.length
   const avatarInitials = useMemo(() => initials(post.name) || 'N2', [post.name])
+  const shortPostTextStyle = useMemo(() => getShortPostTextStyle(post.text, aspect), [aspect, post.text])
 
   function updatePost(field, value) {
     setPost((current) => ({ ...current, [field]: value }))
+  }
+
+  function updateShortPostText(value) {
+    updatePost('text', value.slice(0, shortPostCharacterLimit))
   }
 
   function updateMediumPost(field, value) {
@@ -240,25 +219,6 @@ function App() {
     persistProfiles(profiles.filter((item) => item.id !== selectedProfileId))
     setSelectedProfileId('')
     setNotice(`Deleted profile for ${profile.name || profile.username}.`)
-  }
-
-  function useCurrentTimestamp() {
-    const current = getLocalDateTime()
-    setPost((postState) => ({
-      ...postState,
-      timestampDate: current.date,
-      timestampTime: current.time,
-    }))
-    setNotice('Timestamp set to the current date and time.')
-  }
-
-  function clearTimestamp() {
-    setPost((postState) => ({
-      ...postState,
-      timestampDate: '',
-      timestampTime: '',
-    }))
-    setNotice('Timestamp cleared. The preview will show Today.')
   }
 
   function handleAvatarUpload(event) {
@@ -476,47 +436,22 @@ function App() {
                   <select value={post.source} onChange={(event) => updatePost('source', event.target.value)}>
                     <option>Substack Note</option>
                     <option>X</option>
-                    <option>Web Note</option>
+                    <option>Threads</option>
                   </select>
                 </label>
-
-                <label className="field">
-                  <span>Date</span>
-                  <input
-                    type="date"
-                    value={post.timestampDate}
-                    onChange={(event) => updatePost('timestampDate', event.target.value)}
-                  />
-                </label>
-              </div>
-
-              <div className="timestamp-row">
-                <label className="field">
-                  <span>Time</span>
-                  <input
-                    type="time"
-                    value={post.timestampTime}
-                    onChange={(event) => updatePost('timestampTime', event.target.value)}
-                  />
-                </label>
-
-                <div className="timestamp-actions" aria-label="Date and time actions">
-                  <button type="button" onClick={useCurrentTimestamp}>
-                    Now
-                  </button>
-                  <button type="button" onClick={clearTimestamp}>
-                    Clear
-                  </button>
-                </div>
               </div>
 
               <label className="field full">
                 <span>Post text</span>
-                <textarea value={post.text} onChange={(event) => updatePost('text', event.target.value)} />
+                <textarea
+                  maxLength={shortPostCharacterLimit}
+                  value={post.text}
+                  onChange={(event) => updateShortPostText(event.target.value)}
+                />
               </label>
 
               <div className="helper-row">
-                <span>{charCount} characters</span>
+                <span>{charCount}/{shortPostCharacterLimit} characters</span>
                 <button type="button" onClick={() => updatePost('text', starterPost.text)}>
                   <RefreshCw aria-hidden="true" />
                   Reset text
@@ -640,10 +575,11 @@ function App() {
                       </div>
                     </header>
 
-                    <p className="post-text">{post.text || 'Paste the post text here.'}</p>
+                    <p className="post-text" style={shortPostTextStyle}>
+                      {post.text || 'Paste the post text here.'}
+                    </p>
 
                     <footer className="post-footer">
-                      <span>{displayTimestamp}</span>
                       <span>{post.stats}</span>
                     </footer>
                   </article>

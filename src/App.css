@@ -142,30 +142,6 @@ h2 {
   gap: 14px;
 }
 
-.timestamp-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: end;
-}
-
-.timestamp-actions {
-  display: grid;
-  grid-template-columns: repeat(2, auto);
-  gap: 8px;
-}
-
-.timestamp-actions button {
-  min-height: 44px;
-  padding: 0 14px;
-  border: 1px solid #d6dbe3;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #344054;
-  font-weight: 750;
-  cursor: pointer;
-}
-
 .full {
   grid-column: 1 / -1;
 }
@@ -386,6 +362,8 @@ button:focus-visible {
 
 .post-card {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: min(78%, 430px);
   max-height: 78%;
   box-sizing: border-box;
@@ -447,26 +425,19 @@ button:focus-visible {
 }
 
 .post-text {
-  display: -webkit-box;
   margin: 0;
-  overflow: hidden;
+  overflow: visible;
   color: inherit;
   font-size: 1.82rem;
   font-weight: 760;
-  line-height: 1.18;
+  line-height: 1.16;
   letter-spacing: 0;
   white-space: pre-wrap;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 10;
+  overflow-wrap: anywhere;
 }
 
 .aspect-square .post-text {
   font-size: 1.55rem;
-  -webkit-line-clamp: 7;
-}
-
-.aspect-story .post-text {
-  -webkit-line-clamp: 13;
 }
 
 .post-footer {
@@ -657,14 +628,9 @@ button:focus-visible {
   }
 
   .control-grid,
-  .timestamp-row,
   .segmented,
   .swatches {
     grid-template-columns: 1fr;
-  }
-
-  .timestamp-actions {
-    grid-template-columns: repeat(2, 1fr);
   }
 
   .preview-frame {
