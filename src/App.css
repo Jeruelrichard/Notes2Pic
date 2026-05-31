@@ -562,16 +562,14 @@ button:focus-visible {
 }
 
 .medium-content p {
-  display: -webkit-box;
   margin: 0;
-  overflow: hidden;
+  overflow: visible;
   font-size: 1.45rem;
   font-weight: 540;
   line-height: 1.31;
   letter-spacing: 0;
   white-space: pre-wrap;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 13;
+  overflow-wrap: anywhere;
 }
 
 .aspect-square .medium-content {
@@ -580,7 +578,6 @@ button:focus-visible {
 
 .aspect-square .medium-content p {
   font-size: 1.25rem;
-  -webkit-line-clamp: 10;
 }
 
 .aspect-story .medium-content {
@@ -589,7 +586,6 @@ button:focus-visible {
 
 .aspect-story .medium-content p {
   font-size: 1.55rem;
-  -webkit-line-clamp: 18;
 }
 
 .medium-content span {

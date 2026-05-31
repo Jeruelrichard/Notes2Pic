@@ -11,7 +11,13 @@ Notes2pics is a local MVP for manually turning a Substack Note, X post, or short
 - Pick Square, Portrait, or Story canvas sizes.
 - Pick from four visual templates.
 - Switch to Medium form mode for clean medium-length text images with dark and light themes.
+- Medium-form exports preserve line breaks, spacing, and indentation while fitting all text into the image.
 - Export a high-resolution PNG from the live preview.
+- Install as a PWA after deploying over HTTPS.
+
+## PWA install
+
+The app includes a web manifest, mobile icons, and a production service worker. Mobile browsers usually require HTTPS before showing install/add-to-home-screen prompts.
 
 ## Why it is manual
 

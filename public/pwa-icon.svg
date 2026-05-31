@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Notes2pics</title>
+  <rect width="512" height="512" rx="112" fill="#111827"/>
+  <rect x="96" y="92" width="320" height="328" rx="44" fill="#f8fafc"/>
+  <rect x="132" y="136" width="248" height="22" rx="11" fill="#111827"/>
+  <rect x="132" y="190" width="190" height="20" rx="10" fill="#374151"/>
+  <rect x="132" y="236" width="228" height="20" rx="10" fill="#374151"/>
+  <rect x="132" y="282" width="166" height="20" rx="10" fill="#374151"/>
+  <circle cx="354" cy="354" r="38" fill="#2f6fed"/>
+  <path d="M344 354l17 17 29-42" fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

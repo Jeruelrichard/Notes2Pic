@@ -58,34 +58,47 @@ function readSavedProfiles() {
 
 function getMediumTypography(aspect) {
   if (aspect === 'square') {
-    return { fontSize: 40, lineHeight: 52, signatureSize: 25, maxLines: 10 }
+    return { fontSize: 40, minFontSize: 4, signatureSize: 25 }
   }
 
   if (aspect === 'story') {
-    return { fontSize: 50, lineHeight: 66, signatureSize: 29, maxLines: 18 }
+    return { fontSize: 50, minFontSize: 4, signatureSize: 29 }
   }
 
-  return { fontSize: 46, lineHeight: 60, signatureSize: 27, maxLines: 13 }
+  return { fontSize: 46, minFontSize: 4, signatureSize: 27 }
 }
 
-function wrapCanvasText(context, text, maxWidth, maxLines) {
-  const paragraphs = text.split('\n')
+function getMediumTextStyle(text, aspect) {
+  const explicitLines = text.split('\n').length
+  const visualLineEstimate = Math.ceil(text.length / (aspect === 'square' ? 25 : aspect === 'story' ? 30 : 28))
+  const estimatedLines = Math.max(explicitLines, visualLineEstimate)
+  const baseSize = aspect === 'story' ? 25 : aspect === 'square' ? 20 : 23
+  const sizeByCharacters = text.length > 1200 ? 11 : text.length > 900 ? 13 : text.length > 650 ? 15 : text.length > 420 ? 18 : baseSize
+  const sizeByLines = estimatedLines > 34 ? 9 : estimatedLines > 26 ? 11 : estimatedLines > 20 ? 13 : estimatedLines > 15 ? 15 : sizeByCharacters
+
+  return {
+    fontSize: `${Math.max(8, Math.min(sizeByCharacters, sizeByLines))}px`,
+  }
+}
+
+function wrapCanvasText(context, text, maxWidth) {
+  const hardLines = text.split('\n')
   const lines = []
 
-  for (const paragraph of paragraphs) {
-    if (!paragraph.trim()) {
+  for (const hardLine of hardLines) {
+    if (hardLine === '') {
       lines.push('')
       continue
     }
 
-    const words = paragraph.split(/\s+/)
     let line = ''
 
-    for (const word of words) {
-      const testLine = line ? `${line} ${word}` : word
+    for (const character of hardLine) {
+      const testLine = `${line}${character}`
+
       if (context.measureText(testLine).width > maxWidth && line) {
         lines.push(line)
-        line = word
+        line = character
       } else {
         line = testLine
       }
@@ -94,17 +107,7 @@ function wrapCanvasText(context, text, maxWidth, maxLines) {
     if (line) lines.push(line)
   }
 
-  if (lines.length <= maxLines) return lines
-
-  const visibleLines = lines.slice(0, maxLines)
-  let finalLine = visibleLines[visibleLines.length - 1]
-
-  while (finalLine && context.measureText(`${finalLine}...`).width > maxWidth) {
-    finalLine = finalLine.split(' ').slice(0, -1).join(' ')
-  }
-
-  visibleLines[visibleLines.length - 1] = `${finalLine || visibleLines[visibleLines.length - 1]}...`
-  return visibleLines
+  return lines
 }
 
 function getShortPostTextStyle(text, aspect) {
@@ -143,6 +146,7 @@ function App() {
   const charCount = isMediumMode ? mediumPost.text.length : post.text.length
   const avatarInitials = useMemo(() => initials(post.name) || 'N2', [post.name])
   const shortPostTextStyle = useMemo(() => getShortPostTextStyle(post.text, aspect), [aspect, post.text])
+  const mediumTextStyle = useMemo(() => getMediumTextStyle(mediumPost.text, aspect), [aspect, mediumPost.text])
 
   function updatePost(field, value) {
     setPost((current) => ({ ...current, [field]: value }))
@@ -274,6 +278,7 @@ function App() {
     const textX = width * 0.12
     const maxTextWidth = width * 0.76
     const signatureGap = 34
+    const maxContentHeight = height * 0.82
 
     canvas.width = width
     canvas.height = height
@@ -282,24 +287,39 @@ function App() {
     context.fillStyle = isDark ? '#000000' : '#fbfbf7'
     context.fillRect(0, 0, width, height)
 
+    let fontSize = typography.fontSize
+    let lineHeight = Math.round(fontSize * 1.31)
+    let signatureSize = typography.signatureSize
+    let lines = []
+    let totalTextHeight = 0
+    const text = mediumPost.text || 'Paste your medium-form content here.'
+
+    while (fontSize >= typography.minFontSize) {
+      context.font = `500 ${fontSize}px Trebuchet MS, Segoe UI, sans-serif`
+      lines = wrapCanvasText(context, text, maxTextWidth)
+      lineHeight = Math.round(fontSize * 1.31)
+      signatureSize = Math.max(8, Math.round(fontSize * 0.58))
+      totalTextHeight = lines.length * lineHeight + (mediumPost.signature ? signatureGap + signatureSize : 0)
+
+      if (totalTextHeight <= maxContentHeight) break
+      fontSize -= 1
+    }
+
     context.fillStyle = isDark ? '#f5f5f1' : '#111111'
-    context.font = `500 ${typography.fontSize}px Trebuchet MS, Segoe UI, sans-serif`
+    context.font = `500 ${fontSize}px Trebuchet MS, Segoe UI, sans-serif`
     context.textBaseline = 'top'
 
-    const lines = wrapCanvasText(context, mediumPost.text || 'Paste your medium-form content here.', maxTextWidth, typography.maxLines)
-    const signatureHeight = mediumPost.signature ? signatureGap + typography.signatureSize : 0
-    const totalTextHeight = lines.length * typography.lineHeight + signatureHeight
     let y = (height - totalTextHeight) / 2
 
     for (const line of lines) {
-      context.fillText(line, textX, y)
-      y += typography.lineHeight
+      context.fillText(line || ' ', textX, y)
+      y += lineHeight
     }
 
     if (mediumPost.signature) {
       y += signatureGap
       context.fillStyle = isDark ? '#727272' : '#8a8a84'
-      context.font = `500 ${typography.signatureSize}px Trebuchet MS, Segoe UI, sans-serif`
+      context.font = `500 ${signatureSize}px Trebuchet MS, Segoe UI, sans-serif`
       context.fillText(mediumPost.signature.toUpperCase(), textX, y)
     }
 
@@ -553,7 +573,7 @@ function App() {
               {isMediumMode ? (
                 <>
                   <article className="medium-content">
-                    <p>{mediumPost.text || 'Paste your medium-form content here.'}</p>
+                    <p style={mediumTextStyle}>{mediumPost.text || 'Paste your medium-form content here.'}</p>
                     {mediumPost.signature ? <span>{mediumPost.signature}</span> : null}
                   </article>
                 </>
