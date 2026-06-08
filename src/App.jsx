@@ -91,22 +91,64 @@ function wrapCanvasText(context, text, maxWidth) {
       continue
     }
 
+    const leadingSpaces = hardLine.match(/^\s*/)?.[0] || ''
+    const tokens = hardLine.match(/\s+|\S+/g) || []
     let line = ''
 
-    for (const character of hardLine) {
-      const testLine = `${line}${character}`
+    for (const token of tokens) {
+      const testLine = `${line}${token}`
 
-      if (context.measureText(testLine).width > maxWidth && line) {
-        lines.push(line)
-        line = character
+      if (context.measureText(testLine).width <= maxWidth || !line) {
+        if (context.measureText(testLine).width <= maxWidth) {
+          line = testLine
+        } else {
+          const brokenTokenLines = breakLongToken(context, token, maxWidth)
+          lines.push(...brokenTokenLines.slice(0, -1))
+          line = brokenTokenLines.at(-1) || ''
+        }
+        continue
+      }
+
+      lines.push(line.trimEnd())
+
+      if (/^\s+$/.test(token)) {
+        line = leadingSpaces
+        continue
+      }
+
+      const nextLine = `${leadingSpaces}${token}`
+
+      if (context.measureText(nextLine).width <= maxWidth) {
+        line = nextLine
       } else {
-        line = testLine
+        const brokenTokenLines = breakLongToken(context, token, maxWidth, leadingSpaces)
+        lines.push(...brokenTokenLines.slice(0, -1))
+        line = brokenTokenLines.at(-1) || ''
       }
     }
 
-    if (line) lines.push(line)
+    lines.push(line.trimEnd())
   }
 
+  return lines
+}
+
+function breakLongToken(context, token, maxWidth, prefix = '') {
+  const lines = []
+  let line = prefix
+
+  for (const character of token) {
+    const testLine = `${line}${character}`
+
+    if (context.measureText(testLine).width > maxWidth && line.trim()) {
+      lines.push(line)
+      line = `${prefix}${character}`
+    } else {
+      line = testLine
+    }
+  }
+
+  if (line) lines.push(line)
   return lines
 }
 
