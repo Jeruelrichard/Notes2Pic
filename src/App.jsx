@@ -1,5 +1,14 @@
 import { useMemo, useRef, useState } from 'react'
-import { Download, ImagePlus, RefreshCw, Save, Sparkles, Trash2, UserRoundCheck } from 'lucide-react'
+import {
+  Bookmark,
+  Download,
+  ImagePlus,
+  RefreshCw,
+  Save,
+  Sparkles,
+  Trash2,
+  UserRoundCheck,
+} from 'lucide-react'
 import { toPng } from 'html-to-image'
 import './App.css'
 
@@ -9,21 +18,14 @@ const aspectOptions = {
   story: { label: 'Story', size: '1080 x 1920', width: 540, height: 960 },
 }
 
-const templates = {
-  paper: { label: 'Paper', source: '#f8f3e7' },
-  midnight: { label: 'Midnight', source: '#0f172a' },
-  bloom: { label: 'Bloom', source: '#ef476f' },
-  studio: { label: 'Studio', source: '#f6f7fb' },
-}
-
 const starterPost = {
   source: 'Substack Note',
   name: 'Nuel Okemdilim',
   username: '@nuel',
   avatar: '',
+  theme: 'dark',
   text:
     'Building in public is not about performing productivity. It is about leaving a clear trail of what you are learning, shipping, changing, and becoming.',
-  stats: '12 replies / 48 reposts / 219 likes',
   watermark: 'notes2pics',
 }
 
@@ -36,7 +38,7 @@ const starterMediumPost = {
 
 const profileStorageKey = 'notes2pics.profiles'
 const exportTimeoutMs = 15000
-const shortPostCharacterLimit = 300
+const shortPostCharacterLimit = 500
 
 function initials(name) {
   return name
@@ -54,6 +56,18 @@ function readSavedProfiles() {
   } catch {
     return []
   }
+}
+
+function getShortSourceKey(source) {
+  if (source === 'Threads') return 'threads'
+  if (source === 'X') return 'x'
+  return 'substack'
+}
+
+function getShortExportBackground(sourceKey, theme) {
+  if (sourceKey === 'substack') return '#ff671f'
+  if (theme === 'light') return '#ffffff'
+  return sourceKey === 'threads' ? '#181818' : '#050505'
 }
 
 function getMediumTypography(aspect) {
@@ -152,6 +166,16 @@ function breakLongToken(context, token, maxWidth, prefix = '') {
   return lines
 }
 
+function formatBadgeDate(date) {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function formatTimestamp(date) {
+  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  const day = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return `${time} · ${day}`
+}
+
 function getShortPostTextStyle(text, aspect) {
   const explicitLines = text.split('\n').length
   const visualLineEstimate = Math.ceil(text.length / (aspect === 'square' ? 25 : 31))
@@ -173,22 +197,25 @@ function App() {
   const [profiles, setProfiles] = useState(() => readSavedProfiles())
   const [selectedProfileId, setSelectedProfileId] = useState('')
   const [aspect, setAspect] = useState('portrait')
-  const [template, setTemplate] = useState('paper')
   const [isExporting, setIsExporting] = useState(false)
   const [notice, setNotice] = useState('Fill the post details manually, choose a style, then export a PNG.')
 
   const isMediumMode = contentMode === 'medium'
   const currentAspect = aspectOptions[aspect]
+  const shortSourceKey = getShortSourceKey(post.source)
   const exportBackground = isMediumMode
     ? mediumPost.theme === 'dark'
       ? '#000000'
       : '#fbfbf7'
-    : templates[template].source
+    : getShortExportBackground(shortSourceKey, post.theme)
 
   const charCount = isMediumMode ? mediumPost.text.length : post.text.length
   const avatarInitials = useMemo(() => initials(post.name) || 'N2', [post.name])
   const shortPostTextStyle = useMemo(() => getShortPostTextStyle(post.text, aspect), [aspect, post.text])
   const mediumTextStyle = useMemo(() => getMediumTextStyle(mediumPost.text, aspect), [aspect, mediumPost.text])
+  const today = new Date()
+  const badgeDate = formatBadgeDate(today)
+  const timestamp = formatTimestamp(today)
 
   function updatePost(field, value) {
     setPost((current) => ({ ...current, [field]: value }))
@@ -227,6 +254,7 @@ function App() {
       username,
       source: post.source,
       avatar: post.avatar,
+      theme: post.theme,
       updatedAt: new Date().toISOString(),
     }
     const nextProfiles = existingProfile
@@ -250,6 +278,7 @@ function App() {
       username: profile.username,
       source: profile.source,
       avatar: profile.avatar,
+      theme: profile.theme || current.theme,
     }))
     setNotice(`Loaded profile for ${profile.name || profile.username}.`)
   }
@@ -416,7 +445,7 @@ function App() {
 
               <div className="helper-row">
                 <span>{charCount} characters</span>
-                <button type="button" onClick={() => updateMediumPost('text', starterMediumPost.text)}>
+                <button type="button" onClick={() => updateMediumPost('text', '')}>
                   <RefreshCw aria-hidden="true" />
                   Reset text
                 </button>
@@ -501,6 +530,16 @@ function App() {
                     <option>Threads</option>
                   </select>
                 </label>
+
+                {post.source !== 'Substack Note' ? (
+                  <label className="field">
+                    <span>Appearance</span>
+                    <select value={post.theme} onChange={(event) => updatePost('theme', event.target.value)}>
+                      <option value="dark">Dark</option>
+                      <option value="light">Light</option>
+                    </select>
+                  </label>
+                ) : null}
               </div>
 
               <label className="field full">
@@ -514,7 +553,7 @@ function App() {
 
               <div className="helper-row">
                 <span>{charCount}/{shortPostCharacterLimit} characters</span>
-                <button type="button" onClick={() => updatePost('text', starterPost.text)}>
+                <button type="button" onClick={() => updatePost('text', '')}>
                   <RefreshCw aria-hidden="true" />
                   Reset text
                 </button>
@@ -533,11 +572,6 @@ function App() {
                 <ImagePlus aria-hidden="true" />
                 <span>Upload avatar</span>
                 <input type="file" accept="image/*" onChange={handleAvatarUpload} />
-              </label>
-
-              <label className="field full">
-                <span>Stats</span>
-                <input value={post.stats} onChange={(event) => updatePost('stats', event.target.value)} />
               </label>
 
               <label className="field full">
@@ -566,26 +600,6 @@ function App() {
             </div>
           </div>
 
-          {!isMediumMode ? (
-            <div className="selector-group">
-              <span>Template</span>
-              <div className="swatches">
-                {Object.entries(templates).map(([key, item]) => (
-                  <button
-                    type="button"
-                    className={template === key ? 'active' : ''}
-                    onClick={() => setTemplate(key)}
-                    title={item.label}
-                    key={key}
-                  >
-                    <span style={{ background: item.source }} />
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
           <button className="export-button" type="button" onClick={exportImage} disabled={isExporting}>
             <Download aria-hidden="true" />
             {isExporting ? 'Exporting...' : `Export PNG (${currentAspect.size})`}
@@ -607,7 +621,7 @@ function App() {
               className={
                 isMediumMode
                   ? `export-stage medium-stage medium-${mediumPost.theme} aspect-${aspect}`
-                  : `export-stage template-${template} aspect-${aspect}`
+                  : `export-stage short-stage short-${shortSourceKey} short-${post.theme} aspect-${aspect}`
               }
               ref={exportRef}
               style={{ width: `${currentAspect.width}px`, height: `${currentAspect.height}px` }}
@@ -620,34 +634,14 @@ function App() {
                   </article>
                 </>
               ) : (
-                <>
-                  <div className="texture-grid" />
-                  <article className="post-card">
-                    <header className="post-author">
-                      <div className="avatar">
-                        {post.avatar ? (
-                          <img src={post.avatar} alt="" crossOrigin="anonymous" />
-                        ) : (
-                          <span>{avatarInitials}</span>
-                        )}
-                      </div>
-                      <div className="author-copy">
-                        <strong>{post.name || 'Creator'}</strong>
-                        <span>{post.username || '@username'} / {post.source}</span>
-                      </div>
-                    </header>
-
-                    <p className="post-text" style={shortPostTextStyle}>
-                      {post.text || 'Paste the post text here.'}
-                    </p>
-
-                    <footer className="post-footer">
-                      <span>{post.stats}</span>
-                    </footer>
-                  </article>
-
-                  {post.watermark ? <div className="watermark">{post.watermark}</div> : null}
-                </>
+                <ShortSourcePreview
+                  avatarInitials={avatarInitials}
+                  post={post}
+                  shortPostTextStyle={shortPostTextStyle}
+                  sourceKey={shortSourceKey}
+                  badgeDate={badgeDate}
+                  timestamp={timestamp}
+                />
               )}
             </div>
           </div>
@@ -658,3 +652,88 @@ function App() {
 }
 
 export default App
+
+function ShortSourcePreview({ avatarInitials, post, shortPostTextStyle, sourceKey, badgeDate, timestamp }) {
+  if (sourceKey === 'substack') {
+    return (
+      <article className="substack-card">
+        <header className="substack-author">
+          <div className="substack-author-left">
+            <SourceAvatar avatar={post.avatar} initials={avatarInitials} />
+            <div className="substack-author-copy">
+              <strong>{post.name || 'Creator'}</strong>
+              <span>{badgeDate}</span>
+            </div>
+          </div>
+          <Bookmark aria-hidden="true" />
+        </header>
+
+        <p className="substack-text" style={shortPostTextStyle}>
+          {post.text || 'Paste the post text here.'}
+        </p>
+      </article>
+    )
+  }
+
+  if (sourceKey === 'threads') {
+    return (
+      <article className="threads-card">
+        <header className="threads-author">
+          <SourceAvatar avatar={post.avatar} initials={avatarInitials} />
+          <div className="threads-author-meta">
+            <strong>{post.username.replace(/^@/, '') || post.name || 'creator'}</strong>
+            <VerifiedBadge color="#0095f6" />
+            <span>{badgeDate}</span>
+          </div>
+        </header>
+
+        <p className="threads-text" style={shortPostTextStyle}>
+          {post.text || 'Paste the post text here.'}
+        </p>
+      </article>
+    )
+  }
+
+  return (
+    <article className="x-card">
+      <header className="x-author">
+        <SourceAvatar avatar={post.avatar} initials={avatarInitials} />
+        <div className="x-author-copy">
+          <span className="x-name-row">
+            <strong>{post.name || 'Creator'}</strong>
+            <VerifiedBadge color="#1d9bf0" />
+          </span>
+          <span className="x-handle">{post.username || '@username'}</span>
+        </div>
+      </header>
+
+      <p className="x-text" style={shortPostTextStyle}>
+        {post.text || 'Paste the post text here.'}
+      </p>
+
+      <footer className="x-footer">
+        <span>{timestamp}</span>
+      </footer>
+    </article>
+  )
+}
+
+function VerifiedBadge({ color }) {
+  return (
+    <svg className="verified-badge" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill={color}
+        d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81C14.68 2.62 13.43 1.75 12 1.75s-2.68.88-3.34 2.19c-1.39-.46-2.9-.2-3.91.81s-1.27 2.52-.81 3.91c-1.31.67-2.19 1.91-2.19 3.34s.88 2.67 2.19 3.34c-.46 1.39-.2 2.9.81 3.91s2.52 1.27 3.91.81c.66 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.46 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34z"
+      />
+      <path fill="#ffffff" d="M9.71 16.18 6.3 12.77l1.27-1.27 2.14 2.13 4.72-4.72 1.27 1.27z" />
+    </svg>
+  )
+}
+
+function SourceAvatar({ avatar, initials }) {
+  return (
+    <div className="source-avatar">
+      {avatar ? <img src={avatar} alt="" crossOrigin="anonymous" /> : <span>{initials}</span>}
+    </div>
+  )
+}

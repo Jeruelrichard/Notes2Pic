@@ -4,8 +4,8 @@ Notes2pics is a local MVP for manually turning a Substack Note, X post, or short
 
 ## What works
 
-- Manually edit name, username, source, stats, watermark, and post text.
-- Short-form posts are capped at 300 characters and preserve line breaks/spacing in the image.
+- Manually edit name, username, source, watermark, and post text. Short-form posts always show the current date.
+- Short-form posts are capped at 500 characters and preserve line breaks/spacing in the image.
 - Save reusable profiles in this browser with name, username, source, and avatar.
 - Upload an avatar image for reliable PNG export.
 - Pick Square, Portrait, or Story canvas sizes.
