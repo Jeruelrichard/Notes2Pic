@@ -2,7 +2,7 @@
   "name": "Notes2pics",
   "short_name": "Notes2pics",
   "description": "Create Instagram-ready screenshots from short posts and medium-form text.",
-  "start_url": "/",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

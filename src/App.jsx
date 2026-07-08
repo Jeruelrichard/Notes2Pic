@@ -1,8 +1,10 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Bookmark,
+  Crown,
   Download,
   ImagePlus,
+  LogOut,
   RefreshCw,
   Save,
   Sparkles,
@@ -11,6 +13,13 @@ import {
 } from 'lucide-react'
 import { toPng } from 'html-to-image'
 import './App.css'
+import { isSupabaseConfigured } from './lib/supabaseClient'
+import { useAuth } from './lib/useAuth'
+import { getUsage, recordExport } from './lib/entitlements'
+import AuthModal from './components/AuthModal'
+import UpgradeModal from './components/UpgradeModal'
+
+const productWatermark = 'made with Notes2Pics'
 
 const aspectOptions = {
   square: { label: 'Square', size: '1080 x 1080', width: 540, height: 540 },
@@ -26,7 +35,6 @@ const starterPost = {
   theme: 'dark',
   text:
     'Building in public is not about performing productivity. It is about leaving a clear trail of what you are learning, shipping, changing, and becoming.',
-  watermark: 'notes2pics',
 }
 
 const starterMediumPost = {
@@ -200,6 +208,17 @@ function App() {
   const [isExporting, setIsExporting] = useState(false)
   const [notice, setNotice] = useState('Fill the post details manually, choose a style, then export a PNG.')
 
+  const { user, loading: authLoading, signOut } = useAuth()
+  const [usage, setUsage] = useState(null)
+  const [authModal, setAuthModal] = useState({ open: false, reason: '' })
+  const [upgradeModal, setUpgradeModal] = useState({ open: false, reason: '' })
+  // Watermark on the live stage only while an export is capturing it, so the
+  // editor preview stays clean but the exported PNG carries the mark.
+  const [captureWatermark, setCaptureWatermark] = useState(false)
+
+  const isPaid = usage?.paid === true
+  const freeRemaining = usage && !usage.paid ? usage.remaining : null
+
   const isMediumMode = contentMode === 'medium'
   const currentAspect = aspectOptions[aspect]
   const shortSourceKey = getShortSourceKey(post.source)
@@ -216,6 +235,30 @@ function App() {
   const today = new Date()
   const badgeDate = formatBadgeDate(today)
   const timestamp = formatTimestamp(today)
+
+  // Refresh plan/usage whenever auth state changes (login, logout, return from checkout).
+  useEffect(() => {
+    let active = true
+    if (!user) {
+      // Defer so we don't setState synchronously inside the effect body.
+      queueMicrotask(() => {
+        if (active) setUsage(null)
+      })
+      return () => {
+        active = false
+      }
+    }
+    getUsage()
+      .then((data) => {
+        if (active) setUsage(data)
+      })
+      .catch(() => {
+        if (active) setUsage(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [user])
 
   function updatePost(field, value) {
     setPost((current) => ({ ...current, [field]: value }))
@@ -309,30 +352,76 @@ function App() {
   async function exportImage() {
     if (!exportRef.current) return
 
+    if (!isSupabaseConfigured) {
+      setNotice('Accounts are not configured yet. Add Supabase keys to enable exports.')
+      return
+    }
+
+    // Gate 1: must be signed in to export.
+    if (!user) {
+      setAuthModal({ open: true, reason: 'Sign in to export your image. Editing stays free.' })
+      return
+    }
+
     setIsExporting(true)
 
     try {
-      if (isMediumMode) {
-        exportMediumImage()
-        setNotice(`Exported ${currentAspect.size} PNG.`)
+      // Gate 2: server-authoritative limit + watermark decision.
+      const gate = await recordExport()
+
+      if (!gate?.allowed) {
+        if (gate?.reason === 'limit_reached') {
+          setUpgradeModal({
+            open: true,
+            reason: 'You have used your 3 free exports this month. Upgrade for unlimited, watermark-free exports.',
+          })
+          setNotice('Free export limit reached.')
+        } else {
+          setAuthModal({ open: true, reason: 'Please sign in again to export.' })
+        }
         return
       }
 
-      const dataUrl = await Promise.race([
-        toPng(exportRef.current, {
-          pixelRatio: 2,
-          cacheBust: true,
-          backgroundColor: exportBackground,
-        }),
-        new Promise((_, reject) => {
-          window.setTimeout(() => reject(new Error('Export timed out')), exportTimeoutMs)
-        }),
-      ])
-      const anchor = document.createElement('a')
-      anchor.href = dataUrl
-      anchor.download = `notes2pics-${contentMode}-${aspect}.png`
-      anchor.click()
-      setNotice(`Exported ${currentAspect.size} PNG.`)
+      const withWatermark = gate.watermark === true
+
+      if (isMediumMode) {
+        exportMediumImage(withWatermark)
+      } else {
+        if (withWatermark) {
+          setCaptureWatermark(true)
+          // Let React paint the watermark into the stage before capture.
+          await new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+          )
+        }
+
+        try {
+          const dataUrl = await Promise.race([
+            toPng(exportRef.current, {
+              pixelRatio: 2,
+              cacheBust: true,
+              backgroundColor: exportBackground,
+            }),
+            new Promise((_, reject) => {
+              window.setTimeout(() => reject(new Error('Export timed out')), exportTimeoutMs)
+            }),
+          ])
+          const anchor = document.createElement('a')
+          anchor.href = dataUrl
+          anchor.download = `notes2pics-${contentMode}-${aspect}.png`
+          anchor.click()
+        } finally {
+          if (withWatermark) setCaptureWatermark(false)
+        }
+      }
+
+      // Reflect the consumed export in the account UI.
+      getUsage().then(setUsage).catch(() => {})
+      setNotice(
+        gate.remaining === null || gate.remaining === undefined
+          ? `Exported ${currentAspect.size} PNG.`
+          : `Exported ${currentAspect.size} PNG. ${gate.remaining} free export${gate.remaining === 1 ? '' : 's'} left this month.`,
+      )
     } catch {
       setNotice('Export failed. Try again, and upload avatar images instead of using external image URLs.')
     } finally {
@@ -340,7 +429,7 @@ function App() {
     }
   }
 
-  function exportMediumImage() {
+  function exportMediumImage(withWatermark = false) {
     const canvas = document.createElement('canvas')
     const width = currentAspect.width * 2
     const height = currentAspect.height * 2
@@ -394,6 +483,16 @@ function App() {
       context.fillText(mediumPost.signature.toUpperCase(), textX, y)
     }
 
+    if (withWatermark) {
+      const markSize = Math.max(11, Math.round(width * 0.018))
+      context.font = `600 ${markSize}px Trebuchet MS, Segoe UI, sans-serif`
+      context.textAlign = 'right'
+      context.textBaseline = 'alphabetic'
+      context.fillStyle = isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.38)'
+      context.fillText(productWatermark, width - textX, height - textX * 0.6)
+      context.textAlign = 'left'
+    }
+
     const anchor = document.createElement('a')
     anchor.href = canvas.toDataURL('image/png')
     anchor.download = `notes2pics-medium-${aspect}.png`
@@ -410,6 +509,50 @@ function App() {
               <h1>Post screenshot studio</h1>
             </div>
             <Sparkles aria-hidden="true" />
+          </div>
+
+          <div className="account-bar">
+            {authLoading ? (
+              <span className="account-status">…</span>
+            ) : user ? (
+              <>
+                <div className="account-info">
+                  <span className="account-email">{user.email}</span>
+                  {isPaid ? (
+                    <span className="account-badge pro">
+                      <Crown aria-hidden="true" />
+                      {usage?.plan === 'lifetime' ? 'Lifetime' : 'Pro'}
+                    </span>
+                  ) : (
+                    <span className="account-badge free">
+                      {freeRemaining ?? '–'} free left
+                    </span>
+                  )}
+                </div>
+                <div className="account-actions">
+                  {!isPaid ? (
+                    <button
+                      type="button"
+                      className="upgrade-link"
+                      onClick={() => setUpgradeModal({ open: true, reason: '' })}
+                    >
+                      Upgrade
+                    </button>
+                  ) : null}
+                  <button type="button" className="signout-link" onClick={signOut} aria-label="Sign out">
+                    <LogOut aria-hidden="true" />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="signin-link"
+                onClick={() => setAuthModal({ open: true, reason: '' })}
+              >
+                Sign in
+              </button>
+            )}
           </div>
 
           <div className="selector-group">
@@ -573,14 +716,6 @@ function App() {
                 <span>Upload avatar</span>
                 <input type="file" accept="image/*" onChange={handleAvatarUpload} />
               </label>
-
-              <label className="field full">
-                <span>Watermark</span>
-                <input
-                  value={post.watermark}
-                  onChange={(event) => updatePost('watermark', event.target.value)}
-                />
-              </label>
             </>
           )}
 
@@ -643,10 +778,29 @@ function App() {
                   timestamp={timestamp}
                 />
               )}
+
+              {captureWatermark ? (
+                <span className="product-watermark" aria-hidden="true">
+                  {productWatermark}
+                </span>
+              ) : null}
             </div>
           </div>
         </section>
       </section>
+
+      <AuthModal
+        open={authModal.open}
+        reason={authModal.reason}
+        onClose={() => setAuthModal({ open: false, reason: '' })}
+      />
+      <UpgradeModal
+        open={upgradeModal.open}
+        reason={upgradeModal.reason}
+        userId={user?.id}
+        email={user?.email}
+        onClose={() => setUpgradeModal({ open: false, reason: '' })}
+      />
     </main>
   )
 }
