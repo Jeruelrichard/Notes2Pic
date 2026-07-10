@@ -11,7 +11,7 @@
 .workspace {
   display: grid;
   grid-template-columns: minmax(340px, 440px) minmax(0, 1fr);
-  min-height: 100svh;
+  height: 100svh;
 }
 
 .editor-panel {
@@ -318,6 +318,7 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
   padding: 28px;
 }
 
@@ -330,11 +331,24 @@ button:focus-visible {
   place-items: center;
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   padding: 22px;
   border: 1px solid #e3e6ea;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.6);
+}
+
+/* Scales the fixed-size stage down to fit the visible panel (no scrolling).
+   The outer box reserves the scaled footprint; the inner box is transformed. */
+.preview-fit {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.preview-fit-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .export-stage {
@@ -601,6 +615,8 @@ button:focus-visible {
 }
 
 .x-footer {
+  justify-content: space-between;
+  gap: 12px;
   margin-top: 20px;
   color: #8b98a5;
   font-size: 0.92rem;
@@ -765,26 +781,274 @@ button:focus-visible {
   height: 17px;
 }
 
-/* ============ exported watermark ============ */
-.product-watermark {
-  position: absolute;
-  right: 22px;
-  bottom: 18px;
-  z-index: 3;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.28);
-  color: rgba(255, 255, 255, 0.92);
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+.settings-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #d6dbe3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475467;
+  cursor: pointer;
 }
 
-.short-light .product-watermark,
-.short-substack .product-watermark {
-  background: rgba(255, 255, 255, 0.55);
-  color: rgba(0, 0, 0, 0.6);
+.settings-link:hover {
+  background: #f1f3f7;
+}
+
+.settings-link svg {
+  width: 18px;
+  height: 18px;
+}
+
+.profile-switcher {
+  margin-top: -4px;
+}
+
+/* ============ settings modal ============ */
+.settings-card {
+  max-width: 440px;
+}
+
+.settings-section {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e6e8ee;
+}
+
+.settings-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.settings-section-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.settings-hint {
+  margin: 0 0 12px;
+  color: #667085;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.settings-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #d6dbe3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #344054;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.settings-new:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-new svg {
+  width: 15px;
+  height: 15px;
+}
+
+.upgrade-link.block {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.profile-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e6e8ee;
+  border-radius: 10px;
+}
+
+.profile-list li.active {
+  border-color: #2f6fed;
+  background: #f5f8ff;
+}
+
+.profile-list-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #2f3336;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.profile-list-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-list-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-list-meta strong {
+  overflow: hidden;
+  font-size: 0.95rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-list-meta span {
+  color: #667085;
+  font-size: 0.82rem;
+}
+
+.profile-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.profile-list-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #d6dbe3;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #344054;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.profile-list-actions button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.profile-list-actions button.danger {
+  border-color: #f0c2bd;
+  background: #fef3f2;
+  color: #d92d20;
+}
+
+.profile-active-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #2f6fed;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.profile-active-tag svg {
+  width: 14px;
+  height: 14px;
+}
+
+.settings-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding: 10px 16px;
+  border: 1px solid #d6dbe3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475467;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.settings-logout svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* profile form avatar */
+.profile-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.profile-avatar-preview {
+  display: grid;
+  place-items: center;
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #2f3336;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+
+.profile-avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upload-row.compact {
+  flex: 1;
+  min-height: 42px;
+  margin: 0;
+}
+
+/* ============ exported watermark ============ */
+/* In-card byline watermark (short post) — sits inside the card so it can't be
+   cropped off without cutting into the post content. */
+.card-watermark {
+  margin-top: 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-align: right;
+  color: rgba(0, 0, 0, 0.32);
+}
+
+.short-threads.short-dark .card-watermark,
+.short-x.short-dark .card-watermark {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.x-card .card-watermark,
+.threads-card .card-watermark {
+  margin-top: 0;
 }
 
 /* ============ modals ============ */
@@ -1009,18 +1273,179 @@ button:focus-visible {
   color: #667085;
 }
 
+/* ============ carousel: slide editor ============ */
+.slides-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.slides-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #4b5563;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.slides-editor-head button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid #d6dbe3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #344054;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.slides-editor-head svg {
+  width: 15px;
+  height: 15px;
+}
+
+.slide-card {
+  padding: 12px;
+  border: 1px solid #e3e6ea;
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.slide-card.active {
+  border-color: #2f6fed;
+  box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.12);
+}
+
+.slide-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.82rem;
+  color: #475467;
+}
+
+.slide-card-head span.over {
+  color: #d92d20;
+  font-weight: 800;
+}
+
+.slide-card textarea {
+  min-height: 84px;
+  font-size: 0.92rem;
+}
+
+.slide-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.slide-card-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d6dbe3;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #475467;
+  cursor: pointer;
+}
+
+.slide-card-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.slide-card-actions svg {
+  width: 16px;
+  height: 16px;
+}
+
+.profile-actions button.danger,
+.slide-card-actions button.danger {
+  border-color: #f0c2bd;
+  background: #fef3f2;
+  color: #d92d20;
+}
+
+.profile-actions button.danger:not(:disabled):hover,
+.slide-card-actions button.danger:not(:disabled):hover {
+  background: #fee4e2;
+  border-color: #e0918a;
+}
+
+.helper-actions {
+  display: inline-flex;
+  gap: 8px;
+}
+
+/* ============ carousel: preview ============ */
+.carousel-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.carousel-canvas {
+  border-radius: 4px;
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.2);
+}
+
+.carousel-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #344054;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.carousel-nav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #d6dbe3;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #344054;
+  cursor: pointer;
+}
+
+.carousel-nav button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.carousel-nav svg {
+  width: 20px;
+  height: 20px;
+}
+
 @media (max-width: 1100px) {
   .workspace {
     grid-template-columns: 1fr;
+    height: auto;
   }
 
   .editor-panel {
     border-right: 0;
     border-bottom: 1px solid #e3e6ea;
+    overflow-y: visible;
   }
 
   .preview-panel {
-    min-height: 740px;
+    height: 88svh;
   }
 }
 
@@ -1038,11 +1463,5 @@ button:focus-visible {
 
   .preview-frame {
     padding: 14px;
-  }
-
-  .export-stage {
-    transform: scale(0.62);
-    transform-origin: center;
-    margin: -130px 0;
   }
 }

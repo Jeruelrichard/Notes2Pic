@@ -1,23 +1,33 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  ArrowDown,
+  ArrowUp,
   Bookmark,
+  ChevronLeft,
+  ChevronRight,
   Crown,
   Download,
   ImagePlus,
-  LogOut,
+  Plus,
   RefreshCw,
-  Save,
+  Scissors,
+  Settings,
   Sparkles,
   Trash2,
-  UserRoundCheck,
 } from 'lucide-react'
 import { toPng } from 'html-to-image'
+import JSZip from 'jszip'
 import './App.css'
 import { isSupabaseConfigured } from './lib/supabaseClient'
 import { useAuth } from './lib/useAuth'
 import { getUsage, recordExport } from './lib/entitlements'
+import { listProfiles, upsertProfile, deleteProfileById } from './lib/profiles'
+import { splitIntoSlides, SLIDE_MAX_CHARS } from './lib/carousel'
+import { drawSlide } from './lib/carouselRender'
 import AuthModal from './components/AuthModal'
 import UpgradeModal from './components/UpgradeModal'
+import SettingsModal from './components/SettingsModal'
+import ProfileFormModal from './components/ProfileFormModal'
 
 const productWatermark = 'made with Notes2Pics'
 
@@ -29,8 +39,8 @@ const aspectOptions = {
 
 const starterPost = {
   source: 'Substack Note',
-  name: 'Nuel Okemdilim',
-  username: '@nuel',
+  name: '',
+  username: '',
   avatar: '',
   theme: 'dark',
   text:
@@ -40,13 +50,25 @@ const starterPost = {
 const starterMediumPost = {
   text:
     "A pattern I've noticed in stuck people:\n\nThey're always busy. They never stop moving. They have 47 tabs open and a notebook-sized to-do list. But if you ask them what they accomplished this week that actually matters, their mind goes blank.\n\nBusyness is a poor measure of value. If you focused on being useful instead, your life would change.",
-  signature: 'KOE',
+  signature: '',
   theme: 'dark',
 }
 
-const profileStorageKey = 'notes2pics.profiles'
+const starterCarouselText =
+  "The most underrated skill in your 20s is learning to sit with discomfort.\n\nEvery time you avoid a hard conversation, skip the workout, or reach for your phone in a boring moment, you're training yourself to flinch.\n\nComfort is a slow tax on your potential. It feels free in the moment, but you pay for it later with a smaller life.\n\nStart small. Do one uncomfortable thing today on purpose. Then do it again tomorrow. That's how you build a self you can rely on."
+
+const starterCarousel = {
+  text: starterCarouselText,
+  slides: splitIntoSlides(starterCarouselText),
+  theme: 'dark',
+  name: '',
+  username: '',
+  avatar: '',
+}
+
 const exportTimeoutMs = 15000
 const shortPostCharacterLimit = 500
+const defaultNotice = 'Fill the post details manually, choose a style, then export a PNG.'
 
 function initials(name) {
   return name
@@ -55,15 +77,6 @@ function initials(name) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join('')
-}
-
-function readSavedProfiles() {
-  try {
-    const savedProfiles = JSON.parse(localStorage.getItem(profileStorageKey) || '[]')
-    return Array.isArray(savedProfiles) ? savedProfiles : []
-  } catch {
-    return []
-  }
 }
 
 function getShortSourceKey(source) {
@@ -199,19 +212,29 @@ function getShortPostTextStyle(text, aspect) {
 
 function App() {
   const exportRef = useRef(null)
+  const carouselCanvasRef = useRef(null)
+  const previewFrameRef = useRef(null)
+  const [previewScale, setPreviewScale] = useState(1)
   const [contentMode, setContentMode] = useState('short')
   const [post, setPost] = useState(starterPost)
   const [mediumPost, setMediumPost] = useState(starterMediumPost)
-  const [profiles, setProfiles] = useState(() => readSavedProfiles())
+  const [carousel, setCarousel] = useState(starterCarousel)
+  const [slideIndex, setSlideIndex] = useState(0)
+  const [carouselAvatarImage, setCarouselAvatarImage] = useState(null)
+  const [profiles, setProfiles] = useState([])
   const [selectedProfileId, setSelectedProfileId] = useState('')
   const [aspect, setAspect] = useState('portrait')
   const [isExporting, setIsExporting] = useState(false)
-  const [notice, setNotice] = useState('Fill the post details manually, choose a style, then export a PNG.')
+  const [notice, setNotice] = useState(defaultNotice)
 
   const { user, loading: authLoading, signOut } = useAuth()
   const [usage, setUsage] = useState(null)
   const [authModal, setAuthModal] = useState({ open: false, reason: '' })
   const [upgradeModal, setUpgradeModal] = useState({ open: false, reason: '' })
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [profileForm, setProfileForm] = useState({ open: false, mode: 'create', initial: null, id: null, dismissable: true })
+  const [profileSaving, setProfileSaving] = useState(false)
+  const onboardingHandledRef = useRef(false)
   // Watermark on the live stage only while an export is capturing it, so the
   // editor preview stays clean but the exported PNG carries the mark.
   const [captureWatermark, setCaptureWatermark] = useState(false)
@@ -220,6 +243,7 @@ function App() {
   const freeRemaining = usage && !usage.paid ? usage.remaining : null
 
   const isMediumMode = contentMode === 'medium'
+  const isCarouselMode = contentMode === 'carousel'
   const currentAspect = aspectOptions[aspect]
   const shortSourceKey = getShortSourceKey(post.source)
   const exportBackground = isMediumMode
@@ -260,6 +284,116 @@ function App() {
     }
   }, [user])
 
+  // Saved author profiles live per-user in Supabase; load them on sign-in.
+  useEffect(() => {
+    let active = true
+    if (!user) {
+      onboardingHandledRef.current = false
+      queueMicrotask(() => {
+        if (active) {
+          setProfiles([])
+          setSelectedProfileId('')
+        }
+      })
+      return () => {
+        active = false
+      }
+    }
+    listProfiles()
+      .then((rows) => {
+        if (!active) return
+        setProfiles(rows)
+        // First-time sign-in with no profiles yet: either silently create one
+        // from what they already typed, or prompt them to create it.
+        if (!onboardingHandledRef.current && rows.length === 0) {
+          onboardingHandledRef.current = true
+          const identity = currentIdentity()
+          if (identity.name && identity.username) {
+            createProfileFrom(identity)
+          } else {
+            setProfileForm({ open: true, mode: 'onboard', initial: identity, id: null, dismissable: true })
+          }
+        }
+      })
+      .catch(() => {
+        if (active) setProfiles([])
+      })
+    return () => {
+      active = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
+  // Load the carousel avatar into an <img> the canvas can draw.
+  useEffect(() => {
+    let active = true
+    if (!carousel.avatar) {
+      queueMicrotask(() => {
+        if (active) setCarouselAvatarImage(null)
+      })
+      return () => {
+        active = false
+      }
+    }
+    const image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.onload = () => {
+      if (active) setCarouselAvatarImage(image)
+    }
+    image.onerror = () => {
+      if (active) setCarouselAvatarImage(null)
+    }
+    image.src = carousel.avatar
+    return () => {
+      active = false
+    }
+  }, [carousel.avatar])
+
+  // Keep the preview canvas in sync with the current slide (WYSIWYG with export).
+  useEffect(() => {
+    if (!isCarouselMode) return
+    const canvas = carouselCanvasRef.current
+    if (!canvas) return
+    const scale = 2
+    canvas.width = currentAspect.width * scale
+    canvas.height = currentAspect.height * scale
+    const ctx = canvas.getContext('2d')
+    const slides = carousel.slides
+    const safeIndex = Math.min(slideIndex, Math.max(0, slides.length - 1))
+    drawSlide(ctx, {
+      text: slides[safeIndex] || 'Paste a thread or essay, then split it into slides.',
+      theme: carousel.theme,
+      username: carousel.username,
+      avatar: carouselAvatarImage,
+      index: safeIndex,
+      total: slides.length || 1,
+      width: canvas.width,
+      height: canvas.height,
+      watermark: false,
+    })
+  }, [isCarouselMode, carousel, slideIndex, carouselAvatarImage, currentAspect])
+
+  // Fit the preview card to the visible panel so the whole image shows at once
+  // (no scrolling), scaling down for tall aspects / long carousels.
+  useEffect(() => {
+    const frame = previewFrameRef.current
+    if (!frame) return
+    const measure = () => {
+      const style = getComputedStyle(frame)
+      const padX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight)
+      const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)
+      const navReserve = isCarouselMode ? 64 : 0
+      const availW = frame.clientWidth - padX
+      const availH = frame.clientHeight - padY - navReserve
+      if (availW <= 0 || availH <= 0) return
+      const next = Math.min(availW / currentAspect.width, availH / currentAspect.height, 1)
+      setPreviewScale((current) => (Math.abs(current - next) > 0.005 ? next : current))
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(frame)
+    return () => observer.disconnect()
+  }, [currentAspect.width, currentAspect.height, isCarouselMode])
+
   function updatePost(field, value) {
     setPost((current) => ({ ...current, [field]: value }))
   }
@@ -272,71 +406,161 @@ function App() {
     setMediumPost((current) => ({ ...current, [field]: value }))
   }
 
-  function persistProfiles(nextProfiles) {
-    setProfiles(nextProfiles)
-    localStorage.setItem(profileStorageKey, JSON.stringify(nextProfiles))
+  function updateCarousel(field, value) {
+    setCarousel((current) => ({ ...current, [field]: value }))
   }
 
-  function saveProfile() {
-    const name = post.name.trim()
-    const username = post.username.trim()
+  function switchMode(mode) {
+    setContentMode(mode)
+    setNotice(defaultNotice)
+  }
 
-    if (!name && !username) {
-      setNotice('Add a name or username before saving a profile.')
-      return
-    }
+  function resetCarouselText() {
+    updateCarousel('text', '')
+  }
 
-    const existingProfile = profiles.find(
-      (profile) =>
-        profile.name.toLowerCase() === name.toLowerCase() ||
-        profile.username.toLowerCase() === username.toLowerCase(),
-    )
-    const profile = {
-      id: existingProfile?.id || crypto.randomUUID(),
-      name,
-      username,
+  function splitCarousel() {
+    const slides = splitIntoSlides(carousel.text)
+    setCarousel((current) => ({ ...current, slides }))
+    setSlideIndex(0)
+    setNotice(slides.length ? `Split into ${slides.length} slides.` : 'Paste some text first, then split.')
+  }
+
+  function updateSlideText(index, value) {
+    setCarousel((current) => {
+      const slides = [...current.slides]
+      slides[index] = value.slice(0, SLIDE_MAX_CHARS)
+      return { ...current, slides }
+    })
+  }
+
+  function moveSlide(index, direction) {
+    const target = index + direction
+    setCarousel((current) => {
+      if (target < 0 || target >= current.slides.length) return current
+      const slides = [...current.slides]
+      ;[slides[index], slides[target]] = [slides[target], slides[index]]
+      return { ...current, slides }
+    })
+    setSlideIndex(Math.max(0, Math.min(target, carousel.slides.length - 1)))
+  }
+
+  function deleteSlide(index) {
+    setCarousel((current) => {
+      const slides = current.slides.filter((_, i) => i !== index)
+      return { ...current, slides }
+    })
+    setSlideIndex((current) => Math.max(0, Math.min(current, carousel.slides.length - 2)))
+  }
+
+  function addSlide() {
+    setCarousel((current) => ({ ...current, slides: [...current.slides, ''] }))
+    setSlideIndex(carousel.slides.length)
+  }
+
+  function handleCarouselAvatarUpload(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => updateCarousel('avatar', reader.result)
+    reader.readAsDataURL(file)
+  }
+
+  // The author identity currently in the working editor (a scratch copy — editing
+  // it never writes back to a saved profile; that only happens in Settings).
+  function currentIdentity() {
+    return {
+      name: (isCarouselMode ? carousel.name : post.name).trim(),
+      username: (isCarouselMode ? carousel.username : post.username).trim(),
+      avatar: isCarouselMode ? carousel.avatar : post.avatar,
+      signature: mediumPost.signature.trim(),
       source: post.source,
-      avatar: post.avatar,
-      theme: post.theme,
-      updatedAt: new Date().toISOString(),
+      theme: isCarouselMode ? carousel.theme : post.theme,
     }
-    const nextProfiles = existingProfile
-      ? profiles.map((item) => (item.id === existingProfile.id ? profile : item))
-      : [profile, ...profiles]
-
-    persistProfiles(nextProfiles)
-    setSelectedProfileId(profile.id)
-    setNotice(`Saved profile for ${name || username}.`)
   }
 
-  function loadProfile(profileId) {
-    setSelectedProfileId(profileId)
-
-    const profile = profiles.find((item) => item.id === profileId)
+  // Apply a saved profile into the working editor across every mode.
+  function applyProfile(profile) {
     if (!profile) return
-
+    setSelectedProfileId(profile.id)
     setPost((current) => ({
       ...current,
       name: profile.name,
       username: profile.username,
-      source: profile.source,
+      source: profile.source || current.source,
       avatar: profile.avatar,
-      theme: profile.theme || current.theme,
     }))
-    setNotice(`Loaded profile for ${profile.name || profile.username}.`)
+    setCarousel((current) => ({
+      ...current,
+      name: profile.name,
+      username: profile.username,
+      avatar: profile.avatar,
+    }))
+    setMediumPost((current) => ({ ...current, signature: profile.signature || current.signature }))
   }
 
-  function deleteProfile() {
-    const profile = profiles.find((item) => item.id === selectedProfileId)
+  function applyProfileById(profileId) {
+    const profile = profiles.find((item) => item.id === profileId)
+    if (profile) {
+      applyProfile(profile)
+      setNotice(`Using profile: ${profile.name || profile.username}.`)
+    }
+  }
 
-    if (!profile) {
-      setNotice('Choose a saved profile to delete.')
+  // Silent create from whatever identity the guest already typed (used at first sign-in).
+  async function createProfileFrom(identity) {
+    try {
+      const saved = await upsertProfile(identity)
+      const rows = await listProfiles()
+      setProfiles(rows)
+      applyProfile(saved)
+      setNotice(`Profile created for ${saved.name || saved.username}.`)
+    } catch {
+      // If the silent create fails, fall back to the prompt.
+      setProfileForm({ open: true, mode: 'onboard', initial: identity, id: null, dismissable: true })
+    }
+  }
+
+  function openNewProfile() {
+    if (!isPaid && profiles.length >= 1) {
+      setSettingsOpen(false)
+      setUpgradeModal({ open: true, reason: 'Free accounts can save one profile. Upgrade for unlimited profiles.' })
       return
     }
+    setProfileForm({ open: true, mode: 'create', initial: currentIdentity(), id: null, dismissable: true })
+  }
 
-    persistProfiles(profiles.filter((item) => item.id !== selectedProfileId))
-    setSelectedProfileId('')
-    setNotice(`Deleted profile for ${profile.name || profile.username}.`)
+  function openEditProfile(profile) {
+    setProfileForm({ open: true, mode: 'edit', initial: profile, id: profile.id, dismissable: true })
+  }
+
+  async function submitProfileForm(fields) {
+    setProfileSaving(true)
+    try {
+      const saved = await upsertProfile({ ...fields, id: profileForm.id || undefined })
+      const rows = await listProfiles()
+      setProfiles(rows)
+      applyProfile(saved)
+      setProfileForm({ open: false, mode: 'create', initial: null, id: null, dismissable: true })
+      setNotice(`Saved profile for ${saved.name || saved.username}.`)
+    } catch {
+      setNotice('Could not save profile. Try again.')
+    } finally {
+      setProfileSaving(false)
+    }
+  }
+
+  async function removeProfile(profileId) {
+    const profile = profiles.find((item) => item.id === profileId)
+    if (!profile) return
+    try {
+      await deleteProfileById(profileId)
+      setProfiles((current) => current.filter((item) => item.id !== profileId))
+      if (selectedProfileId === profileId) setSelectedProfileId('')
+      setNotice(`Deleted profile for ${profile.name || profile.username}.`)
+    } catch {
+      setNotice('Could not delete profile. Try again.')
+    }
   }
 
   function handleAvatarUpload(event) {
@@ -350,7 +574,11 @@ function App() {
   }
 
   async function exportImage() {
-    if (!exportRef.current) return
+    if (isCarouselMode && !carousel.slides.length) {
+      setNotice('Split your text into slides before exporting.')
+      return
+    }
+    if (!isCarouselMode && !exportRef.current) return
 
     if (!isSupabaseConfigured) {
       setNotice('Accounts are not configured yet. Add Supabase keys to enable exports.')
@@ -367,6 +595,7 @@ function App() {
 
     try {
       // Gate 2: server-authoritative limit + watermark decision.
+      // A whole carousel counts as a single export.
       const gate = await recordExport()
 
       if (!gate?.allowed) {
@@ -383,6 +612,17 @@ function App() {
       }
 
       const withWatermark = gate.watermark === true
+
+      if (isCarouselMode) {
+        await exportCarousel(withWatermark)
+        getUsage().then(setUsage).catch(() => {})
+        setNotice(
+          gate.remaining === null || gate.remaining === undefined
+            ? `Exported ${carousel.slides.length}-slide carousel (.zip).`
+            : `Exported ${carousel.slides.length}-slide carousel. ${gate.remaining} free export${gate.remaining === 1 ? '' : 's'} left this month.`,
+        )
+        return
+      }
 
       if (isMediumMode) {
         exportMediumImage(withWatermark)
@@ -427,6 +667,41 @@ function App() {
     } finally {
       setIsExporting(false)
     }
+  }
+
+  async function exportCarousel(withWatermark = false) {
+    const width = currentAspect.width * 2
+    const height = currentAspect.height * 2
+    const zip = new JSZip()
+    const total = carousel.slides.length
+
+    for (let index = 0; index < total; index += 1) {
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      drawSlide(ctx, {
+        text: carousel.slides[index],
+        theme: carousel.theme,
+        username: carousel.username,
+        avatar: carouselAvatarImage,
+        index,
+        total,
+        width,
+        height,
+        watermark: withWatermark,
+      })
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
+      const number = String(index + 1).padStart(2, '0')
+      zip.file(`slide-${number}.png`, blob)
+    }
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' })
+    const anchor = document.createElement('a')
+    anchor.href = URL.createObjectURL(zipBlob)
+    anchor.download = `notes2pics-carousel-${aspect}.zip`
+    anchor.click()
+    URL.revokeObjectURL(anchor.href)
   }
 
   function exportMediumImage(withWatermark = false) {
@@ -476,20 +751,36 @@ function App() {
       y += lineHeight
     }
 
+    const markMuted = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'
+
     if (mediumPost.signature) {
       y += signatureGap
+      const signatureTop = y
+      context.textBaseline = 'top'
       context.fillStyle = isDark ? '#727272' : '#8a8a84'
       context.font = `500 ${signatureSize}px Trebuchet MS, Segoe UI, sans-serif`
-      context.fillText(mediumPost.signature.toUpperCase(), textX, y)
-    }
+      context.fillText(mediumPost.signature.toUpperCase(), textX, signatureTop)
 
-    if (withWatermark) {
-      const markSize = Math.max(11, Math.round(width * 0.018))
+      if (withWatermark) {
+        // Fuse the watermark onto the signature's line — cropping it off means
+        // cropping the author's signature too.
+        const markSize = Math.max(11, Math.round(signatureSize * 0.82))
+        context.font = `600 ${markSize}px Trebuchet MS, Segoe UI, sans-serif`
+        context.textAlign = 'right'
+        context.fillStyle = markMuted
+        context.fillText(productWatermark, width - textX, signatureTop + (signatureSize - markSize) / 2)
+        context.textAlign = 'left'
+      }
+    } else if (withWatermark) {
+      // No signature: pin the watermark just below the text block, not in the
+      // far bottom margin where it could be cropped off.
+      y += signatureGap
+      const markSize = Math.max(11, Math.round(width * 0.02))
       context.font = `600 ${markSize}px Trebuchet MS, Segoe UI, sans-serif`
       context.textAlign = 'right'
-      context.textBaseline = 'alphabetic'
-      context.fillStyle = isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.38)'
-      context.fillText(productWatermark, width - textX, height - textX * 0.6)
+      context.textBaseline = 'top'
+      context.fillStyle = markMuted
+      context.fillText(productWatermark, width - textX, y)
       context.textAlign = 'left'
     }
 
@@ -530,17 +821,14 @@ function App() {
                   )}
                 </div>
                 <div className="account-actions">
-                  {!isPaid ? (
-                    <button
-                      type="button"
-                      className="upgrade-link"
-                      onClick={() => setUpgradeModal({ open: true, reason: '' })}
-                    >
-                      Upgrade
-                    </button>
-                  ) : null}
-                  <button type="button" className="signout-link" onClick={signOut} aria-label="Sign out">
-                    <LogOut aria-hidden="true" />
+                  <button
+                    type="button"
+                    className="settings-link"
+                    onClick={() => setSettingsOpen(true)}
+                    aria-label="Settings"
+                    title="Settings"
+                  >
+                    <Settings aria-hidden="true" />
                   </button>
                 </div>
               </>
@@ -555,27 +843,168 @@ function App() {
             )}
           </div>
 
+          {user && profiles.length > 0 ? (
+            <label className="field full profile-switcher">
+              <span>Active profile</span>
+              <select
+                value={selectedProfileId}
+                onChange={(event) => applyProfileById(event.target.value)}
+              >
+                <option value="">Choose a profile</option>
+                {profiles.map((profile) => (
+                  <option value={profile.id} key={profile.id}>
+                    {profile.name || profile.username} {profile.username ? `(${profile.username})` : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
           <div className="selector-group">
             <span>Content type</span>
             <div className="segmented">
               <button
                 type="button"
                 className={contentMode === 'short' ? 'active' : ''}
-                onClick={() => setContentMode('short')}
+                onClick={() => switchMode('short')}
               >
                 Short post
               </button>
               <button
                 type="button"
                 className={contentMode === 'medium' ? 'active' : ''}
-                onClick={() => setContentMode('medium')}
+                onClick={() => switchMode('medium')}
               >
                 Medium form
+              </button>
+              <button
+                type="button"
+                className={contentMode === 'carousel' ? 'active' : ''}
+                onClick={() => switchMode('carousel')}
+              >
+                Carousels
               </button>
             </div>
           </div>
 
-          {isMediumMode ? (
+          {isCarouselMode ? (
+            <>
+              <label className="field full">
+                <span>Long post or thread</span>
+                <textarea
+                  className="medium-textarea"
+                  value={carousel.text}
+                  onChange={(event) => updateCarousel('text', event.target.value)}
+                  placeholder="Paste your Substack essay or Twitter/Threads thread here…"
+                />
+              </label>
+
+              <div className="helper-row">
+                <span>{carousel.text.length} characters</span>
+                <div className="helper-actions">
+                  <button type="button" onClick={resetCarouselText}>
+                    <RefreshCw aria-hidden="true" />
+                    Reset text
+                  </button>
+                  <button type="button" onClick={splitCarousel}>
+                    <Scissors aria-hidden="true" />
+                    Split into slides
+                  </button>
+                </div>
+              </div>
+
+              <div className="control-grid">
+                <label className="field">
+                  <span>Name</span>
+                  <input
+                    value={carousel.name}
+                    onChange={(event) => updateCarousel('name', event.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  <span>Username</span>
+                  <input
+                    value={carousel.username}
+                    onChange={(event) => updateCarousel('username', event.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  <span>Theme</span>
+                  <select
+                    value={carousel.theme}
+                    onChange={(event) => updateCarousel('theme', event.target.value)}
+                  >
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                  </select>
+                </label>
+                <label className="upload-row">
+                  <ImagePlus aria-hidden="true" />
+                  <span>Avatar</span>
+                  <input type="file" accept="image/*" onChange={handleCarouselAvatarUpload} />
+                </label>
+              </div>
+
+              <div className="slides-editor">
+                <div className="slides-editor-head">
+                  <span>{carousel.slides.length} slides</span>
+                  <button type="button" onClick={addSlide}>
+                    <Plus aria-hidden="true" />
+                    Add slide
+                  </button>
+                </div>
+
+                {carousel.slides.map((slide, index) => (
+                  <div
+                    className={`slide-card ${index === slideIndex ? 'active' : ''}`}
+                    key={index}
+                    onClick={() => setSlideIndex(index)}
+                  >
+                    <div className="slide-card-head">
+                      <strong>Slide {index + 1}</strong>
+                      <span className={slide.length >= SLIDE_MAX_CHARS ? 'over' : ''}>
+                        {slide.length}/{SLIDE_MAX_CHARS}
+                      </span>
+                    </div>
+                    <textarea
+                      value={slide}
+                      maxLength={SLIDE_MAX_CHARS}
+                      onChange={(event) => updateSlideText(index, event.target.value)}
+                    />
+                    <div className="slide-card-actions">
+                      <button
+                        type="button"
+                        onClick={() => moveSlide(index, -1)}
+                        disabled={index === 0}
+                        aria-label="Move slide up"
+                        title="Move up"
+                      >
+                        <ArrowUp aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveSlide(index, 1)}
+                        disabled={index === carousel.slides.length - 1}
+                        aria-label="Move slide down"
+                        title="Move down"
+                      >
+                        <ArrowDown aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        className="danger"
+                        onClick={() => deleteSlide(index)}
+                        aria-label="Delete slide"
+                        title="Delete"
+                      >
+                        <Trash2 aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : isMediumMode ? (
             <>
               <label className="field full">
                 <span>Medium-form text</span>
@@ -618,39 +1047,6 @@ function App() {
             </>
           ) : (
             <>
-              <section className="profile-manager" aria-label="Saved profiles">
-                <div className="profile-heading">
-                  <div>
-                    <p className="eyebrow">Profiles</p>
-                    <h2>Save repeat authors</h2>
-                  </div>
-                  <UserRoundCheck aria-hidden="true" />
-                </div>
-
-                <label className="field full">
-                  <span>Saved profile</span>
-                  <select value={selectedProfileId} onChange={(event) => loadProfile(event.target.value)}>
-                    <option value="">Choose saved profile</option>
-                    {profiles.map((profile) => (
-                      <option value={profile.id} key={profile.id}>
-                        {profile.name || profile.username} {profile.username ? `(${profile.username})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <div className="profile-actions">
-                  <button type="button" onClick={saveProfile}>
-                    <Save aria-hidden="true" />
-                    Save current
-                  </button>
-                  <button type="button" onClick={deleteProfile} disabled={!selectedProfileId}>
-                    <Trash2 aria-hidden="true" />
-                    Delete
-                  </button>
-                </div>
-              </section>
-
               <div className="control-grid">
                 <label className="field">
                   <span>Name</span>
@@ -702,15 +1098,6 @@ function App() {
                 </button>
               </div>
 
-              <label className="field full">
-                <span>Avatar URL</span>
-                <input
-                  value={post.avatar}
-                  onChange={(event) => updatePost('avatar', event.target.value)}
-                  placeholder="Upload is safest for export"
-                />
-              </label>
-
               <label className="upload-row">
                 <ImagePlus aria-hidden="true" />
                 <span>Upload avatar</span>
@@ -737,7 +1124,11 @@ function App() {
 
           <button className="export-button" type="button" onClick={exportImage} disabled={isExporting}>
             <Download aria-hidden="true" />
-            {isExporting ? 'Exporting...' : `Export PNG (${currentAspect.size})`}
+            {isExporting
+              ? 'Exporting...'
+              : isCarouselMode
+                ? `Export ${carousel.slides.length}-slide carousel (.zip)`
+                : `Export PNG (${currentAspect.size})`}
           </button>
 
           <p className="notice">{notice}</p>
@@ -751,40 +1142,87 @@ function App() {
             </div>
           </div>
 
-          <div className="preview-frame">
-            <div
-              className={
-                isMediumMode
-                  ? `export-stage medium-stage medium-${mediumPost.theme} aspect-${aspect}`
-                  : `export-stage short-stage short-${shortSourceKey} short-${post.theme} aspect-${aspect}`
-              }
-              ref={exportRef}
-              style={{ width: `${currentAspect.width}px`, height: `${currentAspect.height}px` }}
-            >
-              {isMediumMode ? (
-                <>
-                  <article className="medium-content">
-                    <p style={mediumTextStyle}>{mediumPost.text || 'Paste your medium-form content here.'}</p>
-                    {mediumPost.signature ? <span>{mediumPost.signature}</span> : null}
-                  </article>
-                </>
-              ) : (
-                <ShortSourcePreview
-                  avatarInitials={avatarInitials}
-                  post={post}
-                  shortPostTextStyle={shortPostTextStyle}
-                  sourceKey={shortSourceKey}
-                  badgeDate={badgeDate}
-                  timestamp={timestamp}
+          <div className="preview-frame" ref={previewFrameRef}>
+            {isCarouselMode ? (
+              <div className="carousel-preview">
+                <canvas
+                  ref={carouselCanvasRef}
+                  className="carousel-canvas"
+                  style={{
+                    width: `${currentAspect.width * previewScale}px`,
+                    height: `${currentAspect.height * previewScale}px`,
+                  }}
                 />
-              )}
-
-              {captureWatermark ? (
-                <span className="product-watermark" aria-hidden="true">
-                  {productWatermark}
-                </span>
-              ) : null}
-            </div>
+                <div className="carousel-nav">
+                  <button
+                    type="button"
+                    onClick={() => setSlideIndex((i) => Math.max(0, i - 1))}
+                    disabled={slideIndex <= 0}
+                    aria-label="Previous slide"
+                    title="Previous slide"
+                  >
+                    <ChevronLeft aria-hidden="true" />
+                  </button>
+                  <span>
+                    {carousel.slides.length ? slideIndex + 1 : 0} / {carousel.slides.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSlideIndex((i) => Math.min(carousel.slides.length - 1, i + 1))}
+                    disabled={slideIndex >= carousel.slides.length - 1}
+                    aria-label="Next slide"
+                    title="Next slide"
+                  >
+                    <ChevronRight aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="preview-fit"
+                style={{
+                  width: `${currentAspect.width * previewScale}px`,
+                  height: `${currentAspect.height * previewScale}px`,
+                }}
+              >
+                <div
+                  className="preview-fit-inner"
+                  style={{
+                    width: `${currentAspect.width}px`,
+                    height: `${currentAspect.height}px`,
+                    transform: `scale(${previewScale})`,
+                    transformOrigin: 'top left',
+                  }}
+                >
+                  <div
+                    className={
+                      isMediumMode
+                        ? `export-stage medium-stage medium-${mediumPost.theme} aspect-${aspect}`
+                        : `export-stage short-stage short-${shortSourceKey} short-${post.theme} aspect-${aspect}`
+                    }
+                    ref={exportRef}
+                    style={{ width: `${currentAspect.width}px`, height: `${currentAspect.height}px` }}
+                  >
+                    {isMediumMode ? (
+                      <article className="medium-content">
+                        <p style={mediumTextStyle}>{mediumPost.text || 'Paste your medium-form content here.'}</p>
+                        {mediumPost.signature ? <span>{mediumPost.signature}</span> : null}
+                      </article>
+                    ) : (
+                      <ShortSourcePreview
+                        avatarInitials={avatarInitials}
+                        post={post}
+                        shortPostTextStyle={shortPostTextStyle}
+                        sourceKey={shortSourceKey}
+                        badgeDate={badgeDate}
+                        timestamp={timestamp}
+                        watermark={captureWatermark}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </section>
@@ -801,13 +1239,50 @@ function App() {
         email={user?.email}
         onClose={() => setUpgradeModal({ open: false, reason: '' })}
       />
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        user={user}
+        usage={usage}
+        profiles={profiles}
+        activeProfileId={selectedProfileId}
+        isPaid={isPaid}
+        onUseProfile={(id) => {
+          applyProfileById(id)
+          setSettingsOpen(false)
+        }}
+        onNewProfile={openNewProfile}
+        onEditProfile={openEditProfile}
+        onDeleteProfile={removeProfile}
+        onUpgrade={() => {
+          setSettingsOpen(false)
+          setUpgradeModal({ open: true, reason: '' })
+        }}
+        onLogout={() => {
+          setSettingsOpen(false)
+          signOut()
+        }}
+      />
+      <ProfileFormModal
+        key={profileForm.open ? `${profileForm.mode}-${profileForm.id || 'new'}` : 'closed'}
+        open={profileForm.open}
+        title={profileForm.mode === 'edit' ? 'Edit profile' : profileForm.mode === 'onboard' ? 'Create your profile' : 'New profile'}
+        initial={profileForm.initial}
+        submitLabel={profileForm.mode === 'edit' ? 'Save changes' : 'Create profile'}
+        busy={profileSaving}
+        dismissable={profileForm.dismissable}
+        onSubmit={submitProfileForm}
+        onClose={() => setProfileForm({ open: false, mode: 'create', initial: null, id: null, dismissable: true })}
+      />
     </main>
   )
 }
 
 export default App
 
-function ShortSourcePreview({ avatarInitials, post, shortPostTextStyle, sourceKey, badgeDate, timestamp }) {
+function ShortSourcePreview({ avatarInitials, post, shortPostTextStyle, sourceKey, badgeDate, timestamp, watermark }) {
+  const byline = watermark ? <div className="card-watermark" aria-hidden="true">{productWatermark}</div> : null
+
   if (sourceKey === 'substack') {
     return (
       <article className="substack-card">
@@ -825,6 +1300,7 @@ function ShortSourcePreview({ avatarInitials, post, shortPostTextStyle, sourceKe
         <p className="substack-text" style={shortPostTextStyle}>
           {post.text || 'Paste the post text here.'}
         </p>
+        {byline}
       </article>
     )
   }
@@ -844,6 +1320,7 @@ function ShortSourcePreview({ avatarInitials, post, shortPostTextStyle, sourceKe
         <p className="threads-text" style={shortPostTextStyle}>
           {post.text || 'Paste the post text here.'}
         </p>
+        {byline}
       </article>
     )
   }
@@ -867,6 +1344,7 @@ function ShortSourcePreview({ avatarInitials, post, shortPostTextStyle, sourceKe
 
       <footer className="x-footer">
         <span>{timestamp}</span>
+        {byline}
       </footer>
     </article>
   )

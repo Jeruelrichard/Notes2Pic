@@ -7,8 +7,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores(['dist', 'dist-server', 'dist-ssr']),
   {
-    files: ['**/*.{js,jsx}'],
-    ignores: ['api/**'],
+    files: ['src/**/*.{js,jsx}'],
     extends: [
       js.configs.recommended,
       reactHooks.configs.flat.recommended,
@@ -20,8 +19,8 @@ export default defineConfig([
     },
   },
   {
-    // Vercel serverless functions run in Node, not the browser.
-    files: ['api/**/*.js'],
+    // Node contexts: Vercel functions, Vite config, build scripts.
+    files: ['api/**/*.js', 'scripts/**/*.{js,mjs}', 'vite.config.js', 'eslint.config.js'],
     extends: [js.configs.recommended],
     languageOptions: {
       globals: globals.node,

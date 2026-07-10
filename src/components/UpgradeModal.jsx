@@ -45,10 +45,10 @@ export default function UpgradeModal({ open, onClose, userId, email, reason }) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <span className="plan-badge">Best value</span>
+            <span className="plan-badge">First 20 buyers</span>
             <span className="plan-name">Lifetime</span>
             <span className="plan-price">$10<small>once</small></span>
-            <span className="plan-note">Pay once, keep forever</span>
+            <span className="plan-note">Then $17 — lock in early pricing</span>
           </a>
         </div>
 

@@ -88,9 +88,10 @@ export default function Landing() {
           </article>
 
           <article className="price-card featured">
-            <span className="price-badge">Best value</span>
+            <span className="price-badge">First 20 buyers</span>
             <h3>Lifetime</h3>
             <p className="price">$10<small> once</small></p>
+            <p className="price-note">Then $17 — lock in early pricing now</p>
             <ul>
               <li><Check aria-hidden="true" /> Unlimited exports</li>
               <li><Check aria-hidden="true" /> No watermark</li>

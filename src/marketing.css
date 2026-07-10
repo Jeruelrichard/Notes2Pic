@@ -343,6 +343,13 @@
   color: var(--muted);
 }
 
+.price-note {
+  margin: -10px 0 18px;
+  color: var(--brand);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
 .price-card ul {
   flex: 1;
   margin: 0 0 22px;
