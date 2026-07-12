@@ -20,7 +20,7 @@ export default function Landing() {
           <p className="hero-eyebrow">Post-to-image studio</p>
           <h1>Turn your best posts into Instagram-ready images.</h1>
           <p className="hero-sub">
-            You already write great posts on X, Threads, and Substack. Notes2Pics turns them into
+            You already write great posts on X, Threads, and Substack. Notes2Pic turns them into
             clean, branded images you can post anywhere — in seconds, not minutes.
           </p>
           <div className="hero-actions">
@@ -117,7 +117,7 @@ export default function Landing() {
 
       <section className="cta-band">
         <h2>Your next post could be your next Instagram image.</h2>
-        <Link to="/app" className="btn-primary">Open Notes2Pics</Link>
+        <Link to="/app" className="btn-primary">Open Notes2Pic</Link>
       </section>
     </MarketingLayout>
   )

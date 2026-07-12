@@ -31,7 +31,7 @@ That friction is why most creators never repurpose consistently. If it takes 20 
 
 A post-to-image generator (sometimes called a quote card maker or tweet-to-image tool) does one job well: you paste your text, it produces a clean screenshot-style image that looks native to the platform it came from.
 
-Here is the workflow with [Notes2Pics](/app):
+Here is the workflow with [Notes2Pic](/app):
 
 1. Paste your post text.
 2. Set your name, handle, and avatar once — save it as a profile so you never retype it.
@@ -74,4 +74,4 @@ Five minutes of work becomes a week of Instagram content, all built from writing
 
 You already have the ideas. You already wrote the posts. The only thing standing between your best X and Threads content and a week of Instagram posts is the packaging — and that part now takes seconds.
 
-[Try Notes2Pics free](/app) and turn your next post into an Instagram-ready image.
+[Try Notes2Pic free](/app) and turn your next post into an Instagram-ready image.

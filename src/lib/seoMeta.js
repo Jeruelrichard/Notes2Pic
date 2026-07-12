@@ -1,6 +1,6 @@
 import { posts, getPost } from './posts'
 
-export const SITE_NAME = 'Notes2Pics'
+export const SITE_NAME = 'Notes2Pic'
 export const DEFAULT_DESCRIPTION =
   'Turn your X, Threads, and Substack posts into clean, Instagram-ready images in seconds.'
 
@@ -31,14 +31,14 @@ export function getMetaForPath(pathname) {
   if (pathname === '/privacy') {
     return {
       title: `Privacy Policy | ${SITE_NAME}`,
-      description: 'How Notes2Pics collects, uses, and protects your data.',
+      description: 'How Notes2Pic collects, uses, and protects your data.',
       path: '/privacy',
     }
   }
   if (pathname === '/terms') {
     return {
       title: `Terms of Service | ${SITE_NAME}`,
-      description: 'The terms that govern your use of Notes2Pics.',
+      description: 'The terms that govern your use of Notes2Pic.',
       path: '/terms',
     }
   }

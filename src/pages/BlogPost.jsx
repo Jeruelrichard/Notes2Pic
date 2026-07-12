@@ -65,8 +65,8 @@ export default function BlogPost() {
 
         <div className="blog-post-cta">
           <h2>Turn your posts into images</h2>
-          <p>Notes2Pics does exactly what this article describes — free to start.</p>
-          <Link to="/app" className="btn-primary">Try Notes2Pics</Link>
+          <p>Notes2Pic does exactly what this article describes — free to start.</p>
+          <Link to="/app" className="btn-primary">Try Notes2Pic</Link>
         </div>
       </article>
     </MarketingLayout>

@@ -34,7 +34,7 @@ function buildHead(meta) {
     `<meta property="og:description" content="${esc(meta.description)}" />`,
     `<meta property="og:type" content="website" />`,
     `<meta property="og:url" content="${url}" />`,
-    `<meta property="og:site_name" content="Notes2Pics" />`,
+    `<meta property="og:site_name" content="Notes2Pic" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${esc(meta.title)}" />`,
     `<meta name="twitter:description" content="${esc(meta.description)}" />`,
@@ -59,7 +59,7 @@ async function writeRoute(pathname, contents) {
 // 1) SPA shell for the client-rendered studio (empty root → createRoot on load).
 {
   const meta = {
-    title: 'Studio | Notes2Pics',
+    title: 'Studio | Notes2Pic',
     description: 'Turn your posts into Instagram-ready images.',
     path: '/app',
   }
@@ -106,7 +106,7 @@ const rssItems = posts
 const rss =
   `<?xml version="1.0" encoding="UTF-8"?>\n` +
   `<rss version="2.0">\n  <channel>\n` +
-  `    <title>Notes2Pics Blog</title>\n` +
+  `    <title>Notes2Pic Blog</title>\n` +
   `    <link>${SITE_URL}/blog</link>\n` +
   `    <description>Guides on content repurposing and growing on X, Threads, and Substack.</description>\n` +
   `${rssItems}\n  </channel>\n</rss>\n`

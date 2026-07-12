@@ -8,7 +8,7 @@ export function SiteHeader() {
       <div className="site-header-inner">
         <Link to="/" className="site-brand">
           <img src={markSrc} alt="" width="26" height="26" />
-          <span>Notes2Pics</span>
+          <span>Notes2Pic</span>
         </Link>
         <nav className="site-nav">
           <NavLink to="/blog" className={({ isActive }) => (isActive ? 'active' : '')}>
@@ -29,7 +29,7 @@ export function SiteFooter() {
       <div className="site-footer-inner">
         <div className="site-footer-brand">
           <img src={markSrc} alt="" width="24" height="24" />
-          <span>Notes2Pics</span>
+          <span>Notes2Pic</span>
           <p>Turn your posts into Instagram-ready images.</p>
         </div>
         <nav className="site-footer-links">
@@ -42,7 +42,7 @@ export function SiteFooter() {
         </nav>
       </div>
       <div className="site-footer-legal">
-        © {new Date().getFullYear()} Notes2Pics. All rights reserved.
+        © {new Date().getFullYear()} Notes2Pic. All rights reserved.
       </div>
     </footer>
   )

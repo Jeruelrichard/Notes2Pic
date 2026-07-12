@@ -42,7 +42,7 @@ export default function SettingsModal({
             </span>
           </div>
           {isPaid ? (
-            <p className="settings-hint">Unlimited watermark-free exports and unlimited saved profiles. Thank you for supporting Notes2Pics.</p>
+            <p className="settings-hint">Unlimited watermark-free exports and unlimited saved profiles. Thank you for supporting Notes2Pic.</p>
           ) : (
             <>
               <p className="settings-hint">

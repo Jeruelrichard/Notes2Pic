@@ -14,7 +14,7 @@ export default function BlogIndex() {
 
       <div className="blog-index">
         <header className="blog-index-head">
-          <p className="hero-eyebrow">The Notes2Pics blog</p>
+          <p className="hero-eyebrow">The Notes2Pic blog</p>
           <h1>Repurpose smarter. Grow faster.</h1>
           <p>Practical guides on turning your writing into images that travel.</p>
         </header>

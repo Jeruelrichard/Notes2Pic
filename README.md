@@ -1,6 +1,6 @@
-# Notes2pics
+# Notes2Pic
 
-Notes2pics is a local MVP for manually turning a Substack Note, X post, or short text post into an Instagram-ready PNG.
+Notes2Pic turns a Substack Note, X post, or short text post into an Instagram-ready PNG — short posts, medium-form quotes, and multi-slide carousels.
 
 ## What works
 
@@ -31,7 +31,7 @@ Profiles are saved in browser localStorage under `notes2pics.profiles`. They sta
 
 - Editing and previewing are always free and need no account.
 - **Exporting requires sign-in** (Supabase Auth: email+password or Google).
-- Free tier: **3 exports per rolling 30 days**, each carrying a "made with Notes2Pics" watermark.
+- Free tier: **3 exports per rolling 30 days**, each carrying a "made with Notes2Pic" watermark.
 - Paid tier removes the watermark and unlocks unlimited exports: **$5/mo** or **$10 lifetime** (Freemius).
 - Entitlements are written only by the Freemius webhook (server-side, service-role key),
   so the paywall can't be bypassed from the browser. The export limit is enforced by the

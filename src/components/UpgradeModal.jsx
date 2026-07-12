@@ -22,7 +22,7 @@ export default function UpgradeModal({ open, onClose, email, reason }) {
 
         <ul className="plan-benefits">
           <li><Check aria-hidden="true" /> Unlimited exports</li>
-          <li><Check aria-hidden="true" /> No "made with Notes2Pics" watermark</li>
+          <li><Check aria-hidden="true" /> No "made with Notes2Pic" watermark</li>
           <li><Check aria-hidden="true" /> Unlimited saved profiles</li>
           <li><Check aria-hidden="true" /> Every template and canvas size</li>
         </ul>

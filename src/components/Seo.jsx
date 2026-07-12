@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-const SITE_NAME = 'Notes2Pics'
+const SITE_NAME = 'Notes2Pic'
 const DEFAULT_DESCRIPTION =
   'Turn your X, Threads, and Substack posts into clean, Instagram-ready images in seconds.'
 

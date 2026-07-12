@@ -30,7 +30,7 @@ import UpgradeModal from './components/UpgradeModal'
 import SettingsModal from './components/SettingsModal'
 import ProfileFormModal from './components/ProfileFormModal'
 
-const productWatermark = 'made with Notes2Pics'
+const productWatermark = 'made with Notes2Pic'
 const checkoutIntentKey = 'n2p.checkout'
 
 // Read a pending checkout intent from the URL (?checkout=…) or a recent
@@ -722,7 +722,7 @@ function App() {
           ])
           const anchor = document.createElement('a')
           anchor.href = dataUrl
-          anchor.download = `notes2pics-${contentMode}-${aspect}.png`
+          anchor.download = `notes2pic-${contentMode}-${aspect}.png`
           anchor.click()
         } finally {
           if (withWatermark) setCaptureWatermark(false)
@@ -773,7 +773,7 @@ function App() {
     const zipBlob = await zip.generateAsync({ type: 'blob' })
     const anchor = document.createElement('a')
     anchor.href = URL.createObjectURL(zipBlob)
-    anchor.download = `notes2pics-carousel-${aspect}.zip`
+    anchor.download = `notes2pic-carousel-${aspect}.zip`
     anchor.click()
     URL.revokeObjectURL(anchor.href)
   }
@@ -860,7 +860,7 @@ function App() {
 
     const anchor = document.createElement('a')
     anchor.href = canvas.toDataURL('image/png')
-    anchor.download = `notes2pics-medium-${aspect}.png`
+    anchor.download = `notes2pic-medium-${aspect}.png`
     anchor.click()
   }
 
@@ -870,7 +870,7 @@ function App() {
         <aside className="editor-panel" aria-label="Post editor">
           <div className="brand-row">
             <div>
-              <p className="eyebrow">Notes2pics</p>
+              <p className="eyebrow">Notes2pic</p>
               <h1>Post screenshot studio</h1>
             </div>
             <Sparkles aria-hidden="true" />

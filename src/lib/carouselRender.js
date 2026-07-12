@@ -116,7 +116,7 @@ export function drawSlide(ctx, opts) {
     ctx.font = `600 ${Math.round(width * 0.02)}px ${FONT_STACK}`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'alphabetic'
-    ctx.fillText('made with Notes2Pics', width / 2, height - height * 0.035)
+    ctx.fillText('made with Notes2Pic', width / 2, height - height * 0.035)
   }
 
   ctx.textAlign = 'left'
