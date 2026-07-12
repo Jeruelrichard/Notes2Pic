@@ -3,6 +3,8 @@ import { Routes, Route } from 'react-router-dom'
 import Landing from './pages/Landing'
 import BlogIndex from './pages/BlogIndex'
 import BlogPost from './pages/BlogPost'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 
 // Lazy-load the studio so the marketing/blog pages don't ship the heavy
 // editor bundle (Supabase, html-to-image, etc.). Keeps landing fast for SEO.
@@ -23,6 +25,8 @@ export default function AppShell() {
       />
       <Route path="/blog" element={<BlogIndex />} />
       <Route path="/blog/:slug" element={<BlogPost />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
       <Route path="*" element={<Landing />} />
     </Routes>
   )

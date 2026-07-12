@@ -35,6 +35,8 @@ export function SiteFooter() {
         <nav className="site-footer-links">
           <Link to="/app">App</Link>
           <Link to="/blog">Blog</Link>
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/terms">Terms</Link>
           <a href="/sitemap.xml">Sitemap</a>
           <a href="/rss.xml">RSS</a>
         </nav>

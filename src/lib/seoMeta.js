@@ -28,11 +28,25 @@ export function getMetaForPath(pathname) {
       return { title: `${post.title} | ${SITE_NAME}`, description: post.description, path: pathname }
     }
   }
+  if (pathname === '/privacy') {
+    return {
+      title: `Privacy Policy | ${SITE_NAME}`,
+      description: 'How Notes2Pics collects, uses, and protects your data.',
+      path: '/privacy',
+    }
+  }
+  if (pathname === '/terms') {
+    return {
+      title: `Terms of Service | ${SITE_NAME}`,
+      description: 'The terms that govern your use of Notes2Pics.',
+      path: '/terms',
+    }
+  }
   return { title: `${SITE_NAME} — post-to-image studio`, description: DEFAULT_DESCRIPTION, path: pathname }
 }
 
 // Every path the prerender step should emit as static HTML (the SPA /app route
 // is intentionally excluded — it stays client-rendered).
 export function listPrerenderPaths() {
-  return ['/', '/blog', ...posts.map((post) => `/blog/${post.slug}`)]
+  return ['/', '/blog', '/privacy', '/terms', ...posts.map((post) => `/blog/${post.slug}`)]
 }
