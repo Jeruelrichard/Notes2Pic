@@ -1,4 +1,4 @@
-const cacheName = 'notes2pics-v2'
+const cacheName = 'notes2pics-v3'
 const appShell = ['/', '/manifest.webmanifest', '/favicon.svg', '/pwa-icon.svg']
 
 // Never cache or intercept auth/API/Supabase traffic — these carry tokens and
@@ -8,7 +8,9 @@ function shouldBypass(url) {
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/auth/') ||
     url.hostname.endsWith('.supabase.co') ||
-    url.hostname.endsWith('.lemonsqueezy.com')
+    url.hostname.endsWith('.freemius.com')
+    // Lemon Squeezy integration disabled — bypass no longer needed.
+    // || url.hostname.endsWith('.lemonsqueezy.com')
   )
 }
 

@@ -42,11 +42,11 @@ export default function SettingsModal({
             </span>
           </div>
           {isPaid ? (
-            <p className="settings-hint">You have unlimited, watermark-free exports. Thank you for supporting Notes2Pics.</p>
+            <p className="settings-hint">Unlimited watermark-free exports and unlimited saved profiles. Thank you for supporting Notes2Pics.</p>
           ) : (
             <>
               <p className="settings-hint">
-                {usage?.remaining ?? 3} free export{(usage?.remaining ?? 3) === 1 ? '' : 's'} left this month, with a watermark.
+                {usage?.remaining ?? 3} free export{(usage?.remaining ?? 3) === 1 ? '' : 's'} left this month (with a watermark), and one saved profile.
               </p>
               <button type="button" className="upgrade-link block" onClick={onUpgrade}>
                 Upgrade for unlimited

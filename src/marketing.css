@@ -49,10 +49,10 @@
   font-size: 1.1rem;
 }
 
-.site-brand svg {
-  width: 22px;
-  height: 22px;
-  color: var(--brand);
+.site-brand img {
+  width: 26px;
+  height: 26px;
+  display: block;
 }
 
 .site-nav {
@@ -403,10 +403,10 @@
   font-weight: 800;
 }
 
-.site-footer-brand svg {
-  width: 20px;
-  height: 20px;
-  color: var(--brand);
+.site-footer-brand img {
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 
 .site-footer-brand p {

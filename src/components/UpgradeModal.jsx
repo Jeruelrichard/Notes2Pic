@@ -1,13 +1,12 @@
 import { Check, X } from 'lucide-react'
+import { checkoutUrlForPlan } from '../lib/checkout'
 
 // Shown when a free user hits the export limit or clicks "Remove watermark".
-// Builds Lemon Squeezy checkout URLs, passing the Supabase user id as custom data
-// so the webhook can attribute the purchase back to this account.
-export default function UpgradeModal({ open, onClose, userId, email, reason }) {
+export default function UpgradeModal({ open, onClose, email, reason }) {
   if (!open) return null
 
-  const monthly = buildCheckoutUrl(import.meta.env.VITE_LS_CHECKOUT_MONTHLY, userId, email)
-  const lifetime = buildCheckoutUrl(import.meta.env.VITE_LS_CHECKOUT_LIFETIME, userId, email)
+  const monthly = checkoutUrlForPlan('monthly', email)
+  const lifetime = checkoutUrlForPlan('lifetime', email)
 
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>
@@ -24,6 +23,7 @@ export default function UpgradeModal({ open, onClose, userId, email, reason }) {
         <ul className="plan-benefits">
           <li><Check aria-hidden="true" /> Unlimited exports</li>
           <li><Check aria-hidden="true" /> No "made with Notes2Pics" watermark</li>
+          <li><Check aria-hidden="true" /> Unlimited saved profiles</li>
           <li><Check aria-hidden="true" /> Every template and canvas size</li>
         </ul>
 
@@ -48,7 +48,7 @@ export default function UpgradeModal({ open, onClose, userId, email, reason }) {
             <span className="plan-badge">First 20 buyers</span>
             <span className="plan-name">Lifetime</span>
             <span className="plan-price">$10<small>once</small></span>
-            <span className="plan-note">Then $17 — lock in early pricing</span>
+            <span className="plan-note">Then $17 — lock in founding members pricing</span>
           </a>
         </div>
 
@@ -60,16 +60,4 @@ export default function UpgradeModal({ open, onClose, userId, email, reason }) {
       </div>
     </div>
   )
-}
-
-function buildCheckoutUrl(base, userId, email) {
-  if (!base) return ''
-  try {
-    const url = new URL(base)
-    if (userId) url.searchParams.set('checkout[custom][user_id]', userId)
-    if (email) url.searchParams.set('checkout[email]', email)
-    return url.toString()
-  } catch {
-    return base
-  }
 }

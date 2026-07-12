@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Favicon-optimized cut: bigger glyph, one peeking slide, no dots. Legible at 16px. -->
+  <rect x="0" y="0" width="512" height="512" rx="116" fill="#111827" />
+
+  <!-- Peeking slide (single, stronger) -->
+  <rect x="396" y="150" width="52" height="212" rx="24" fill="#FFFFFF" opacity="0.4" />
+
+  <!-- Front card (larger, centered) -->
+  <rect x="64" y="96" width="296" height="320" rx="56" fill="#FFFFFF" />
+
+  <!-- Double quote glyph, enlarged -->
+  <path d="M124 330
+           L124 258
+           Q124 190 192 180
+           L192 218
+           Q162 226 160 258
+           L198 258
+           L198 330
+           Z" fill="#111827" />
+  <path d="M232 330
+           L232 258
+           Q232 190 300 180
+           L300 218
+           Q270 226 268 258
+           L306 258
+           L306 330
+           Z" fill="#111827" />
+</svg>

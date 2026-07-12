@@ -3,7 +3,11 @@ import { X } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 
 // Email+password (sign up / sign in toggle) plus Google OAuth.
-export default function AuthModal({ open, onClose, reason }) {
+// onClose closes the modal (also used after a successful sign-in). onDismiss (if
+// provided) fires only on an explicit user dismiss (X / overlay), so callers can
+// cancel a pending intent like a checkout redirect.
+export default function AuthModal({ open, onClose, onDismiss, reason }) {
+  const dismiss = onDismiss || onClose
   const [mode, setMode] = useState('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -21,8 +25,14 @@ export default function AuthModal({ open, onClose, reason }) {
 
     try {
       if (isSignup) {
-        const { error } = await supabase.auth.signUp({ email, password })
+        const { data, error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
+        // Supabase hides "email already exists" to prevent enumeration: it returns
+        // a user with an empty identities array instead of an error. Detect that.
+        if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+          setMessage('An account with this email already exists. Try signing in instead.')
+          return
+        }
         setMessage('Check your email to confirm your account, then sign in.')
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -50,9 +60,9 @@ export default function AuthModal({ open, onClose, reason }) {
   }
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>
+    <div className="modal-overlay" role="dialog" aria-modal="true" onClick={dismiss}>
       <div className="modal-card" onClick={(event) => event.stopPropagation()}>
-        <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
+        <button type="button" className="modal-close" onClick={dismiss} aria-label="Close">
           <X aria-hidden="true" />
         </button>
 

@@ -1,12 +1,13 @@
 import { Link, NavLink } from 'react-router-dom'
-import { Sparkles } from 'lucide-react'
+
+const markSrc = '/notes2pics-mark-v2-quote-standalone.svg'
 
 export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="site-header-inner">
         <Link to="/" className="site-brand">
-          <Sparkles aria-hidden="true" />
+          <img src={markSrc} alt="" width="26" height="26" />
           <span>Notes2Pics</span>
         </Link>
         <nav className="site-nav">
@@ -27,7 +28,7 @@ export function SiteFooter() {
     <footer className="site-footer">
       <div className="site-footer-inner">
         <div className="site-footer-brand">
-          <Sparkles aria-hidden="true" />
+          <img src={markSrc} alt="" width="24" height="24" />
           <span>Notes2Pics</span>
           <p>Turn your posts into Instagram-ready images.</p>
         </div>

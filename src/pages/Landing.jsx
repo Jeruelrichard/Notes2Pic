@@ -82,7 +82,7 @@ export default function Landing() {
             <ul>
               <li><Check aria-hidden="true" /> 3 exports per month</li>
               <li><Check aria-hidden="true" /> Every template & size</li>
-              <li><Check aria-hidden="true" /> Saved profiles</li>
+              <li><Check aria-hidden="true" /> One saved profile</li>
             </ul>
             <Link to="/app" className="btn-secondary block">Start free</Link>
           </article>
@@ -91,13 +91,14 @@ export default function Landing() {
             <span className="price-badge">First 20 buyers</span>
             <h3>Lifetime</h3>
             <p className="price">$10<small> once</small></p>
-            <p className="price-note">Then $17 — lock in early pricing now</p>
+            <p className="price-note">Then $17 — lock in founding members pricing now</p>
             <ul>
               <li><Check aria-hidden="true" /> Unlimited exports</li>
               <li><Check aria-hidden="true" /> No watermark</li>
+              <li><Check aria-hidden="true" /> Unlimited saved profiles</li>
               <li><Check aria-hidden="true" /> Pay once, keep forever</li>
             </ul>
-            <Link to="/app" className="btn-primary block">Get lifetime</Link>
+            <Link to="/app?checkout=lifetime" className="btn-primary block">Get lifetime</Link>
           </article>
 
           <article className="price-card">
@@ -106,9 +107,10 @@ export default function Landing() {
             <ul>
               <li><Check aria-hidden="true" /> Unlimited exports</li>
               <li><Check aria-hidden="true" /> No watermark</li>
+              <li><Check aria-hidden="true" /> Unlimited saved profiles</li>
               <li><Check aria-hidden="true" /> Cancel anytime</li>
             </ul>
-            <Link to="/app" className="btn-secondary block">Go monthly</Link>
+            <Link to="/app?checkout=monthly" className="btn-secondary block">Go monthly</Link>
           </article>
         </div>
       </section>

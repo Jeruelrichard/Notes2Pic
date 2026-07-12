@@ -32,8 +32,8 @@ Profiles are saved in browser localStorage under `notes2pics.profiles`. They sta
 - Editing and previewing are always free and need no account.
 - **Exporting requires sign-in** (Supabase Auth: email+password or Google).
 - Free tier: **3 exports per rolling 30 days**, each carrying a "made with Notes2Pics" watermark.
-- Paid tier removes the watermark and unlocks unlimited exports: **$5/mo** or **$10 lifetime** (Lemon Squeezy).
-- Entitlements are written only by the Lemon Squeezy webhook (server-side, service-role key),
+- Paid tier removes the watermark and unlocks unlimited exports: **$5/mo** or **$10 lifetime** (Freemius).
+- Entitlements are written only by the Freemius webhook (server-side, service-role key),
   so the paywall can't be bypassed from the browser. The export limit is enforced by the
   `record_export()` Postgres RPC.
 
@@ -41,7 +41,7 @@ Profiles are saved in browser localStorage under `notes2pics.profiles`. They sta
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in Supabase + Lemon Squeezy values
+cp .env.example .env.local   # then fill in Supabase + Freemius values
 npm run dev
 ```
 

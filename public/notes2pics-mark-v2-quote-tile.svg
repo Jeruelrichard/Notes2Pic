@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Notes2Pics mark v2 — "your words, framed" : bold double-quote glyph on the front slide of a carousel. Tile version. -->
+
+  <!-- App tile -->
+  <rect x="0" y="0" width="512" height="512" rx="116" fill="#111827" />
+
+  <!-- Slide 3 (furthest, faint) -->
+  <rect x="424" y="192" width="26" height="128" rx="13" fill="#FFFFFF" opacity="0.22" />
+
+  <!-- Slide 2 (peeking) -->
+  <rect x="374" y="168" width="40" height="176" rx="18" fill="#FFFFFF" opacity="0.45" />
+
+  <!-- Slide 1 (front card) -->
+  <rect x="96" y="132" width="248" height="248" rx="44" fill="#FFFFFF" />
+
+  <!-- Double quotation glyph — the words, made visual -->
+  <!-- Left quote -->
+  <path d="M150 296
+           L150 246
+           Q150 196 200 188
+           L200 216
+           Q178 222 176 244
+           L204 244
+           L204 296
+           Z" fill="#111827" />
+  <!-- Right quote -->
+  <path d="M236 296
+           L236 246
+           Q236 196 286 188
+           L286 216
+           Q264 222 262 244
+           L290 244
+           L290 296
+           Z" fill="#111827" />
+
+  <!-- Carousel indicator dots -->
+  <circle cx="188" cy="428" r="10" fill="#FFFFFF" />
+  <circle cx="222" cy="428" r="10" fill="#FFFFFF" opacity="0.45" />
+  <circle cx="256" cy="428" r="10" fill="#FFFFFF" opacity="0.22" />
+</svg>

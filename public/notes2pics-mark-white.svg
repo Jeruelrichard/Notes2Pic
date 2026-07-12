@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Standalone mark, white variant — for dark backgrounds (dark mode header, dark OG images). -->
+
+  <rect x="428" y="180" width="28" height="152" rx="14" fill="#FFFFFF" opacity="0.18" />
+  <rect x="372" y="156" width="44" height="200" rx="20" fill="#FFFFFF" opacity="0.4" />
+  <rect x="88" y="128" width="264" height="256" rx="44" fill="#FFFFFF" />
+
+  <!-- Quote glyph in ink (knocked out of white card) -->
+  <path d="M148 316
+           L148 262
+           Q148 208 202 200
+           L202 230
+           Q178 236 176 260
+           L206 260
+           L206 316
+           Z" fill="#111827" />
+  <path d="M240 316
+           L240 262
+           Q240 208 294 200
+           L294 230
+           Q270 236 268 260
+           L298 260
+           L298 316
+           Z" fill="#111827" />
+
+  <circle cx="196" cy="428" r="10" fill="#FFFFFF" />
+  <circle cx="232" cy="428" r="10" fill="#FFFFFF" opacity="0.4" />
+  <circle cx="268" cy="428" r="10" fill="#FFFFFF" opacity="0.18" />
+</svg>

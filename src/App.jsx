@@ -21,6 +21,7 @@ import './App.css'
 import { isSupabaseConfigured } from './lib/supabaseClient'
 import { useAuth } from './lib/useAuth'
 import { getUsage, recordExport } from './lib/entitlements'
+import { checkoutUrlForPlan } from './lib/checkout'
 import { listProfiles, upsertProfile, deleteProfileById } from './lib/profiles'
 import { splitIntoSlides, SLIDE_MAX_CHARS } from './lib/carousel'
 import { drawSlide } from './lib/carouselRender'
@@ -30,6 +31,22 @@ import SettingsModal from './components/SettingsModal'
 import ProfileFormModal from './components/ProfileFormModal'
 
 const productWatermark = 'made with Notes2Pics'
+const checkoutIntentKey = 'n2p.checkout'
+
+// Read a pending checkout intent from the URL (?checkout=…) or a recent
+// sessionStorage entry (survives an OAuth redirect). Read-only — no side effects.
+function readCheckoutIntent() {
+  if (typeof window === 'undefined') return null
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get('checkout')
+    if (fromUrl === 'monthly' || fromUrl === 'lifetime') return fromUrl
+    const saved = JSON.parse(sessionStorage.getItem(checkoutIntentKey) || 'null')
+    if (saved && Date.now() - saved.ts < 15 * 60 * 1000) return saved.plan
+  } catch {
+    return null
+  }
+  return null
+}
 
 const aspectOptions = {
   square: { label: 'Square', size: '1080 x 1080', width: 540, height: 540 },
@@ -235,6 +252,8 @@ function App() {
   const [profileForm, setProfileForm] = useState({ open: false, mode: 'create', initial: null, id: null, dismissable: true })
   const [profileSaving, setProfileSaving] = useState(false)
   const onboardingHandledRef = useRef(false)
+  // Pending "buy this plan" intent carried from the landing page (?checkout=…).
+  const [pendingCheckout, setPendingCheckout] = useState(readCheckoutIntent)
   // Watermark on the live stage only while an export is capturing it, so the
   // editor preview stays clean but the exported PNG carries the mark.
   const [captureWatermark, setCaptureWatermark] = useState(false)
@@ -283,6 +302,61 @@ function App() {
       active = false
     }
   }, [user])
+
+  // Persist a fresh ?checkout intent to sessionStorage (so it survives an OAuth
+  // full-page redirect), clean the URL, and drop stale intents. No setState here —
+  // the intent itself is seeded lazily into pendingCheckout's initial state.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const fromUrl = params.get('checkout')
+    if (fromUrl === 'monthly' || fromUrl === 'lifetime') {
+      sessionStorage.setItem('n2p.checkout', JSON.stringify({ plan: fromUrl, ts: Date.now() }))
+      params.delete('checkout')
+      const clean = window.location.pathname + (params.toString() ? `?${params}` : '') + window.location.hash
+      window.history.replaceState({}, '', clean)
+    } else if (!pendingCheckout) {
+      sessionStorage.removeItem('n2p.checkout')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Resolve a pending checkout: sign in if needed, then redirect to Freemius.
+  useEffect(() => {
+    if (!pendingCheckout) return
+
+    if (!user) {
+      queueMicrotask(() =>
+        setAuthModal({
+          open: true,
+          reason: `Sign in to continue to ${pendingCheckout === 'lifetime' ? 'Lifetime' : 'Monthly'} checkout.`,
+        }),
+      )
+      return
+    }
+
+    // Wait for the plan status to load so we don't send a paid user to checkout.
+    if (usage === null) return
+
+    sessionStorage.removeItem('n2p.checkout')
+
+    if (isPaid) {
+      queueMicrotask(() => {
+        setPendingCheckout(null)
+        setNotice("You're already on a paid plan.")
+      })
+      return
+    }
+
+    const url = checkoutUrlForPlan(pendingCheckout, user.email)
+    if (url) {
+      window.location.href = url // full-tab redirect to Freemius checkout
+    } else {
+      queueMicrotask(() => {
+        setPendingCheckout(null)
+        setNotice('Checkout is not configured yet.')
+      })
+    }
+  }, [pendingCheckout, user, usage, isPaid])
 
   // Saved author profiles live per-user in Supabase; load them on sign-in.
   useEffect(() => {
@@ -1231,6 +1305,14 @@ function App() {
         open={authModal.open}
         reason={authModal.reason}
         onClose={() => setAuthModal({ open: false, reason: '' })}
+        onDismiss={() => {
+          // Explicit dismiss cancels any pending landing→checkout intent.
+          setAuthModal({ open: false, reason: '' })
+          if (pendingCheckout) {
+            setPendingCheckout(null)
+            sessionStorage.removeItem('n2p.checkout')
+          }
+        }}
       />
       <UpgradeModal
         open={upgradeModal.open}

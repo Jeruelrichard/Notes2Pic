@@ -1,3 +1,9 @@
+// DISABLED — Lemon Squeezy integration is paused while we evaluate Freemius
+// as the payment provider instead. Everything below is commented out and kept
+// only for reference / possible rollback. Do not remove the default export —
+// Vercel needs a valid handler for this route to build.
+
+/*
 import crypto from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 
@@ -34,7 +40,7 @@ function mapSubStatus(status) {
   return 'expired' // expired, unpaid, past_due
 }
 
-export default async function handler(req, res) {
+async function lemonSqueezyHandler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST')
     return res.status(405).json({ error: 'Method not allowed' })
@@ -124,4 +130,9 @@ export default async function handler(req, res) {
   }
 
   return res.status(200).json({ ok: true, event: eventName, plan: entitlement.plan, status: entitlement.status })
+}
+*/
+
+export default async function handler(req, res) {
+  return res.status(410).json({ error: 'Lemon Squeezy integration is disabled.' })
 }
