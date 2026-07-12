@@ -40,7 +40,7 @@ FREEMIUS_SECRET_KEY=<Freemius → product → Settings → Secret Key (webhook H
 2. **Providers → Google**: enable and paste the Google OAuth client ID + secret (step 3).
 3. **URL Configuration → Site URL + Redirect URLs**: add
    - `http://localhost:5173`
-   - your Vercel production URL (e.g. `https://notes2pic.vercel.app`)
+   - your Vercel production URL (e.g. `https://notes2pic.com`)
 
 ## 3. Google OAuth client
 
