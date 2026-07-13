@@ -1,13 +1,167 @@
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, Download, ImageIcon, Layers, Palette, Zap } from 'lucide-react'
+import { ArrowRight, Check, Clipboard, Download, Sparkles, Wand2 } from 'lucide-react'
 import { MarketingLayout } from '../components/SiteChrome'
 import Seo from '../components/Seo'
 
-const features = [
-  { icon: Zap, title: 'Paste and export', body: 'Drop in your post text, pick a style, and export a high-res PNG in seconds. No blank canvas, no fighting with fonts.' },
-  { icon: Layers, title: 'X, Threads & Substack', body: 'Authentic templates that look native to each platform — verified badge, timestamps, and layout included.' },
-  { icon: ImageIcon, title: 'Every size that matters', body: 'Square for the feed, Portrait for reach, Story for full-screen. One post, every format.' },
-  { icon: Palette, title: 'Stay on brand', body: 'Save reusable profiles with your name, handle, and avatar so every image looks unmistakably yours.' },
+// Faithful-to-the-app example outputs. These drive both the hero demo loop
+// and the outputs showcase, so the page proves the value instead of describing it.
+const samples = [
+  {
+    skin: 'is-x',
+    avatar: '/nuelokemdilim.jpg',
+    name: 'Nuel Okemdilim',
+    id: '@nuel',
+    date: 'Jul 8',
+    draft: 'building in public is really just leaving a clear trail of what you’re learning and shipping.',
+    body: 'Building in public is really just leaving a clear trail of what you’re learning and shipping.',
+  },
+  {
+    skin: 'is-threads',
+    avatar: '/jerueldp.jpg',
+    name: 'jeruelrichard',
+    id: '2h',
+    date: '',
+    draft: 'there is so much signal on that app. time to actually start showing up.',
+    body: 'There is so much signal on that app. Time to actually start showing up.',
+  },
+  {
+    skin: 'is-substack',
+    avatar: '/okempfp.jpg',
+    name: 'Okem Dinach',
+    id: 'theokemdinach',
+    date: '',
+    draft: 'you don’t need permission to start. one honest sentence and the nerve to post it.',
+    body: 'You don’t need permission to start. One honest sentence, and the nerve to post it.',
+  },
+]
+
+const QUERY = '(prefers-reduced-motion: reduce)'
+function usePrefersReducedMotion() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const mq = window.matchMedia(QUERY)
+      mq.addEventListener('change', onChange)
+      return () => mq.removeEventListener('change', onChange)
+    },
+    () => window.matchMedia(QUERY).matches,
+    () => false, // server snapshot: assume motion allowed, effect corrects on client
+  )
+}
+
+function OutputCard({ sample }) {
+  return (
+    <div className={`n2p-card ${sample.skin}`}>
+      <div className="n2p-head">
+        <span className="n2p-avatar">
+          <img src={sample.avatar} alt="" loading="lazy" />
+        </span>
+        <div className="n2p-id">
+          <strong>{sample.name}</strong>
+          <span>{sample.id}</span>
+        </div>
+      </div>
+      <p className="n2p-body">{sample.body}</p>
+      <div className="n2p-foot">
+        <span>{sample.date || 'Notes2Pic'}</span>
+        <span className="n2p-mark">made with Notes2Pic</span>
+      </div>
+    </div>
+  )
+}
+
+const slides = ['/slide-01.png', '/slide-02.png', '/slide-03.png', '/slide-04.png']
+
+function SlideCarousel() {
+  // A CSS-driven auto-advancing carousel. The track holds all four slides plus a
+  // clone of the first, so the loop point (last keyframe) lands on an identical
+  // frame and the restart is seamless — no visible rewind.
+  const frames = [...slides, slides[0]]
+  return (
+    <div className="output-frame carousel" role="img" aria-label="Four carousel slides auto-advancing like a real Instagram carousel.">
+      <div className="carousel-track">
+        {frames.map((src, i) => (
+          <div className="carousel-slide" key={i}>
+            <img src={src} alt="" loading="lazy" width="1080" height="1350" />
+          </div>
+        ))}
+      </div>
+      <div className="carousel-dots" aria-hidden="true">
+        {slides.map((_, i) => (
+          <span className="carousel-dot" key={i} style={{ '--i': i }} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function HeroDemo() {
+  const reduced = usePrefersReducedMotion()
+  const [i, setI] = useState(0)
+
+  useEffect(() => {
+    if (reduced) return
+    const t = setInterval(() => setI((n) => (n + 1) % samples.length), 4600)
+    return () => clearInterval(t)
+  }, [reduced])
+
+  const sample = samples[i]
+
+  return (
+    <div className="demo" aria-hidden="true">
+      <div className="demo-stage">
+        {/* key remounts the node each cycle so the CSS entrance animations replay */}
+        <div className="demo-source" key={`src-${i}`}>
+          <span className="demo-source-label">Your post</span>
+          <p>
+            {sample.draft}
+            {!reduced && <span className="caret" />}
+          </p>
+        </div>
+
+        <span className="demo-arrow">
+          <Wand2 aria-hidden="true" />
+        </span>
+
+        <div className="demo-output" key={`out-${i}`}>
+          <OutputCard sample={sample} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const steps = [
+  {
+    n: '1',
+    title: 'Paste your post',
+    body: 'Drop in the text you already wrote for X, Threads, or Substack. No blank canvas to stare at.',
+  },
+  {
+    n: '2',
+    title: 'Pick a style',
+    body: 'Choose a template and size, save your name, handle, and avatar once, and it stays yours.',
+  },
+  {
+    n: '3',
+    title: 'Export the image',
+    body: 'Download a crisp, high-res PNG — ready to post. Carousels come out as a tidy zip.',
+  },
+]
+
+const honestPoints = [
+  {
+    title: 'Manual by design',
+    body: 'You paste the text. No scraping, no logins to your accounts, nothing to break when a platform changes its API.',
+  },
+  {
+    title: 'Free where it counts',
+    body: 'Editing and previewing are always free and need no account. You only sign in to export.',
+  },
+  {
+    title: 'One thing, done well',
+    body: 'Not an AI content generator. It turns the words you already wrote into images that look like you.',
+  },
 ]
 
 export default function Landing() {
@@ -17,107 +171,210 @@ export default function Landing() {
 
       <section className="hero">
         <div className="hero-copy">
-          <p className="hero-eyebrow">Post-to-image studio</p>
-          <h1>Turn your best posts into Instagram-ready images.</h1>
+          <p className="hero-tag">
+            <span className="dot" />
+            For writers on X, Threads &amp; Substack
+          </p>
+          <h1>
+            Your best posts, turned into <em>images worth sharing.</em>
+          </h1>
           <p className="hero-sub">
-            You already write great posts on X, Threads, and Substack. Notes2Pic turns them into
-            clean, branded images you can post anywhere — in seconds, not minutes.
+            You already write the good stuff. Notes2Pic turns it into clean, branded,
+            Instagram-ready images &mdash; in seconds, without opening a design tool.
           </p>
           <div className="hero-actions">
-            <Link to="/app" className="btn-primary">
+            <Link to="/app?checkout=lifetime" className="btn-primary">
+              <Sparkles aria-hidden="true" />
+              Get lifetime &mdash; $10
+            </Link>
+            <Link to="/app" className="btn-secondary">
               <Download aria-hidden="true" />
               Start free
             </Link>
-            <Link to="/blog" className="btn-secondary">
-              Read the blog
-            </Link>
           </div>
-          <p className="hero-note">Free to start · No card required · 3 free exports a month</p>
+          <p className="hero-note">
+            <strong>First 20 buyers</strong> lock in $10 (then $17)
+            <span className="sep" />
+            No card to start
+          </p>
         </div>
 
-        <div className="hero-art" aria-hidden="true">
-          <div className="demo-card demo-threads">
-            <div className="demo-head">
-              <span className="demo-avatar" />
-              <div>
-                <strong>jeruelrichard</strong>
-                <em>Jul 8</em>
-              </div>
-            </div>
-            <p>There is so much signal on that app. Time to start showing up.</p>
+        <HeroDemo />
+      </section>
+
+      <section className="outputs">
+        <div className="section-shell">
+          <div className="section-head center">
+            <span className="section-kicker">Three ways to post</span>
+            <h2>One post. Every format you need.</h2>
+            <p>
+              Short cards that look native to each platform, medium-form quotes with room to
+              breathe, and long threads auto-split into carousel slides.
+            </p>
           </div>
-          <div className="demo-card demo-x">
-            <div className="demo-head">
-              <span className="demo-avatar" />
-              <div>
-                <strong>Nuel Okemdilim</strong>
-                <em>@nuel</em>
+
+          <div className="outputs-grid">
+            <div className="output-col">
+              <div className="output-frame square">
+                <img
+                  src="/notes2pics-short-square.png"
+                  alt="A short post exported as a branded, Instagram-ready Notes2Pic image."
+                  loading="lazy"
+                  width="1080"
+                  height="1080"
+                />
+              </div>
+              <div className="output-caption">
+                <h3>Short posts</h3>
+                <p>Verified-looking cards with the handle, date, and layout of the real thing.</p>
               </div>
             </div>
-            <p>Building in public is about leaving a clear trail of what you're learning and shipping.</p>
+
+            <div className="output-col mid">
+              <div className="output-frame square">
+                <img
+                  src="/notes2pics-medium-square.png"
+                  alt="A medium-form quote set on a clean canvas as a Notes2Pic image."
+                  loading="lazy"
+                  width="1080"
+                  height="1080"
+                />
+              </div>
+              <div className="output-caption">
+                <h3>Medium form</h3>
+                <p>A single strong line, set as a quote on a clean canvas. Light or dark.</p>
+              </div>
+            </div>
+
+            <div className="output-col">
+              <SlideCarousel />
+              <div className="output-caption">
+                <h3>Carousels</h3>
+                <p>Long text split into readable slides and exported as a ready-to-post zip.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="features">
-        <h2>Everything you need to repurpose faster</h2>
-        <div className="feature-grid">
-          {features.map(({ icon: Icon, title, body }) => (
-            <article className="feature-card" key={title}>
-              <Icon aria-hidden="true" />
-              <h3>{title}</h3>
-              <p>{body}</p>
+      <section className="section-shell">
+        <div className="section-head">
+          <span className="section-kicker">How it works</span>
+          <h2>From written to posted in three steps.</h2>
+        </div>
+        <div className="steps-grid">
+          {steps.map((s, idx) => (
+            <article className="step" key={s.n}>
+              <span className="step-n">{s.n}</span>
+              <h3>{s.title}</h3>
+              <p>{s.body}</p>
+              {idx < steps.length - 1 && <ArrowRight aria-hidden="true" />}
             </article>
           ))}
         </div>
       </section>
 
-      <section className="pricing" id="pricing">
-        <h2>Simple pricing</h2>
-        <p className="pricing-sub">Start free. Upgrade when you're ready to go unlimited.</p>
-        <div className="pricing-grid">
-          <article className="price-card">
-            <h3>Free</h3>
-            <p className="price">$0</p>
-            <ul>
-              <li><Check aria-hidden="true" /> 3 exports per month</li>
-              <li><Check aria-hidden="true" /> Every template & size</li>
-              <li><Check aria-hidden="true" /> One saved profile</li>
-            </ul>
-            <Link to="/app" className="btn-secondary block">Start free</Link>
-          </article>
+      <section className="honest">
+        <div className="section-shell">
+          <div className="honest-lead">
+            <h2>Honest about what it is.</h2>
+            <p>
+              Notes2Pic is a small tool made by a writer, for writers. It does one job, and it&rsquo;s
+              upfront about the rest.
+            </p>
+          </div>
+          <ul className="honest-list">
+            {honestPoints.map((p) => (
+              <li className="honest-item" key={p.title}>
+                <Check aria-hidden="true" />
+                <div>
+                  <h3>{p.title}</h3>
+                  <p>{p.body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
 
+      <section className="section-shell pricing" id="pricing">
+        <div className="section-head center">
+          <span className="section-kicker">Pricing</span>
+          <h2>Start free. Go unlimited for the price of a coffee.</h2>
+          <p>Editing and previewing are always free. Paid removes the watermark and the limits.</p>
+        </div>
+
+        <div className="pricing-grid">
           <article className="price-card featured">
             <span className="price-badge">First 20 buyers</span>
-            <h3>Lifetime</h3>
-            <p className="price">$10<small> once</small></p>
-            <p className="price-note">Then $17 — lock in founding members pricing now</p>
-            <ul>
+            <span className="price-plan">Lifetime</span>
+            <p className="price">
+              $10<small>once</small>
+            </p>
+            <p className="price-note">Then $17 &mdash; founding-member price, locked in forever</p>
+            <ul className="price-list">
               <li><Check aria-hidden="true" /> Unlimited exports</li>
+              <li><Check aria-hidden="true" /> Unlimited carousels</li>
               <li><Check aria-hidden="true" /> No watermark</li>
               <li><Check aria-hidden="true" /> Unlimited saved profiles</li>
               <li><Check aria-hidden="true" /> Pay once, keep forever</li>
             </ul>
-            <Link to="/app?checkout=lifetime" className="btn-primary block">Get lifetime</Link>
+            <Link to="/app?checkout=lifetime" className="btn-primary block">
+              Get lifetime
+            </Link>
           </article>
 
           <article className="price-card">
-            <h3>Monthly</h3>
-            <p className="price">$5<small>/mo</small></p>
-            <ul>
+            <span className="price-plan">Free</span>
+            <p className="price">$0</p>
+            <p className="price-note-plain">No account needed to edit &amp; preview</p>
+            <ul className="price-list">
+              <li><Check aria-hidden="true" /> 3 exports per month</li>
+              <li><Check aria-hidden="true" /> 1 carousel per month</li>
+              <li><Check aria-hidden="true" /> Every template &amp; size</li>
+              <li><Check aria-hidden="true" /> One saved profile</li>
+            </ul>
+            <Link to="/app" className="btn-secondary block">
+              Start free
+            </Link>
+          </article>
+
+          <article className="price-card">
+            <span className="price-plan">Monthly</span>
+            <p className="price">
+              $5<small>/mo</small>
+            </p>
+            <p className="price-note-plain">Prefer to pay as you go</p>
+            <ul className="price-list">
               <li><Check aria-hidden="true" /> Unlimited exports</li>
+              <li><Check aria-hidden="true" /> Unlimited carousels</li>
               <li><Check aria-hidden="true" /> No watermark</li>
               <li><Check aria-hidden="true" /> Unlimited saved profiles</li>
               <li><Check aria-hidden="true" /> Cancel anytime</li>
             </ul>
-            <Link to="/app?checkout=monthly" className="btn-secondary block">Go monthly</Link>
+            <Link to="/app?checkout=monthly" className="btn-secondary block">
+              Go monthly
+            </Link>
           </article>
         </div>
       </section>
 
-      <section className="cta-band">
-        <h2>Your next post could be your next Instagram image.</h2>
-        <Link to="/app" className="btn-primary">Open Notes2Pic</Link>
+      <section className="close-band">
+        <div className="close-inner">
+          <h2>
+            Your next post could be your next <em>image worth sharing.</em>
+          </h2>
+          <div className="close-actions">
+            <Link to="/app?checkout=lifetime" className="btn-primary">
+              <Sparkles aria-hidden="true" />
+              Get lifetime &mdash; $10
+            </Link>
+            <Link to="/app" className="btn-secondary">
+              <Clipboard aria-hidden="true" />
+              Try it free
+            </Link>
+          </div>
+        </div>
       </section>
     </MarketingLayout>
   )

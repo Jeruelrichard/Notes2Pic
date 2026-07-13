@@ -29,6 +29,8 @@ import AuthModal from './components/AuthModal'
 import UpgradeModal from './components/UpgradeModal'
 import SettingsModal from './components/SettingsModal'
 import ProfileFormModal from './components/ProfileFormModal'
+import SetPasswordModal from './components/SetPasswordModal'
+import { supabase } from './lib/supabaseClient'
 
 const productWatermark = 'made with Notes2Pic'
 const checkoutIntentKey = 'n2p.checkout'
@@ -251,6 +253,7 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [profileForm, setProfileForm] = useState({ open: false, mode: 'create', initial: null, id: null, dismissable: true })
   const [profileSaving, setProfileSaving] = useState(false)
+  const [recoverPassword, setRecoverPassword] = useState(false)
   const onboardingHandledRef = useRef(false)
   // Pending "buy this plan" intent carried from the landing page (?checkout=…).
   const [pendingCheckout, setPendingCheckout] = useState(readCheckoutIntent)
@@ -278,6 +281,19 @@ function App() {
   const today = new Date()
   const badgeDate = formatBadgeDate(today)
   const timestamp = formatTimestamp(today)
+
+  // After a password-reset link is followed, Supabase fires PASSWORD_RECOVERY.
+  // Show the "set a new password" modal. Also check the URL hash as a fallback in
+  // case the event fired before this listener attached.
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash.includes('type=recovery')) {
+      queueMicrotask(() => setRecoverPassword(true))
+    }
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setRecoverPassword(true)
+    })
+    return () => listener.subscription.unsubscribe()
+  }, [])
 
   // Refresh plan/usage whenever auth state changes (login, logout, return from checkout).
   useEffect(() => {
@@ -669,8 +685,8 @@ function App() {
 
     try {
       // Gate 2: server-authoritative limit + watermark decision.
-      // A whole carousel counts as a single export.
-      const gate = await recordExport()
+      // A whole carousel counts as a single export (and, on free, is capped at one/month).
+      const gate = await recordExport(contentMode)
 
       if (!gate?.allowed) {
         if (gate?.reason === 'limit_reached') {
@@ -679,6 +695,12 @@ function App() {
             reason: 'You have used your 3 free exports this month. Upgrade for unlimited, watermark-free exports.',
           })
           setNotice('Free export limit reached.')
+        } else if (gate?.reason === 'carousel_limit') {
+          setUpgradeModal({
+            open: true,
+            reason: 'Your free plan includes one carousel per month. Upgrade for unlimited carousels.',
+          })
+          setNotice('Free carousel limit reached (1 per month).')
         } else {
           setAuthModal({ open: true, reason: 'Please sign in again to export.' })
         }
@@ -1355,6 +1377,16 @@ function App() {
         dismissable={profileForm.dismissable}
         onSubmit={submitProfileForm}
         onClose={() => setProfileForm({ open: false, mode: 'create', initial: null, id: null, dismissable: true })}
+      />
+      <SetPasswordModal
+        open={recoverPassword}
+        onDone={() => {
+          setRecoverPassword(false)
+          setNotice('Password updated. You are signed in.')
+          if (typeof window !== 'undefined' && window.location.hash) {
+            window.history.replaceState({}, '', window.location.pathname + window.location.search)
+          }
+        }}
       />
     </main>
   )

@@ -17,6 +17,12 @@ export default function AuthModal({ open, onClose, onDismiss, reason }) {
   if (!open) return null
 
   const isSignup = mode === 'signup'
+  const isReset = mode === 'reset'
+
+  function switchMode(next) {
+    setMode(next)
+    setMessage('')
+  }
 
   async function submit(event) {
     event.preventDefault()
@@ -24,7 +30,14 @@ export default function AuthModal({ open, onClose, onDismiss, reason }) {
     setMessage('')
 
     try {
-      if (isSignup) {
+      if (isReset) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/app`,
+        })
+        if (error) throw error
+        // Neutral message so we don't reveal whether the email is registered.
+        setMessage('If an account exists for that email, a password reset link is on its way.')
+      } else if (isSignup) {
         const { data, error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
         // Supabase hides "email already exists" to prevent enumeration: it returns
@@ -66,17 +79,24 @@ export default function AuthModal({ open, onClose, onDismiss, reason }) {
           <X aria-hidden="true" />
         </button>
 
-        <h2 className="modal-title">{isSignup ? 'Create your account' : 'Sign in'}</h2>
+        <h2 className="modal-title">
+          {isSignup ? 'Create your account' : isReset ? 'Reset your password' : 'Sign in'}
+        </h2>
         <p className="modal-sub">
-          {reason || 'Sign in to export your image. Editing and previewing are always free.'}
+          {isReset
+            ? "Enter your account email and we'll send you a link to set a new password."
+            : reason || 'Sign in to export your image. Editing and previewing are always free.'}
         </p>
 
-        <button type="button" className="google-button" onClick={google} disabled={busy}>
-          <GoogleGlyph />
-          Continue with Google
-        </button>
-
-        <div className="modal-divider"><span>or</span></div>
+        {!isReset ? (
+          <>
+            <button type="button" className="google-button" onClick={google} disabled={busy}>
+              <GoogleGlyph />
+              Continue with Google
+            </button>
+            <div className="modal-divider"><span>or</span></div>
+          </>
+        ) : null}
 
         <form className="modal-form" onSubmit={submit}>
           <label className="field full">
@@ -90,37 +110,47 @@ export default function AuthModal({ open, onClose, onDismiss, reason }) {
             />
           </label>
 
-          <label className="field full">
-            <span>Password</span>
-            <input
-              type="password"
-              autoComplete={isSignup ? 'new-password' : 'current-password'}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              minLength={6}
-              required
-            />
-          </label>
+          {!isReset ? (
+            <label className="field full">
+              <span>Password</span>
+              <input
+                type="password"
+                autoComplete={isSignup ? 'new-password' : 'current-password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                minLength={6}
+                required
+              />
+            </label>
+          ) : null}
 
           <button type="submit" className="export-button" disabled={busy}>
-            {busy ? 'Please wait…' : isSignup ? 'Sign up' : 'Sign in'}
+            {busy ? 'Please wait…' : isReset ? 'Send reset link' : isSignup ? 'Sign up' : 'Sign in'}
           </button>
         </form>
 
         {message ? <p className="modal-message">{message}</p> : null}
 
-        <p className="modal-switch">
-          {isSignup ? 'Already have an account?' : 'New here?'}{' '}
-          <button
-            type="button"
-            onClick={() => {
-              setMode(isSignup ? 'signin' : 'signup')
-              setMessage('')
-            }}
-          >
-            {isSignup ? 'Sign in' : 'Create one'}
-          </button>
-        </p>
+        {isReset ? (
+          <p className="modal-switch">
+            Remembered it?{' '}
+            <button type="button" onClick={() => switchMode('signin')}>Back to sign in</button>
+          </p>
+        ) : (
+          <>
+            {!isSignup ? (
+              <p className="modal-switch">
+                <button type="button" onClick={() => switchMode('reset')}>Forgot your password?</button>
+              </p>
+            ) : null}
+            <p className="modal-switch">
+              {isSignup ? 'Already have an account?' : 'New here?'}{' '}
+              <button type="button" onClick={() => switchMode(isSignup ? 'signin' : 'signup')}>
+                {isSignup ? 'Sign in' : 'Create one'}
+              </button>
+            </p>
+          </>
+        )}
       </div>
     </div>
   )

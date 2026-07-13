@@ -1,0 +1,27 @@
+{
+  "date": "2026-07-13",
+  "url": "http://localhost:5173",
+  "branch": "main",
+  "scope": "landing-page redesign + marketing routes",
+  "healthScore": 98,
+  "issues": [
+    { "id": "ISSUE-001", "title": "Hero demo avatar lazy-loaded above the fold", "severity": "low", "category": "functional" },
+    { "id": "ISSUE-002", "title": "Footer /sitemap.xml and /rss.xml serve SPA HTML in dev", "severity": "low", "category": "links", "note": "dev-only, resolves in prod build, pre-existing" },
+    { "id": "ISSUE-003", "title": "Landing loads ~600KB of raster PNGs", "severity": "medium", "category": "performance" },
+    { "id": "ISSUE-004", "title": "Transient React <Landing> error during HMR", "severity": "info", "category": "functional", "note": "not reproducible on fresh load" }
+  ],
+  "categoryScores": {
+    "console": 100,
+    "links": 100,
+    "visual": 100,
+    "functional": 97,
+    "ux": 97,
+    "performance": 92,
+    "content": 100,
+    "accessibility": 100
+  },
+  "notes": {
+    "screenshots": "unavailable in this environment (capture pipeline timeout on animated page)",
+    "app_studio": "smoke-tested only; export/paywall flows not exercised (need auth)"
+  }
+}
