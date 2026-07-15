@@ -2,10 +2,8 @@
 title: "How to Turn a Twitter Thread Into an Instagram Carousel (2026 Guide)"
 description: "Turn any X thread into a scroll-stopping Instagram carousel in minutes. Step-by-step method, slide-count guidance, and the fast way with Notes2Pic."
 date: 2026-07-15
-tags: [instagram, twitter, threads, carousels, content reurposing]
+tags: [instagram, twitter, threads, carousels, content repurposing]
 ---
-
-# How to Turn a Twitter Thread Into an Instagram Carousel (2026 Guide)
 
 You spend an hour getting a thread right — the hook, the pacing, the payoff on tweet six. It does well on X. Then it just sits there, because turning it into something postable on Instagram means opening Canva, resizing ten frames by hand, and losing thirty minutes you didn't have. So it never happens, and an audience that's actively growing on Instagram never sees your best writing.
 
@@ -100,10 +98,10 @@ No. The structure is already decided by your thread — one idea per slide, in o
 1080×1350 pixels (4:5 portrait) is the standard recommendation — it takes up more vertical space in the feed than the square 1080×1080 option, without Instagram cropping it.
 
 ### Can I turn a Substack Note into a carousel the same way?
-Yes — the process is identical, since a Substack Note or a short newsletter excerpt has the same sequential-idea structure a thread does. [[link: substack-notes-to-instagram]]
+Yes — the process is identical, since a Substack Note or a short newsletter excerpt has the same sequential-idea structure a thread does.
 
 ### Is there a free way to do this?
-Manually, yes — Canva's free tier covers it, at the cost of the 20–40 minutes per carousel described above. Notes2Pic charges has a $10 lifetime plan specifically to remove that time cost.
+Manually, yes — Canva's free tier covers it, at the cost of the 20–40 minutes per carousel described above. Notes2Pic has a $10 lifetime plan specifically to remove that time cost.
 
 ## Turn Your Next Thread Into a Carousel Right Now
 

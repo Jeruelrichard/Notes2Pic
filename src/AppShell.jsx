@@ -5,6 +5,7 @@ import BlogIndex from './pages/BlogIndex'
 import BlogPost from './pages/BlogPost'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import Analytics from './components/Analytics'
 
 // Lazy-load the studio so the marketing/blog pages don't ship the heavy
 // editor bundle (Supabase, html-to-image, etc.). Keeps landing fast for SEO.
@@ -13,8 +14,10 @@ const App = lazy(() => import('./App'))
 // Central route table, shared by the client entry and the prerender step.
 export default function AppShell() {
   return (
-    <Routes>
-      <Route path="/" element={<Landing />} />
+    <>
+      <Analytics />
+      <Routes>
+        <Route path="/" element={<Landing />} />
       <Route
         path="/app"
         element={
@@ -28,6 +31,7 @@ export default function AppShell() {
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="*" element={<Landing />} />
-    </Routes>
+      </Routes>
+    </>
   )
 }
