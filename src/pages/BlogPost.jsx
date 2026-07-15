@@ -35,7 +35,15 @@ export default function BlogPost() {
 
         <header className="blog-post-head">
           <div className="post-card-meta">
-            <time>{formatPostDate(post.date)}</time>
+            <span className="post-author">By {post.author}</span>
+            <span>·</span>
+            <time dateTime={post.date}>{formatPostDate(post.date)}</time>
+            {post.updated && post.updated !== post.date ? (
+              <>
+                <span>·</span>
+                <span>Updated {formatPostDate(post.updated)}</span>
+              </>
+            ) : null}
             <span>· {post.readingTime} min read</span>
           </div>
           <h1>{post.title}</h1>
@@ -68,6 +76,20 @@ export default function BlogPost() {
           <p>Notes2Pic does exactly what this article describes — free to start.</p>
           <Link to="/app" className="btn-primary">Try Notes2Pic</Link>
         </div>
+
+        {post.related?.length ? (
+          <aside className="blog-related" aria-label="Related articles">
+            <h2>Keep reading</h2>
+            <div className="blog-related-grid">
+              {post.related.map((rel) => (
+                <Link className="blog-related-card" to={`/blog/${rel.slug}`} key={rel.slug}>
+                  <h3>{rel.title}</h3>
+                  <p>{rel.description}</p>
+                </Link>
+              ))}
+            </div>
+          </aside>
+        ) : null}
       </article>
     </MarketingLayout>
   )

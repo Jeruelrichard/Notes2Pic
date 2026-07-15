@@ -10,10 +10,12 @@ const SITE_URL = (
   process.env.SITE_URL ||
   (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '') ||
   'http://localhost:5173'
-).replace(/\/$/, '')
+)
+  .trim() // a trailing \n from the Vercel CLI silently breaks every absolute URL
+  .replace(/\/$/, '')
 
 const server = await import(pathToFileURL(join(root, 'dist-server', 'entry-server.js')).href)
-const { render, listPrerenderPaths, posts } = server
+const { render, listPrerenderPaths, posts, buildJsonLd, DEFAULT_DESCRIPTION } = server
 
 const template = await readFile(join(distDir, 'index.html'), 'utf8')
 
@@ -27,18 +29,28 @@ function esc(value = '') {
 
 function buildHead(meta) {
   const url = SITE_URL + meta.path
-  return [
+  const image = SITE_URL + (meta.image || '/og-image.png')
+  const jsonLd = buildJsonLd(meta, SITE_URL)
+  const tags = [
     `<meta name="description" content="${esc(meta.description)}" />`,
     `<link rel="canonical" href="${url}" />`,
+    meta.noindex ? `<meta name="robots" content="noindex, follow" />` : '',
     `<meta property="og:title" content="${esc(meta.title)}" />`,
     `<meta property="og:description" content="${esc(meta.description)}" />`,
-    `<meta property="og:type" content="website" />`,
+    `<meta property="og:type" content="${meta.type || 'website'}" />`,
     `<meta property="og:url" content="${url}" />`,
     `<meta property="og:site_name" content="Notes2Pic" />`,
+    `<meta property="og:image" content="${image}" />`,
+    meta.publishedTime ? `<meta property="article:published_time" content="${esc(meta.publishedTime)}" />` : '',
+    meta.modifiedTime ? `<meta property="article:modified_time" content="${esc(meta.modifiedTime)}" />` : '',
+    meta.author ? `<meta property="article:author" content="${esc(meta.author)}" />` : '',
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${esc(meta.title)}" />`,
     `<meta name="twitter:description" content="${esc(meta.description)}" />`,
-  ].join('\n    ')
+    `<meta name="twitter:image" content="${image}" />`,
+    `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`,
+  ]
+  return tags.filter(Boolean).join('\n    ')
 }
 
 function applyHead(source, meta) {
@@ -83,7 +95,8 @@ const sitemap =
   sitemapUrls
     .map((path) => {
       const post = path.startsWith('/blog/') ? posts.find((item) => `/blog/${item.slug}` === path) : null
-      const lastmod = post?.date ? `\n    <lastmod>${post.date}</lastmod>` : ''
+      const stamp = post?.updated || post?.date
+      const lastmod = stamp ? `\n    <lastmod>${stamp}</lastmod>` : ''
       return `  <url>\n    <loc>${SITE_URL}${path}</loc>${lastmod}\n  </url>`
     })
     .join('\n') +
@@ -112,4 +125,43 @@ const rss =
   `${rssItems}\n  </channel>\n</rss>\n`
 await writeFile(join(distDir, 'rss.xml'), rss, 'utf8')
 
-console.log(`sitemap.xml + rss.xml written. SITE_URL = ${SITE_URL}`)
+// 5) robots.txt — allow all content + explicitly allow AI crawlers (the #1
+// self-inflicted reason sites get zero AI citations is blanket-blocking them).
+// OAI-SearchBot (not GPTBot) is what puts you in ChatGPT Search — allow both.
+const aiBots = [
+  'GPTBot',
+  'OAI-SearchBot',
+  'ChatGPT-User',
+  'ClaudeBot',
+  'Claude-SearchBot',
+  'anthropic-ai',
+  'PerplexityBot',
+  'Perplexity-User',
+  'Google-Extended',
+  'CCBot',
+  'Applebot-Extended',
+]
+const robots =
+  `User-agent: *\n` +
+  `Allow: /\n` +
+  `Disallow: /api/\n\n` +
+  aiBots.map((bot) => `User-agent: ${bot}\nAllow: /\n`).join('\n') +
+  `\nSitemap: ${SITE_URL}/sitemap.xml\n`
+await writeFile(join(distDir, 'robots.txt'), robots, 'utf8')
+
+// 6) llms.txt — cheap forward-compatibility (no proven citation lift, but free).
+// A plain-text map of the site for LLMs that choose to read it.
+const llms =
+  `# Notes2Pic\n\n` +
+  `> ${DEFAULT_DESCRIPTION}\n\n` +
+  `Notes2Pic turns X, Threads, and Substack posts into clean, Instagram-ready images: short-post cards, medium-form quotes, and multi-slide carousels.\n\n` +
+  `## Key pages\n` +
+  `- [Notes2Pic studio](${SITE_URL}/app): the free editor.\n` +
+  `- [Pricing](${SITE_URL}/#pricing): free, $5/mo, or $10 lifetime.\n` +
+  `- [Blog](${SITE_URL}/blog): guides on repurposing writing into images.\n\n` +
+  `## Blog\n` +
+  posts.map((post) => `- [${post.title}](${SITE_URL}/blog/${post.slug}): ${post.description}`).join('\n') +
+  `\n`
+await writeFile(join(distDir, 'llms.txt'), llms, 'utf8')
+
+console.log(`sitemap.xml + rss.xml + robots.txt + llms.txt written. SITE_URL = ${SITE_URL}`)
