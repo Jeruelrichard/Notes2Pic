@@ -8,6 +8,7 @@ import {
   Crown,
   Download,
   ImagePlus,
+  Link2 as LinkIcon,
   Plus,
   RefreshCw,
   Scissors,
@@ -16,6 +17,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { toPng } from 'html-to-image'
+import { createShare, isFounder } from './lib/shares'
 import JSZip from 'jszip'
 import './App.css'
 import { isSupabaseConfigured } from './lib/supabaseClient'
@@ -23,7 +25,7 @@ import { useAuth } from './lib/useAuth'
 import { getUsage, recordExport } from './lib/entitlements'
 import { checkoutUrlForPlan } from './lib/checkout'
 import { listProfiles, upsertProfile, deleteProfileById } from './lib/profiles'
-import { splitIntoSlides, SLIDE_MAX_CHARS } from './lib/carousel'
+import { splitIntoSlides, splitThread, SLIDE_MAX_CHARS, SLIDE_HARD_MAX } from './lib/carousel'
 import { drawSlide } from './lib/carouselRender'
 import AuthModal from './components/AuthModal'
 import UpgradeModal from './components/UpgradeModal'
@@ -244,6 +246,8 @@ function App() {
   const [selectedProfileId, setSelectedProfileId] = useState('')
   const [aspect, setAspect] = useState('portrait')
   const [isExporting, setIsExporting] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
   const [notice, setNotice] = useState(defaultNotice)
 
   const { user, loading: authLoading, signOut } = useAuth()
@@ -510,16 +514,27 @@ function App() {
   }
 
   function splitCarousel() {
-    const slides = splitIntoSlides(carousel.text)
+    const { slides, numbered } = splitThread(carousel.text)
     setCarousel((current) => ({ ...current, slides }))
     setSlideIndex(0)
-    setNotice(slides.length ? `Split into ${slides.length} slides.` : 'Paste some text first, then split.')
+    if (!slides.length) {
+      setNotice('Paste some text first, then split.')
+    } else if (numbered) {
+      // The text was already a numbered thread — we followed the author's own
+      // boundaries instead of re-splitting it.
+      setNotice(`Kept your numbering — ${slides.length} slides.`)
+    } else {
+      setNotice(`Split into ${slides.length} slides.`)
+    }
   }
 
   function updateSlideText(index, value) {
     setCarousel((current) => {
       const slides = [...current.slides]
-      slides[index] = value.slice(0, SLIDE_MAX_CHARS)
+      // Clamp at the hard ceiling, not the soft target: a pre-numbered thread
+      // can legitimately hand us a tweet longer than SLIDE_MAX_CHARS, and
+      // silently truncating the author's own tweet on first edit is data loss.
+      slides[index] = value.slice(0, SLIDE_HARD_MAX)
       return { ...current, slides }
     })
   }
@@ -800,7 +815,84 @@ function App() {
     URL.revokeObjectURL(anchor.href)
   }
 
-  function exportMediumImage(withWatermark = false) {
+  const founder = isFounder(user)
+
+  // Render the current mode to PNG blob(s), reusing the exact export pipeline so
+  // the shared images match what the user would download. Founder shares never
+  // carry a watermark (the founder account is always paid).
+  async function buildShareBlobs() {
+    const width = currentAspect.width * 2
+    const height = currentAspect.height * 2
+
+    if (isCarouselMode) {
+      const total = carousel.slides.length
+      const blobs = []
+      for (let index = 0; index < total; index += 1) {
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        drawSlide(canvas.getContext('2d'), {
+          text: carousel.slides[index],
+          theme: carousel.theme,
+          username: carousel.username,
+          avatar: carouselAvatarImage,
+          index,
+          total,
+          width,
+          height,
+          watermark: false,
+        })
+        blobs.push(await new Promise((resolve) => canvas.toBlob(resolve, 'image/png')))
+      }
+      return { kind: 'carousel', blobs }
+    }
+
+    if (isMediumMode) {
+      const canvas = renderMediumCanvas(false)
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
+      return { kind: 'medium', blobs: [blob] }
+    }
+
+    const dataUrl = await toPng(exportRef.current, {
+      pixelRatio: 2,
+      cacheBust: true,
+      backgroundColor: exportBackground,
+    })
+    const blob = await (await fetch(dataUrl)).blob()
+    return { kind: 'short', blobs: [blob] }
+  }
+
+  // Founder-only: upload the current image/carousel and copy a public /s/<id>
+  // link. Built for cold-DM outreach where attachments aren't allowed.
+  async function shareCurrent() {
+    if (isCarouselMode && !carousel.slides.length) {
+      setNotice('Split your text into slides before sharing.')
+      return
+    }
+    if (!isCarouselMode && !exportRef.current && !isMediumMode) return
+
+    setIsSharing(true)
+    setShareUrl('')
+    try {
+      const { kind, blobs } = await buildShareBlobs()
+      const { url } = await createShare({ kind, blobs })
+      setShareUrl(url)
+      try {
+        await navigator.clipboard.writeText(url)
+        setNotice('Share link copied to clipboard.')
+      } catch {
+        setNotice('Share link created.')
+      }
+    } catch (error) {
+      setNotice(`Could not create share link: ${error?.message || 'unknown error'}`)
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
+  // Draw the medium-form image to a canvas and return it. Shared by the export
+  // (download) path and the founder share-link path so both render identically.
+  function renderMediumCanvas(withWatermark = false) {
     const canvas = document.createElement('canvas')
     const width = currentAspect.width * 2
     const height = currentAspect.height * 2
@@ -880,6 +972,11 @@ function App() {
       context.textAlign = 'left'
     }
 
+    return canvas
+  }
+
+  function exportMediumImage(withWatermark = false) {
+    const canvas = renderMediumCanvas(withWatermark)
     const anchor = document.createElement('a')
     anchor.href = canvas.toDataURL('image/png')
     anchor.download = `notes2pic-medium-${aspect}.png`
@@ -1058,13 +1155,20 @@ function App() {
                   >
                     <div className="slide-card-head">
                       <strong>Slide {index + 1}</strong>
-                      <span className={slide.length >= SLIDE_MAX_CHARS ? 'over' : ''}>
+                      <span
+                        className={slide.length > SLIDE_MAX_CHARS ? 'over' : ''}
+                        title={
+                          slide.length > SLIDE_MAX_CHARS
+                            ? 'Longer than the recommended slide length — the text will render smaller.'
+                            : undefined
+                        }
+                      >
                         {slide.length}/{SLIDE_MAX_CHARS}
                       </span>
                     </div>
                     <textarea
                       value={slide}
-                      maxLength={SLIDE_MAX_CHARS}
+                      maxLength={SLIDE_HARD_MAX}
                       onChange={(event) => updateSlideText(index, event.target.value)}
                     />
                     <div className="slide-card-actions">
@@ -1226,6 +1330,20 @@ function App() {
                 ? `Export ${carousel.slides.length}-slide carousel (.zip)`
                 : `Export PNG (${currentAspect.size})`}
           </button>
+
+          {founder ? (
+            <div className="share-tool">
+              <button type="button" className="share-button" onClick={shareCurrent} disabled={isSharing}>
+                <LinkIcon aria-hidden="true" />
+                {isSharing ? 'Creating link…' : 'Create share link'}
+              </button>
+              {shareUrl ? (
+                <a className="share-url" href={shareUrl} target="_blank" rel="noreferrer" title={shareUrl}>
+                  {shareUrl.replace(/^https?:\/\//, '')}
+                </a>
+              ) : null}
+            </div>
+          ) : null}
 
           <p className="notice">{notice}</p>
         </aside>
