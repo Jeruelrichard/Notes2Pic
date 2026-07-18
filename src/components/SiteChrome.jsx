@@ -40,6 +40,20 @@ export function SiteFooter() {
           <a href="/sitemap.xml">Sitemap</a>
           <a href="/rss.xml">RSS</a>
         </nav>
+        <a
+          className="site-footer-badge"
+          href="https://www.producthunt.com/products/notes2pic?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-notes2pic"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            alt="Notes2Pic - Threads, Tweets & Notes → Instagram carousels. 10 seconds. | Product Hunt"
+            width="250"
+            height="54"
+            loading="lazy"
+            src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1199762&theme=light&t=1784371056412"
+          />
+        </a>
       </div>
       <div className="site-footer-legal">
         © {new Date().getFullYear()} Notes2Pic. All rights reserved.

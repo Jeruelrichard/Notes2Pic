@@ -1,5 +1,11 @@
 # Notes2Pic — Deployment & Go-Live Checklist
 
+> **STATUS (2026-07-17): LIVE at `www.notes2pic.com`**, auto-deploying from `main` via Vercel.
+> This doc is now a reference for the setup that was done (and for re-doing it). Current running
+> state lives in `HANDOFF.md`. Note: `SITE_URL` is `https://www.notes2pic.com` (apex 301→www);
+> optional `VITE_GA4_ID` enables GA4; IndexNow is still not implemented.
+
+
 This app is a Vite/React SPA plus a Vercel serverless webhook (`api/freemius-webhook.js`),
 backed by Supabase (Auth + Postgres) and Freemius (payments). The old
 `api/lemonsqueezy-webhook.js` is disabled/commented out and kept only for reference.

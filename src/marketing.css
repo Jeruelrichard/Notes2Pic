@@ -1006,6 +1006,25 @@ h3 {
   color: var(--clay-ink);
 }
 
+/* Let the footer wrap so the 250px Product Hunt badge drops to its own line on
+   narrow screens instead of forcing horizontal scroll. */
+.site-footer-inner {
+  flex-wrap: wrap;
+  gap: 20px 24px;
+}
+
+.site-footer-badge {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.site-footer-badge img {
+  display: block;
+  width: 250px;
+  height: 54px;
+}
+
 .site-footer-legal {
   border-top: 1px solid var(--line);
   padding: 16px 24px;

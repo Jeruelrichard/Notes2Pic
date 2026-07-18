@@ -1,5 +1,11 @@
 # Notes2Pics Productization Plan
 
+> **Historical planning doc (early-stage). Superseded by `PRD.md`.** Much here is now done or
+> intentionally changed — e.g. payments ARE live (Freemius), the product is deployed, and the
+> brand is "Notes2Pic" (no trailing "s"). Kept for context on original intent; do not treat as
+> current guidance.
+
+
 ## Positioning
 
 Right now Notes2Pics is mostly:

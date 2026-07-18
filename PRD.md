@@ -251,6 +251,7 @@ pipeline — always test real purchases with a different email. Real accounts (n
 - Auth (email + Google), reset password, free caps + watermark, Freemius checkout + webhook.
 - Deployed to production on `www.notes2pic.com` (auto-deploy from `main`).
 - Redesigned demo-led landing; blog with full SEO/GEO structure; privacy/terms; sitemap/rss/robots/llms.
+- 3 blog posts live (`content/blog/`); Product Hunt badge in the footer (post_id 1199762).
 - Intelligent, numbering- and style-aware thread splitter.
 - GA4 wiring (env-gated; needs `VITE_GA4_ID` set in Vercel to activate).
 - Founder share links (`/s/<id>`): schema, bucket, client lib, serverless render page, and studio
