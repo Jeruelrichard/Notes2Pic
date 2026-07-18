@@ -23,3 +23,6 @@ dist-server
 *.njsproj
 *.sln
 *.sw?
+
+# Personal learning notes (not part of the product)
+LEARNING.md
