@@ -39,6 +39,9 @@ export function SiteFooter() {
           <Link to="/terms">Terms</Link>
           <a href="/sitemap.xml">Sitemap</a>
           <a href="/rss.xml">RSS</a>
+          <a href="https://useneedle.net/directory/notes2pic" target="_blank" rel="noopener">
+            Needle
+          </a>
         </nav>
         <a
           className="site-footer-badge"
