@@ -1,6 +1,6 @@
 # Notes2Pic — Session Handoff / Project State
 
-> Working handoff doc for picking up in a fresh session. Last updated: 2026‑07‑17.
+> Working handoff doc for picking up in a fresh session. Last updated: 2026‑07‑18.
 > Brand name is **"Notes2Pic"** (no trailing "s"). The repo folder is still `Notes2pics`
 > and some asset filenames/package name keep the old `notes2pics` spelling — that's fine,
 > only user‑visible text must read "Notes2Pic".
