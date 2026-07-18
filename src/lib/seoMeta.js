@@ -1,4 +1,5 @@
 import { posts, getPost } from './posts'
+import { TOOL_PAGES, getToolPage } from './toolPages'
 
 export const SITE_NAME = 'Notes2Pic'
 export const DEFAULT_DESCRIPTION =
@@ -45,6 +46,20 @@ export function getMetaForPath(pathname) {
     }
     // Unknown slug: don't let a soft-404 get indexed.
     return { ...base, title: `Post not found | ${SITE_NAME}`, description: '', path: pathname, noindex: true }
+  }
+  const tool = getToolPage(pathname)
+  if (tool) {
+    return {
+      ...base,
+      title: `${tool.metaTitle} | ${SITE_NAME}`,
+      description: tool.metaDescription,
+      path: tool.path,
+      faq: tool.faq,
+      breadcrumb: [
+        { name: 'Home', item: '/' },
+        { name: tool.h1, item: tool.path },
+      ],
+    }
   }
   if (pathname === '/privacy') {
     return {
@@ -125,11 +140,41 @@ export function buildJsonLd(meta, origin) {
     }
   }
 
+  // Tool pages (and any non-post route) can carry their own breadcrumb + FAQ.
+  if (meta.breadcrumb?.length) {
+    graph.push({
+      '@type': 'BreadcrumbList',
+      itemListElement: meta.breadcrumb.map((crumb, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: crumb.name,
+        item: abs(crumb.item),
+      })),
+    })
+  }
+  if (meta.faq?.length) {
+    graph.push({
+      '@type': 'FAQPage',
+      mainEntity: meta.faq.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
+    })
+  }
+
   return { '@context': 'https://schema.org', '@graph': graph }
 }
 
 // Every path the prerender step should emit as static HTML (the SPA /app route
 // is intentionally excluded — it stays client-rendered).
 export function listPrerenderPaths() {
-  return ['/', '/blog', '/privacy', '/terms', ...posts.map((post) => `/blog/${post.slug}`)]
+  return [
+    '/',
+    '/blog',
+    '/privacy',
+    '/terms',
+    ...TOOL_PAGES.map((page) => page.path),
+    ...posts.map((post) => `/blog/${post.slug}`),
+  ]
 }

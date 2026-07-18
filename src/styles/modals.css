@@ -1,0 +1,277 @@
+/* Shared modal styling for AuthModal + UpgradeModal. These modals are used both
+   inside the studio (App.css also defines these, identically) AND on marketing /
+   free-tool pages, which don't load App.css. Importing this file directly from
+   the modal components guarantees they're styled (and centred as an overlay)
+   wherever they render. Rules are copied verbatim from App.css to avoid any
+   divergence in the studio. */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.35);
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: #f1f3f7;
+  color: #475467;
+  cursor: pointer;
+}
+
+.modal-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.modal-title {
+  margin: 0 0 6px;
+  font-size: 1.4rem;
+}
+
+.modal-sub {
+  margin: 0 0 20px;
+  color: #667085;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.google-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #d6dbe3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f2937;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.modal-divider {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  color: #98a2b3;
+  font-size: 0.8rem;
+}
+
+.modal-divider::before,
+.modal-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e3e6ea;
+}
+
+.modal-divider span {
+  padding: 0 12px;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Form field label + input (studio's .field, copied so marketing modals match) */
+.modal-card .field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.modal-card .field span {
+  color: #4b5563;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.modal-card .field input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #d6dbe3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+}
+
+.modal-card .field input:focus {
+  outline: none;
+  border-color: #2f6fed;
+  box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.15);
+}
+
+/* Primary submit button inside modals (studio's .export-button, copied) */
+.modal-card .export-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  border: 0;
+  border-radius: 8px;
+  background: #111827;
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.modal-card .export-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.modal-message {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f1f3f7;
+  color: #475467;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.modal-switch {
+  margin: 16px 0 0;
+  color: #667085;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.modal-switch button {
+  border: 0;
+  background: none;
+  color: #2f6fed;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* ============ upgrade plans ============ */
+.plan-benefits {
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.plan-benefits li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #344054;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.plan-benefits svg {
+  width: 17px;
+  height: 17px;
+  color: #12b76a;
+}
+
+.plan-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 16px;
+  border: 1.5px solid #d6dbe3;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #111827;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.plan-card:hover {
+  border-color: #2f6fed;
+  box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.12);
+}
+
+.plan-card.featured {
+  border-color: #2f6fed;
+}
+
+.plan-card.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.plan-badge {
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #2f6fed;
+  color: #ffffff;
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.plan-name {
+  font-size: 0.82rem;
+  font-weight: 750;
+  color: #667085;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.plan-price {
+  font-size: 1.7rem;
+  font-weight: 850;
+}
+
+.plan-price small {
+  margin-left: 3px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #667085;
+}
+
+.plan-note {
+  font-size: 0.78rem;
+  color: #667085;
+}

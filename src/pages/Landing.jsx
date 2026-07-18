@@ -1,8 +1,9 @@
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Check, Clipboard, Download, Sparkles, Wand2 } from 'lucide-react'
 import { MarketingLayout } from '../components/SiteChrome'
 import Seo from '../components/Seo'
+import { scrollToHashTarget } from '../lib/scrollTo'
 
 // Faithful-to-the-app example outputs. These drive both the hero demo loop
 // and the outputs showcase, so the page proves the value instead of describing it.
@@ -165,6 +166,27 @@ const honestPoints = [
 ]
 
 export default function Landing() {
+  // Smooth-scroll to the pricing cards when arriving with that intent — either a
+  // sessionStorage flag set by the header's "Pricing" link, or a #pricing hash
+  // (bookmarks / old links). We strip the hash first so the browser's native
+  // jump-to-anchor doesn't fight our smooth, card-centred scroll. The ref guard
+  // (and NOT returning the cancel) makes this survive StrictMode's double-invoke,
+  // which would otherwise consume the flag then cancel the scroll.
+  const didPricingScroll = useRef(false)
+  useEffect(() => {
+    if (didPricingScroll.current) return
+    const wantsPricing =
+      window.location.hash.slice(1) === 'pricing' ||
+      sessionStorage.getItem('scrollToPricing') === '1'
+    if (!wantsPricing) return
+    didPricingScroll.current = true
+    sessionStorage.removeItem('scrollToPricing')
+    if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    }
+    scrollToHashTarget('pricing')
+  }, [])
+
   return (
     <MarketingLayout>
       <Seo path="/" />

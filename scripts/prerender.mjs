@@ -15,7 +15,7 @@ const SITE_URL = (
   .replace(/\/$/, '')
 
 const server = await import(pathToFileURL(join(root, 'dist-server', 'entry-server.js')).href)
-const { render, listPrerenderPaths, posts, buildJsonLd, DEFAULT_DESCRIPTION } = server
+const { render, listPrerenderPaths, posts, buildJsonLd, DEFAULT_DESCRIPTION, TOOL_PAGES } = server
 
 const template = await readFile(join(distDir, 'index.html'), 'utf8')
 
@@ -88,7 +88,13 @@ for (const pathname of listPrerenderPaths()) {
 }
 
 // 3) sitemap.xml
-const sitemapUrls = ['/', '/app', '/blog', ...posts.map((post) => `/blog/${post.slug}`)]
+const sitemapUrls = [
+  '/',
+  '/app',
+  '/blog',
+  ...TOOL_PAGES.map((page) => page.path),
+  ...posts.map((post) => `/blog/${post.slug}`),
+]
 const sitemap =
   `<?xml version="1.0" encoding="UTF-8"?>\n` +
   `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +

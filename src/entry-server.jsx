@@ -6,6 +6,7 @@ import { getMetaForPath } from './lib/seoMeta'
 
 export { listPrerenderPaths, buildJsonLd, DEFAULT_DESCRIPTION } from './lib/seoMeta'
 export { posts } from './lib/posts'
+export { TOOL_PAGES } from './lib/toolPages'
 
 // Rendered at build time by scripts/prerender.mjs for each marketing/blog route.
 export function render(url) {

@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
+import '../styles/modals.css'
 
 // Email+password (sign up / sign in toggle) plus Google OAuth.
 // onClose closes the modal (also used after a successful sign-in). onDismiss (if
 // provided) fires only on an explicit user dismiss (X / overlay), so callers can
 // cancel a pending intent like a checkout redirect.
-export default function AuthModal({ open, onClose, onDismiss, reason }) {
+export default function AuthModal({ open, onClose, onDismiss, reason, redirectTo = '/app' }) {
   const dismiss = onDismiss || onClose
   const [mode, setMode] = useState('signin')
   const [email, setEmail] = useState('')
@@ -64,7 +65,7 @@ export default function AuthModal({ open, onClose, onDismiss, reason }) {
     setMessage('')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/app` },
+      options: { redirectTo: `${window.location.origin}${redirectTo}` },
     })
     if (error) {
       setMessage(error.message)

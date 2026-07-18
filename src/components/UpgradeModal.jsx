@@ -1,5 +1,6 @@
 import { Check, X } from 'lucide-react'
 import { checkoutUrlForPlan } from '../lib/checkout'
+import '../styles/modals.css'
 
 // Shown when a free user hits the export limit or clicks "Remove watermark".
 export default function UpgradeModal({ open, onClose, email, reason }) {
