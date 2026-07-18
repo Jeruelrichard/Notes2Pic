@@ -1,5 +1,5 @@
 ---
-title: "How to Turn a Twitter Thread Into an Instagram Carousel (2026 Guide)"
+title: "How to Turn a Twitter Thread Into an Instagram Carousel (2026)"
 description: "Turn any X thread into a scroll-stopping Instagram carousel in minutes. Step-by-step method, slide-count guidance, and the fast way with Notes2Pic."
 date: 2026-07-15
 tags: [instagram, twitter, threads, carousels, content repurposing]

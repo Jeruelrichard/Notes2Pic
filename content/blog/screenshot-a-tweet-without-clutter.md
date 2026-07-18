@@ -1,6 +1,6 @@
 ---
 title: "How to Screenshot a Tweet Without the Clutter"
-description: "Learn how to screenshot a tweet without the clutter — no notification banners, stale counts, or cropped-in timeline posts. Real methods, plus a clutter-free alternative."
+description: "Learn how to screenshot a tweet without the clutter — no notification banners, stale counts, or cropped-in timeline posts — plus a clutter-free alternative."
 date: "2026-07-18"
 tags: [twitter, screenshot tweet]
 ---
