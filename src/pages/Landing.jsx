@@ -83,7 +83,13 @@ function SlideCarousel() {
       <div className="carousel-track">
         {frames.map((src, i) => (
           <div className="carousel-slide" key={i}>
-            <img src={src} alt="" loading="lazy" width="1080" height="1350" />
+            <img
+              src={src}
+              alt={`Instagram carousel slide ${(i % slides.length) + 1} made from a Twitter thread with Notes2Pic`}
+              loading="lazy"
+              width="1080"
+              height="1350"
+            />
           </div>
         ))}
       </div>
@@ -198,11 +204,12 @@ export default function Landing() {
             For writers on X, Threads &amp; Substack
           </p>
           <h1>
-            Your best posts, turned into <em>images worth sharing.</em>
+            Turn your tweets &amp; threads into <em>Instagram images worth sharing.</em>
           </h1>
           <p className="hero-sub">
-            You already write the good stuff. Notes2Pic turns it into clean, branded,
-            Instagram-ready images &mdash; in seconds, without opening a design tool.
+            You already write the good stuff. Notes2Pic turns your tweets, threads, and Substack
+            notes into clean images and Instagram carousels &mdash; in seconds, free to start, no
+            design tool needed.
           </p>
           <div className="hero-actions">
             <Link to="/app?checkout=lifetime" className="btn-primary">
@@ -215,9 +222,9 @@ export default function Landing() {
             </Link>
           </div>
           <p className="hero-note">
-            <strong>First 20 buyers</strong> lock in $10 (then $17)
+            <strong>Free to start</strong> &mdash; no card, no signup to preview
             <span className="sep" />
-            No card to start
+            First 20 buyers lock in $10 (then $17)
           </p>
         </div>
 
@@ -231,7 +238,7 @@ export default function Landing() {
             <h2>One post. Every format you need.</h2>
             <p>
               Short cards that look native to each platform, medium-form quotes with room to
-              breathe, and long threads auto-split into carousel slides.
+              breathe, and long threads auto-split into Instagram carousel slides.
             </p>
           </div>
 

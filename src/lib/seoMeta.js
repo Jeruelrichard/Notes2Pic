@@ -14,7 +14,14 @@ export function getMetaForPath(pathname) {
   const base = { type: 'website', image: DEFAULT_OG_IMAGE }
 
   if (pathname === '/' || pathname === '') {
-    return { ...base, title: `${SITE_NAME} — post-to-image studio`, description: DEFAULT_DESCRIPTION, path: '/' }
+    return {
+      ...base,
+      // Title leads with the primary keyword phrase (search-intent match), brand last.
+      title: `Turn Tweets & Threads into Instagram Carousels | ${SITE_NAME}`,
+      description:
+        'Turn your tweets, threads, and Substack notes into clean, Instagram-ready images and carousels. Free to start — no design tool, no signup to preview.',
+      path: '/',
+    }
   }
   if (pathname === '/app') {
     return { ...base, title: `Studio | ${SITE_NAME}`, description: DEFAULT_DESCRIPTION, path: '/app' }
