@@ -87,6 +87,13 @@ async function fromSyndication(id, diag) {
       verified: Boolean(data.user?.is_blue_verified || data.user?.verified),
       date: data.created_at || '',
       likes: typeof data.favorite_count === 'number' ? data.favorite_count : null,
+      replies: typeof data.conversation_count === 'number' ? data.conversation_count : null,
+      retweets: typeof data.retweet_count === 'number' ? data.retweet_count : null,
+      // Long-form ("note") tweets: syndication returns only an id reference for
+      // the full body, never the text itself — so `text` above is the truncated
+      // version. Flag it so the UI can say so instead of silently cutting off.
+      truncated: Boolean(data.note_tweet),
+      photo: data.photos?.[0]?.url || null,
     }
   } catch (error) {
     diag.syndication = { error: error?.name === 'AbortError' ? 'timeout' : String(error?.message || error) }

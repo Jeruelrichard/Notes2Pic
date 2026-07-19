@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Menu, X } from 'lucide-react'
+import { ChevronDown, Menu, X } from 'lucide-react'
 import { useAuth } from '../lib/useAuth'
 import { scrollToHashTarget } from '../lib/scrollTo'
+import { TOOL_PAGES } from '../lib/toolPages'
 
 const markSrc = '/notes2pics-mark-v2-quote-standalone.svg'
 
@@ -20,6 +21,62 @@ function AccountChip({ user }) {
         <span className="account-initial">{initial}</span>
       )}
     </Link>
+  )
+}
+
+// "Tools" dropdown. Sourced from TOOL_PAGES so shipping a new tool page puts it
+// in the header and footer automatically — no second list to forget to update.
+function ToolsMenu({ onNavigate }) {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef(null)
+
+  // Close on outside click / Escape, the two things users expect from a menu.
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (event) => {
+      if (!wrapRef.current?.contains(event.target)) setOpen(false)
+    }
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  return (
+    <div className="nav-dropdown" ref={wrapRef}>
+      <button
+        type="button"
+        className="nav-dropdown-trigger"
+        aria-expanded={open}
+        aria-haspopup="true"
+        onClick={() => setOpen((value) => !value)}
+      >
+        Tools
+        <ChevronDown aria-hidden="true" className={open ? 'flip' : ''} />
+      </button>
+      {open ? (
+        <div className="nav-dropdown-menu">
+          <span className="nav-dropdown-label">Free tools</span>
+          {TOOL_PAGES.map((tool) => (
+            <Link
+              key={tool.path}
+              to={tool.path}
+              onClick={() => {
+                setOpen(false)
+                onNavigate?.()
+              }}
+            >
+              {tool.navLabel}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -53,6 +110,7 @@ export function SiteHeader() {
           <span>Notes2Pic</span>
         </Link>
         <nav className="site-nav">
+          <ToolsMenu />
           {/* Plain anchor (not Link) so it works from any page: on the landing it
               smooth-scrolls to the pricing cards; elsewhere it navigates home first. */}
           <a href="/#pricing" onClick={handlePricing}>Pricing</a>
@@ -80,6 +138,12 @@ export function SiteHeader() {
 
       {menuOpen ? (
         <nav className="site-menu-mobile">
+          <span className="site-menu-label">Free tools</span>
+          {TOOL_PAGES.map((tool) => (
+            <Link key={tool.path} to={tool.path} onClick={close}>
+              {tool.navLabel}
+            </Link>
+          ))}
           <a href="/#pricing" onClick={handlePricing}>Pricing</a>
           <NavLink to="/blog" onClick={close}>Blog</NavLink>
           <Link to="/app" onClick={close}>Open app</Link>
@@ -94,38 +158,56 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
-        <div className="site-footer-brand">
-          <img src={markSrc} alt="" width="24" height="24" />
-          <span>Notes2Pic</span>
-          <p>Turn your posts into Instagram-ready images.</p>
-        </div>
-        <nav className="site-footer-links">
-          <Link to="/app">App</Link>
-          <Link to="/thread-to-carousel">Free tools</Link>
-          <Link to="/blog">Blog</Link>
-          <Link to="/contact">Contact</Link>
-          <Link to="/privacy">Privacy</Link>
-          <Link to="/terms">Terms</Link>
-          <a href="/sitemap.xml">Sitemap</a>
-          <a href="/rss.xml">RSS</a>
-          <a href="https://useneedle.net/directory/notes2pic" target="_blank" rel="noopener">
-            Needle
+        <div className="site-footer-top">
+          <div className="site-footer-brand">
+            <img src={markSrc} alt="" width="24" height="24" />
+            <span>Notes2Pic</span>
+            <p>Turn your posts into Instagram-ready images.</p>
+          </div>
+          <a
+            className="site-footer-badge"
+            href="https://www.producthunt.com/products/notes2pic?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-notes2pic"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              alt="Notes2Pic - Threads, Tweets & Notes → Instagram carousels. 10 seconds. | Product Hunt"
+              width="250"
+              height="54"
+              loading="lazy"
+              src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1199762&theme=light&t=1784371056412"
+            />
           </a>
-        </nav>
-        <a
-          className="site-footer-badge"
-          href="https://www.producthunt.com/products/notes2pic?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-notes2pic"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img
-            alt="Notes2Pic - Threads, Tweets & Notes → Instagram carousels. 10 seconds. | Product Hunt"
-            width="250"
-            height="54"
-            loading="lazy"
-            src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1199762&theme=light&t=1784371056412"
-          />
-        </a>
+        </div>
+
+        <div className="site-footer-cols">
+          <nav className="site-footer-col">
+            <h3>Free Tools</h3>
+            {TOOL_PAGES.map((tool) => (
+              <Link key={tool.path} to={tool.path}>
+                {tool.navLabel}
+              </Link>
+            ))}
+          </nav>
+
+          <nav className="site-footer-col">
+            <h3>Notes2Pic</h3>
+            <Link to="/app">App</Link>
+            <Link to="/blog">Blog</Link>
+            <Link to="/contact">Contact</Link>
+          </nav>
+
+          <nav className="site-footer-col">
+            <h3>More</h3>
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
+            <a href="/sitemap.xml">Sitemap</a>
+            <a href="/rss.xml">RSS</a>
+            <a href="https://useneedle.net/directory/notes2pic" target="_blank" rel="noopener">
+              Needle
+            </a>
+          </nav>
+        </div>
       </div>
       <div className="site-footer-legal">
         © {new Date().getFullYear()} Notes2Pic. All rights reserved.

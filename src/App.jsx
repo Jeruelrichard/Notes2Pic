@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowDown,
   ArrowUp,
-  Bookmark,
   ChevronLeft,
   ChevronRight,
   Crown,
@@ -27,6 +26,15 @@ import { checkoutUrlForPlan } from './lib/checkout'
 import { listProfiles, upsertProfile, deleteProfileById } from './lib/profiles'
 import { splitIntoSlides, splitThread, SLIDE_MAX_CHARS, SLIDE_HARD_MAX } from './lib/carousel'
 import { drawSlide } from './lib/carouselRender'
+import ShortSourcePreview from './components/ShortSourcePreview'
+import {
+  initials,
+  getShortSourceKey,
+  getShortExportBackground,
+  formatBadgeDate,
+  formatTimestamp,
+  getShortPostTextStyle,
+} from './lib/postcard'
 import AuthModal from './components/AuthModal'
 import UpgradeModal from './components/UpgradeModal'
 import SettingsModal from './components/SettingsModal'
@@ -90,27 +98,6 @@ const starterCarousel = {
 const exportTimeoutMs = 15000
 const shortPostCharacterLimit = 500
 const defaultNotice = 'Fill the post details manually, choose a style, then export a PNG.'
-
-function initials(name) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('')
-}
-
-function getShortSourceKey(source) {
-  if (source === 'Threads') return 'threads'
-  if (source === 'X') return 'x'
-  return 'substack'
-}
-
-function getShortExportBackground(sourceKey, theme) {
-  if (sourceKey === 'substack') return '#ff671f'
-  if (theme === 'light') return '#ffffff'
-  return sourceKey === 'threads' ? '#181818' : '#050505'
-}
 
 function getMediumTypography(aspect) {
   if (aspect === 'square') {
@@ -208,29 +195,6 @@ function breakLongToken(context, token, maxWidth, prefix = '') {
   return lines
 }
 
-function formatBadgeDate(date) {
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-function formatTimestamp(date) {
-  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  const day = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  return `${time} · ${day}`
-}
-
-function getShortPostTextStyle(text, aspect) {
-  const explicitLines = text.split('\n').length
-  const visualLineEstimate = Math.ceil(text.length / (aspect === 'square' ? 25 : 31))
-  const estimatedLines = Math.max(explicitLines, visualLineEstimate)
-  const baseSize = aspect === 'square' ? 24 : 28
-  const sizeByCharacters = text.length > 210 ? baseSize - 4 : text.length > 150 ? baseSize - 2 : baseSize
-  const sizeByLines = estimatedLines > 12 ? 15 : estimatedLines > 9 ? 17 : estimatedLines > 7 ? 19 : sizeByCharacters
-
-  return {
-    fontSize: `${Math.max(13, Math.min(sizeByCharacters, sizeByLines))}px`,
-  }
-}
-
 function App() {
   const exportRef = useRef(null)
   const carouselCanvasRef = useRef(null)
@@ -238,6 +202,11 @@ function App() {
   const [previewScale, setPreviewScale] = useState(1)
   const [contentMode, setContentMode] = useState('short')
   const [post, setPost] = useState(starterPost)
+  // "Import from a tweet link" — fills the short-post fields from a public tweet
+  // so you don't retype it. Same /api/tweet endpoint the free tool page uses.
+  const [tweetUrl, setTweetUrl] = useState('')
+  const [tweetLoading, setTweetLoading] = useState(false)
+  const [tweetError, setTweetError] = useState('')
   const [mediumPost, setMediumPost] = useState(starterMediumPost)
   const [carousel, setCarousel] = useState(starterCarousel)
   const [slideIndex, setSlideIndex] = useState(0)
@@ -490,6 +459,39 @@ function App() {
 
   function updatePost(field, value) {
     setPost((current) => ({ ...current, [field]: value }))
+  }
+
+  // Pull a public tweet's text/author/avatar into the short-post fields. Purely
+  // a convenience: everything it fills stays editable, and typing it by hand
+  // still works exactly as before if the fetch fails or the tweet is private.
+  async function importTweet(event) {
+    event?.preventDefault()
+    const trimmed = tweetUrl.trim()
+    if (!trimmed) return
+    setTweetLoading(true)
+    setTweetError('')
+    try {
+      const response = await fetch(`/api/tweet?url=${encodeURIComponent(trimmed)}`)
+      const data = await response.json()
+      if (!response.ok || !data?.ok) {
+        setTweetError(data?.error || 'Could not read that tweet. Check the link and try again.')
+        return
+      }
+      const t = data.tweet
+      setPost((current) => ({
+        ...current,
+        source: 'X',
+        name: t.name || current.name,
+        username: t.handle ? `@${t.handle}` : current.username,
+        avatar: t.avatar || current.avatar,
+        text: (t.text || '').slice(0, shortPostCharacterLimit),
+      }))
+      setNotice('Tweet imported. Edit anything you like, then export.')
+    } catch {
+      setTweetError('Something went wrong fetching that tweet. Try again in a moment.')
+    } finally {
+      setTweetLoading(false)
+    }
   }
 
   function updateShortPostText(value) {
@@ -750,7 +752,10 @@ function App() {
           const dataUrl = await Promise.race([
             toPng(exportRef.current, {
               pixelRatio: 2,
-              cacheBust: true,
+              // No cacheBust: it appends ?<timestamp> to image URLs and
+              // pbs.twimg.com 404s on that, which breaks exporting an
+              // imported tweet's avatar.
+              skipFonts: true,
               backgroundColor: exportBackground,
             }),
             new Promise((_, reject) => {
@@ -855,7 +860,9 @@ function App() {
 
     const dataUrl = await toPng(exportRef.current, {
       pixelRatio: 2,
-      cacheBust: true,
+      // See exportImage: cacheBust breaks pbs.twimg.com avatars (404 on the
+      // appended query param), skipFonts avoids a cross-origin CSS read.
+      skipFonts: true,
       backgroundColor: exportBackground,
     })
     const blob = await (await fetch(dataUrl)).blob()
@@ -1281,6 +1288,26 @@ function App() {
                 ) : null}
               </div>
 
+              <div className="field full tweet-import">
+                <span>Import from a tweet link <em>(optional)</em></span>
+                <div className="tweet-import-row">
+                  <input
+                    type="url"
+                    value={tweetUrl}
+                    placeholder="https://x.com/username/status/123…"
+                    onChange={(event) => setTweetUrl(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') importTweet(event)
+                    }}
+                  />
+                  <button type="button" onClick={importTweet} disabled={tweetLoading || !tweetUrl.trim()}>
+                    <LinkIcon aria-hidden="true" />
+                    {tweetLoading ? 'Fetching…' : 'Import'}
+                  </button>
+                </div>
+                {tweetError ? <p className="tweet-import-error">{tweetError}</p> : null}
+              </div>
+
               <label className="field full">
                 <span>Post text</span>
                 <textarea
@@ -1511,93 +1538,3 @@ function App() {
 }
 
 export default App
-
-function ShortSourcePreview({ avatarInitials, post, shortPostTextStyle, sourceKey, badgeDate, timestamp, watermark }) {
-  const byline = watermark ? <div className="card-watermark" aria-hidden="true">{productWatermark}</div> : null
-
-  if (sourceKey === 'substack') {
-    return (
-      <article className="substack-card">
-        <header className="substack-author">
-          <div className="substack-author-left">
-            <SourceAvatar avatar={post.avatar} initials={avatarInitials} />
-            <div className="substack-author-copy">
-              <strong>{post.name || 'Creator'}</strong>
-              <span>{badgeDate}</span>
-            </div>
-          </div>
-          <Bookmark aria-hidden="true" />
-        </header>
-
-        <p className="substack-text" style={shortPostTextStyle}>
-          {post.text || 'Paste the post text here.'}
-        </p>
-        {byline}
-      </article>
-    )
-  }
-
-  if (sourceKey === 'threads') {
-    return (
-      <article className="threads-card">
-        <header className="threads-author">
-          <SourceAvatar avatar={post.avatar} initials={avatarInitials} />
-          <div className="threads-author-meta">
-            <strong>{post.username.replace(/^@/, '') || post.name || 'creator'}</strong>
-            <VerifiedBadge color="#0095f6" />
-            <span>{badgeDate}</span>
-          </div>
-        </header>
-
-        <p className="threads-text" style={shortPostTextStyle}>
-          {post.text || 'Paste the post text here.'}
-        </p>
-        {byline}
-      </article>
-    )
-  }
-
-  return (
-    <article className="x-card">
-      <header className="x-author">
-        <SourceAvatar avatar={post.avatar} initials={avatarInitials} />
-        <div className="x-author-copy">
-          <span className="x-name-row">
-            <strong>{post.name || 'Creator'}</strong>
-            <VerifiedBadge color="#1d9bf0" />
-          </span>
-          <span className="x-handle">{post.username || '@username'}</span>
-        </div>
-      </header>
-
-      <p className="x-text" style={shortPostTextStyle}>
-        {post.text || 'Paste the post text here.'}
-      </p>
-
-      <footer className="x-footer">
-        <span>{timestamp}</span>
-        {byline}
-      </footer>
-    </article>
-  )
-}
-
-function VerifiedBadge({ color }) {
-  return (
-    <svg className="verified-badge" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill={color}
-        d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91s-2.52-1.27-3.91-.81C14.68 2.62 13.43 1.75 12 1.75s-2.68.88-3.34 2.19c-1.39-.46-2.9-.2-3.91.81s-1.27 2.52-.81 3.91c-1.31.67-2.19 1.91-2.19 3.34s.88 2.67 2.19 3.34c-.46 1.39-.2 2.9.81 3.91s2.52 1.27 3.91.81c.66 1.31 1.91 2.19 3.34 2.19s2.68-.88 3.34-2.19c1.39.46 2.9.2 3.91-.81s1.27-2.52.81-3.91c1.31-.67 2.19-1.91 2.19-3.34z"
-      />
-      <path fill="#ffffff" d="M9.71 16.18 6.3 12.77l1.27-1.27 2.14 2.13 4.72-4.72 1.27 1.27z" />
-    </svg>
-  )
-}
-
-function SourceAvatar({ avatar, initials }) {
-  return (
-    <div className="source-avatar">
-      {avatar ? <img src={avatar} alt="" crossOrigin="anonymous" /> : <span>{initials}</span>}
-    </div>
-  )
-}

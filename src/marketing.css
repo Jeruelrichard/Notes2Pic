@@ -78,6 +78,21 @@
   padding: 15px 24px;
 }
 
+/* Footer: brand row on top, then a row of labelled link columns. */
+.site-footer-inner {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 40px;
+  padding: 52px 24px 44px;
+}
+.site-footer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
 .site-brand {
   display: inline-flex;
   align-items: center;
@@ -206,6 +221,12 @@
   .site-header .site-nav {
     display: none;
   }
+  /* The hidden nav is removed from the grid entirely, so the actions block would
+     auto-place into the middle column and the hamburger would sit dead centre.
+     Drop to two columns so it lands hard against the right edge. */
+  .site-header .site-header-inner {
+    grid-template-columns: 1fr auto;
+  }
   .site-hamburger {
     display: inline-flex;
   }
@@ -216,13 +237,15 @@
     display: none;
   }
 
-  /* Dressed-up mobile footer: centred, roomy, with a tidy link grid. */
+  /* Mobile footer: centred and roomy, columns become a two-up grid. */
   .site-footer-inner {
+    text-align: center;
+    padding: 36px 24px 32px;
+    gap: 30px;
+  }
+  .site-footer-top {
     flex-direction: column;
     align-items: center;
-    text-align: center;
-    padding: 32px 24px;
-    gap: 24px;
   }
   .site-footer-brand {
     max-width: none;
@@ -231,10 +254,10 @@
   .site-footer-brand p {
     text-align: center;
   }
-  .site-footer-links {
-    justify-content: center;
-    gap: 14px 22px;
-    max-width: 320px;
+  .site-footer-cols {
+    grid-template-columns: repeat(2, 1fr);
+    text-align: left;
+    gap: 26px 20px;
   }
   .site-footer-badge {
     margin-top: 4px;
@@ -2096,4 +2119,209 @@ h3 {
   text-align: center;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+/* ---- tweet-screenshot tool ---- */
+.tweet-url-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.tweet-url-input {
+  flex: 1 1 200px;
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: 11px;
+  padding: 12px 14px;
+}
+.tweet-url-input:focus {
+  outline: none;
+  border-color: var(--clay);
+  box-shadow: 0 0 0 3px var(--clay-tint);
+}
+.tool-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--clay-tint);
+  color: var(--clay-ink);
+  font-size: 0.88rem;
+}
+.tool-hint {
+  margin: 14px 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+/* Clips the full-size export stage down to a preview box. Fluid, so it fits
+   narrow phones instead of overflowing a fixed width. */
+.tweet-stage-frame {
+  container-type: inline-size;
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+  flex: 0 0 auto;
+}
+.spin {
+  animation: n2p-spin 0.9s linear infinite;
+}
+@keyframes n2p-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- header "Tools" dropdown ---------- */
+.nav-dropdown {
+  position: relative;
+}
+.nav-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+}
+.nav-dropdown-trigger:hover {
+  color: var(--clay-ink);
+}
+.nav-dropdown-trigger svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 0.18s var(--ease-out-quart);
+}
+.nav-dropdown-trigger svg.flip {
+  transform: rotate(180deg);
+}
+.nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 250px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lift);
+}
+.nav-dropdown-label {
+  padding: 4px 10px 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.nav-dropdown-menu a {
+  padding: 9px 10px;
+  border-radius: 9px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+.nav-dropdown-menu a:hover {
+  background: var(--clay-soft);
+  color: var(--clay-ink);
+}
+
+/* ---------- footer link columns ---------- */
+.site-footer-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 34px 32px;
+}
+.site-footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.site-footer-col h3 {
+  margin: 0 0 3px;
+  font-family: var(--font-body);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.site-footer-col a {
+  font-size: 0.93rem;
+}
+.site-footer-col a:hover {
+  color: var(--clay-ink);
+}
+
+/* Mobile menu section label */
+.site-menu-label {
+  padding: 10px 6px 2px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Grid/flex children default to min-width:auto, so a wide input row refuses to
+   shrink and pushes the page into horizontal scroll on phones. Let them shrink. */
+.tool-input,
+.tool-preview {
+  min-width: 0;
+}
+.tweet-url-row .btn-primary {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.tweet-stage-scaler {
+  flex: 0 0 auto;
+}
+.tool-toggle {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px !important;
+  cursor: pointer;
+}
+.tool-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--clay);
+  cursor: pointer;
+}
+
+.tool-editable {
+  display: block;
+  margin-top: 16px;
+}
+.tweet-textarea {
+  min-height: 130px;
+  margin-top: 8px;
+}
+.tool-warn {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--clay-soft);
+  color: var(--clay-ink);
+  font-size: 0.85rem;
+  line-height: 1.5;
 }

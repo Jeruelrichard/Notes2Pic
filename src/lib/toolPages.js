@@ -40,7 +40,62 @@ What got trained in can get trained back out.`
 
 export const TOOL_PAGES = [
   {
+    slug: 'tweet-screenshot',
+    path: '/tweet-screenshot',
+    widget: 'tweet',
+    navLabel: 'Twitter Screenshot Generator',
+    metaTitle: 'Tweet Screenshot Generator — Paste a Link, Get a Clean Image',
+    metaDescription:
+      'Paste any tweet link and get a clean, high-res screenshot in seconds. No clutter, no cropping, no design skills. Free to preview.',
+    eyebrow: 'Free tool',
+    h1: 'Screenshot any tweet, without the clutter',
+    subhead:
+      'Paste the link. We pull the tweet and hand you a crisp, shareable image — no messy phone screenshots, no cropping.',
+    steps: [
+      {
+        title: 'Paste the tweet link',
+        body: 'Copy the link to any public tweet on X and drop it in. We fetch the text, name, handle, and avatar for you.',
+      },
+      {
+        title: 'Pick light or dark',
+        body: 'Preview the card instantly, right here on the page. Editing and previewing stay free forever.',
+      },
+      {
+        title: 'Download the image',
+        body: 'Sign in and grab a crisp, high-res PNG — sized for Instagram and ready to post.',
+      },
+    ],
+    faq: [
+      {
+        q: 'Is it really free?',
+        a: 'Yes. Paste a link and preview the image for free, with no account. Downloading needs a free account; the free plan includes 3 exports a month, each with a small “made with Notes2Pic” mark. Paid removes the mark and the limits.',
+      },
+      {
+        q: 'Why not just take a phone screenshot?',
+        a: 'A phone screenshot brings the whole interface with it — status bar, buttons, awkward crop, and whatever resolution your screen happens to be. This gives you just the post, centred and high-resolution, at a size built for Instagram.',
+      },
+      {
+        q: 'Which tweets work?',
+        a: 'Any public tweet. Posts from private/protected accounts, and tweets that have been deleted, can’t be read — for those you can still paste the text in manually in the studio.',
+      },
+      {
+        q: 'Does it post to my account or need my password?',
+        a: 'Never. We only read the public post you paste a link to. Notes2Pic never asks for your X login and never posts anything on your behalf.',
+      },
+      {
+        q: 'Can I screenshot a whole thread?',
+        a: 'This tool handles one post at a time. For a full thread, use the free thread-to-carousel tool, which splits it into Instagram carousel slides.',
+      },
+    ],
+    related: {
+      slug: 'screenshot-a-tweet-without-clutter',
+      label: 'How to screenshot a tweet without the clutter',
+    },
+  },
+  {
     slug: 'thread-to-carousel',
+    widget: 'carousel',
+    navLabel: 'Thread to Carousel Generator',
     path: '/thread-to-carousel',
     // SEO (metaTitle gets " | Notes2Pic" appended, like blog posts).
     metaTitle: 'Twitter Thread to Instagram Carousel — Free Tool',

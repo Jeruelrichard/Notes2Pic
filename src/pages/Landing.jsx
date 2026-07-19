@@ -158,8 +158,8 @@ const steps = [
 
 const honestPoints = [
   {
-    title: 'Manual by design',
-    body: 'You paste the text. No scraping, no logins to your accounts, nothing to break when a platform changes its API.',
+    title: 'Your account stays yours',
+    body: 'Notes2Pic never asks for your login and never posts on your behalf. Paste a link and we read the public post for you, or paste the text yourself — either way, nothing is connected to your account.',
   },
   {
     title: 'Free where it counts',

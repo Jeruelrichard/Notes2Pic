@@ -11,6 +11,10 @@ import { getPost } from '../lib/posts'
 // crawlers still see a real, populated tool — the marketing copy and FAQ below
 // are always in the static HTML.
 const CarouselTool = lazy(() => import('../components/CarouselTool'))
+const TweetScreenshotTool = lazy(() => import('../components/TweetScreenshotTool'))
+
+// Each tool page names its widget in the TOOL_PAGES config.
+const WIDGETS = { carousel: CarouselTool, tweet: TweetScreenshotTool }
 
 // Hydration-safe "are we on the client yet?" — false during SSR/first paint,
 // true after hydration, without a setState-in-effect.
@@ -19,12 +23,23 @@ function useHydrated() {
   return useSyncExternalStore(noopSubscribe, () => true, () => false)
 }
 
-function ToolSkeleton({ demo }) {
+function ToolSkeleton({ config }) {
   return (
     <div className="tool tool-skeleton" aria-hidden="true">
       <div className="tool-input">
-        <span className="tool-label">Your thread</span>
-        <textarea className="tool-textarea" defaultValue={demo} readOnly tabIndex={-1} />
+        {config.demo ? (
+          <>
+            <span className="tool-label">Your thread</span>
+            <textarea className="tool-textarea" defaultValue={config.demo} readOnly tabIndex={-1} />
+          </>
+        ) : (
+          <>
+            <span className="tool-label">Tweet link</span>
+            <div className="tweet-url-row">
+              <input className="tweet-url-input" placeholder="https://x.com/username/status/123…" readOnly tabIndex={-1} />
+            </div>
+          </>
+        )}
       </div>
       <div className="tool-preview">
         <div className="tool-canvas tool-canvas-placeholder">Loading preview…</div>
@@ -57,6 +72,7 @@ export default function ToolPage() {
   }
 
   const related = config.related ? getPost(config.related.slug) : null
+  const Widget = WIDGETS[config.widget] || CarouselTool
 
   return (
     <MarketingLayout>
@@ -71,11 +87,11 @@ export default function ToolPage() {
 
         <section className="tool-stage" aria-label="Carousel maker">
           {mounted ? (
-            <Suspense fallback={<ToolSkeleton demo={config.demo} />}>
-              <CarouselTool config={config} />
+            <Suspense fallback={<ToolSkeleton config={config} />}>
+              <Widget config={config} />
             </Suspense>
           ) : (
-            <ToolSkeleton demo={config.demo} />
+            <ToolSkeleton config={config} />
           )}
         </section>
 
