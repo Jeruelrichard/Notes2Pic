@@ -5,6 +5,7 @@ import BlogIndex from './pages/BlogIndex'
 import BlogPost from './pages/BlogPost'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import Contact from './pages/Contact'
 import ToolPage from './pages/ToolPage'
 import { TOOL_PAGES } from './lib/toolPages'
 import Analytics from './components/Analytics'
@@ -49,6 +50,7 @@ export default function AppShell() {
       ))}
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<Terms />} />
+      <Route path="/contact" element={<Contact />} />
       <Route path="*" element={<Landing />} />
       </Routes>
     </>

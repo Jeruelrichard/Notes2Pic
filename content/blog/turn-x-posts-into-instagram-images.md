@@ -1,5 +1,5 @@
 ---
-title: "How to Turn Your X (Twitter) Posts Into Instagram-Ready Images"
+title: "How to Turn Your Twitter Posts Into Instagram-Ready Images"
 description: "A step-by-step guide to repurposing your best X and Threads posts into clean, branded images you can post on Instagram in seconds."
 date: 2026-07-08
 tags: [content repurposing, instagram, twitter]

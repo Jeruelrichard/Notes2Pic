@@ -92,6 +92,7 @@ const sitemapUrls = [
   '/',
   '/app',
   '/blog',
+  '/contact',
   ...TOOL_PAGES.map((page) => page.path),
   ...posts.map((post) => `/blog/${post.slug}`),
 ]

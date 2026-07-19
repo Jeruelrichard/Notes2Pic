@@ -68,6 +68,15 @@ export function getMetaForPath(pathname) {
       ],
     }
   }
+  if (pathname === '/contact') {
+    return {
+      ...base,
+      title: `Contact | ${SITE_NAME}`,
+      description:
+        'Get in touch with Notes2Pic — email or DM. Built and supported by one person, so your message reaches a human.',
+      path: '/contact',
+    }
+  }
   if (pathname === '/privacy') {
     return {
       ...base,
@@ -179,6 +188,7 @@ export function listPrerenderPaths() {
   return [
     '/',
     '/blog',
+    '/contact',
     '/privacy',
     '/terms',
     ...TOOL_PAGES.map((page) => page.path),

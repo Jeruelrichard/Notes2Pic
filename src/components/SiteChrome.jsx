@@ -103,6 +103,7 @@ export function SiteFooter() {
           <Link to="/app">App</Link>
           <Link to="/thread-to-carousel">Free tools</Link>
           <Link to="/blog">Blog</Link>
+          <Link to="/contact">Contact</Link>
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms</Link>
           <a href="/sitemap.xml">Sitemap</a>
