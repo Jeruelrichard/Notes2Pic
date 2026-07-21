@@ -9,8 +9,6 @@ function shouldBypass(url) {
     url.pathname.startsWith('/auth/') ||
     url.hostname.endsWith('.supabase.co') ||
     url.hostname.endsWith('.freemius.com')
-    // Lemon Squeezy integration disabled — bypass no longer needed.
-    // || url.hostname.endsWith('.lemonsqueezy.com')
   )
 }
 

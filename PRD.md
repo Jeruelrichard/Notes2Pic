@@ -155,8 +155,8 @@ brand palette also lives in `api/share.js` — a rebrand touches it too.
 - **Frontend:** Vite + React 19 SPA. `react-router-dom` v7. Marketing/blog/legal prerendered at
   build via a Vite SSR build + `scripts/prerender.mjs`.
 - **Auth + DB:** Supabase (project ref `wrymzmmqzyhgxkvudoma`). Email/password + Google OAuth.
-- **Payments:** Freemius (Merchant of Record — handles tax/VAT/refunds). Lemon Squeezy disabled,
-  kept for reference. Freemius product `34323`, monthly plan `56531`, lifetime plan `56534`.
+- **Payments:** Freemius (Merchant of Record — handles tax/VAT/refunds). Product `34323`,
+  monthly plan `56531`, lifetime plan `56534`.
 - **Hosting:** Vercel, GitHub integration deploying `main` → production. Serverless `api/`
   functions (Freemius webhook; share render pending).
 - **Domain:** `www.notes2pic.com` (apex `notes2pic.com` 301-redirects to www).
@@ -167,7 +167,7 @@ brand palette also lives in `api/share.js` — a rebrand touches it too.
 - `exports` — one row per successful export; `kind` ∈ {short|medium|carousel}. Rolling-30-day
   counts drive the free caps.
 - `entitlements` — plan/status/`renews_at` + `fs_*` (Freemius) ids. Written **only** by the
-  webhook. Legacy `ls_*` columns unused.
+  webhook.
 - `author_profiles` — saved author profiles, per-user, RLS.
 - `shares` — unlisted share pages (id, user_id, kind, images[], caption, created_at); RLS locks
   inserts to the founder email. Paired with a public `shares` storage bucket.
@@ -239,8 +239,6 @@ pipeline — always test real purchases with a different email. Real accounts (n
   fails (blank unfurl). Shipped correctly (§6.4); keep it that way if the page is refactored.
 - **New-domain SEO reality** — meaningful Google traffic is a 3–6 month horizon; AI citations +
   Reddit are the faster channel. Don't expect head terms to rank in year one.
-- **OG image** — `public/og-image.png` is a placeholder (square app icon); replace with a real
-  1200×630 share image.
 - **Splitter ceiling** — deterministic rules can't understand "one idea"; genuine semantic
   splitting would need AI, which conflicts with the "not an AI generator" positioning.
 

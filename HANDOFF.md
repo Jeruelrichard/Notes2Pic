@@ -1,6 +1,6 @@
 # Notes2Pic — Session Handoff / Project State
 
-> Working handoff doc for picking up in a fresh session. Last updated: 2026‑07‑18.
+> Working handoff doc for picking up in a fresh session. Last updated: 2026‑07‑21.
 > Brand name is **"Notes2Pic"** (no trailing "s"). The repo folder is still `Notes2pics`
 > and some asset filenames/package name keep the old `notes2pics` spelling — that's fine,
 > only user‑visible text must read "Notes2Pic".
@@ -10,178 +10,184 @@
 ## What it is
 A post‑to‑image SaaS: turn X / Threads / Substack posts into Instagram‑ready images.
 Three studio modes: **Short post** (platform‑style cards), **Medium form** (quote image on
-a plain canvas), **Carousels** (long text split into slides, exported as a zip — splitting is
-now numbering‑aware; see "Thread splitter" below). Editing/preview are free & account‑less;
-**exporting requires sign‑in**.
+a plain canvas), **Carousels** (long text → slides, exported as a zip; numbering‑aware split).
+Editing/preview are free & account‑less; **exporting requires sign‑in**. Beyond the studio,
+there are **free SEO tool pages** and an **AI thread generator** (see those sections).
 
 ## Stack
-- **Frontend**: Vite + React 19 SPA. Marketing/blog/legal pages are **prerendered to static
-  HTML** at build (`scripts/prerender.mjs` via a Vite SSR build) for SEO; `/app` (the studio)
-  stays a client SPA. Routing = `react-router-dom` v7 (client) + prerender.
+- **Frontend**: Vite + React 19 SPA (JavaScript, not TS). Marketing/blog/legal/tool pages are
+  **prerendered to static HTML** at build (`scripts/prerender.mjs` via a Vite SSR build) for SEO;
+  `/app` (the studio) stays a client SPA. Routing = `react-router-dom` v7 + prerender.
 - **Auth + DB**: Supabase (project ref **`wrymzmmqzyhgxkvudoma`**). Email/password + Google OAuth.
-- **Payments**: **Freemius** (Merchant of Record — handles tax/VAT/refunds). Lemon Squeezy was
-  the earlier choice, now **disabled/commented out** (kept in `api/lemonsqueezy-webhook.js` and
-  `UpgradeModal`/`.env` for reference).
+- **Payments**: **Freemius** (Merchant of Record — tax/VAT/refunds). Product `34323`, monthly
+  plan `56531`, lifetime plan `56534`. (Lemon Squeezy is fully removed — never going back.)
+- **AI**: Google Gemini (thread generation). Server‑side only, key `GEMINI_API_KEY`.
 - **Hosting**: Vercel (project `notes2pic`, team `jeruel-richards-projects`), GitHub integration
-  auto‑deploys `main` → production. Domain: **`www.notes2pic.com`** (apex `notes2pic.com`
-  301‑redirects to www — so `SITE_URL` must be `https://www.notes2pic.com`).
+  auto‑deploys `main` → production. Domain **`www.notes2pic.com`** (apex 301→www, so
+  `SITE_URL` must be `https://www.notes2pic.com`).
 
 ## Plans / limits
-- **Free**: 3 exports per rolling 30 days (watermarked "made with Notes2Pic"), **1 carousel per
-  30 days** (still consumes 1 of the 3 credits), **1 saved profile**.
-- **Paid**: unlimited exports, unlimited carousels, unlimited saved profiles, no watermark.
-  **$5/mo** or **$10 lifetime** (first 20 buyers, then $17).
+- **Free**: 3 exports / rolling 30 days (watermarked), **1 carousel / 30 days** (uses 1 of the 3
+  credits), **1 saved profile**, **1 AI thread generation ever (lifetime cap, not monthly)**.
+- **Paid** ($5/mo or $10 lifetime): unlimited exports, carousels, saved profiles, **unlimited AI
+  thread generations**, no watermark.
 
-## Key architecture / data model (Supabase, all migrations already applied)
+## Data model (Supabase, `public`; all migrations applied via MCP)
 - `profiles` — one row per user (email), auto‑created by an `auth.users` insert trigger.
-- `exports` — one row per successful export; has a `kind` column ('short'|'medium'|'carousel').
-  Rolling‑30‑day counts drive the free caps.
-- `entitlements` — plan/status/`renews_at` + `fs_*` (Freemius license ids). Written **only** by
-  the Freemius webhook (service‑role key). Legacy `ls_*` columns still present, unused.
-- `author_profiles` — saved author profiles (name/username/avatar/signature), per‑user, RLS.
-- `shares` — unlisted `/s/<id>` share pages (id, user_id, kind, images[], caption, created_at).
-  RLS locks **inserts to the founder email**. Paired with a **public `shares` storage bucket**
-  (public read; founder‑only upload). See "Share links" below.
-- RPCs (SECURITY DEFINER, authenticated‑only):
-  - `record_export(p_kind text)` → `{allowed, watermark, remaining, reason}`. Enforces the
-    3/month cap, the 1 carousel/month cap (reason `carousel_limit`), and watermark decision.
-  - `get_usage()` → `{authenticated, paid, plan, remaining, carouselRemaining, ...}`.
-  - `is_paid(uuid)` → expiration‑aware (lifetime = null expiry always paid; monthly paid until
-    `renews_at` even if cancelled; expired = not paid). **Contains a founder bypass** (see below).
+- `exports` — one row per successful export; `kind` ∈ {short|medium|carousel}. Rolling‑30‑day
+  counts drive the free caps.
+- `generations` — one row per AI thread generation; `kind` default `'thread'`. **Deliberately
+  separate from `exports`** — `record_export` counts every `exports` row against the 3/month cap,
+  so a generation there would silently eat an export credit. RLS: owner‑select only.
+- `entitlements` — plan/status/`renews_at` + `fs_*` (Freemius) ids. Written **only** by the
+  Freemius webhook (service‑role). (The old `ls_*` columns were dropped.)
+- `author_profiles` — saved author profiles, per‑user, RLS.
+- `shares` — unlisted `/s/<id>` share pages; RLS locks inserts to the founder email. Paired with a
+  **public `shares` storage bucket** (public read; founder‑only upload).
+- RPCs (SECURITY DEFINER):
+  - `record_export(p_kind)` → `{allowed, watermark, remaining, reason}`. 3/month + 1 carousel/month
+    caps + watermark decision.
+  - `record_generation()` → `{allowed, remaining, reason}`. **1 lifetime free**, paid = unlimited.
+    Reason `generation_limit` when a free user is out. Inserts only via this RPC.
+  - `get_usage()` → `{authenticated, paid, plan, remaining, carouselRemaining, threadsRemaining}`.
+  - `is_paid(uuid)` → expiration‑aware; **contains the founder bypass** (below).
 
 ## Founder bypass (IMPORTANT for testing)
-`okemdinach383@gmail.com` is hardcoded in `is_paid()` to always be paid (unlimited, no
-watermark). So it **cannot** validate the payment pipeline — always test purchases with a
-different email.
+`okemdinach383@gmail.com` is hardcoded in `is_paid()` to always be paid (unlimited exports,
+carousels, generations; no watermark). So it **cannot** validate the payment/quota pipeline —
+always test caps with a different (throwaway) account. Founder‑only UI toggles: "Create share
+link", and a **"Show watermark (founder)"** toggle in the studio + tweet tool (founder is
+watermark‑free by default, so the toggle turns it ON for demo shots).
 
-## Freemius integration
-- Client checkout links built in `src/lib/checkout.js` / `UpgradeModal`:
-  `https://checkout.freemius.com/product/{PRODUCT}/plan/{PLAN}/?user_email=…&readonly_user=true`.
-  IDs: **product `34323`**, **monthly plan `56531`**, **lifetime plan `56534`**.
-- Webhook: `api/freemius-webhook.js` — verifies `x-signature` HMAC‑SHA256 with the product
-  **Secret Key**, maps the Freemius buyer **back to the Supabase user by email** (via `profiles`),
-  and upserts the `entitlements` row. Handles all `license.*` events.
-- **The email match is the linchpin**: checkout locks the email (`readonly_user=true`) to the
-  signed‑in user, so the webhook can match. Always be signed in before clicking upgrade.
+## Free tool pages (SEO engine — Kevin Wu / TwitterShots playbook)
+Config‑driven: **`src/lib/toolPages.js`** (data) → **`src/pages/ToolPage.jsx`** (one template,
+`WIDGETS` map) → routes auto‑generated in `src/AppShell.jsx` from `TOOL_PAGES`. A new tool page =
+a config entry + a widget. SEO meta, sitemap + `lastmod`, IndexNow ping, the header **Tools**
+dropdown, and the footer "Free Tools" column all derive from that config automatically. Three live:
+- **`/thread-to-carousel`** (`CarouselTool.jsx`) — paste thread → live carousel preview → download
+  zip. Reuses `splitThread` + `drawSlide` + the sign‑in/quota export path.
+- **`/tweet-screenshot`** (`TweetScreenshotTool.jsx`) — paste a tweet link → we fetch it →
+  render the studio's short‑post card → export. See "Tweet screenshot" below.
+- **`/thread-generator`** (`ThreadGeneratorTool.jsx`) — paste an essay → Gemini → thread →
+  "Turn this into a carousel" hands off to `/thread-to-carousel`. See "AI thread generator" below.
+Each tool's stage renders at **540px** and exports at `pixelRatio: 2` → 1080 (the card is capped
+at 450px, so a 1080 stage would leave it filling ~41% — must stay 540). Shared card markup +
+styles: `src/components/ShortSourcePreview.jsx` + `src/styles/postcard.css` (one source, studio +
+tool pages both use it).
 
-## Landing → checkout deep link
-Landing pricing buttons carry intent: `/app?checkout=lifetime|monthly`. On `/app`, if signed in
-→ redirect straight to Freemius checkout; if not → sign in first, then continue. Intent survives
-Google OAuth via `sessionStorage` (with a timestamp guard). See the `pendingCheckout` logic in
-`App.jsx`.
+## Tweet screenshot tool (`api/tweet.js`)
+Serverless fetch of a public tweet — **no X API key, no cost**.
+- Source 1: `cdn.syndication.twimg.com/tweet-result` (X's own embed endpoint) — full data (text,
+  name, handle, avatar, verified, date, likes/replies/retweets, photo + dims). Source 2 fallback:
+  `publish.twitter.com/oembed` (text + author only). **Works from Vercel's IPs** (verified).
+- **Long‑form ("note") tweets**: syndication returns only a `note_tweet` *id*, not the full body,
+  so `text` is truncated (~he first chunk). We flag `truncated` and the UI shows an editable box.
+- **Photos**: rendered uncropped at true aspect ratio; the tool page's canvas GROWS (540→up to 960
+  = a 1080×1920 export) for tall images; the studio keeps its fixed Square/Portrait/Story and the
+  photo shrinks to fit (`.x-card` flex column, `min-height:0` on `.x-photo`, grid track
+  `minmax(0,1fr)` on `.export-stage` so `max-height` actually clamps).
+- Text links/@mentions/#hashtags render in X blue via the `highlight` prop (curated TLD list, not
+  "dot anything", to avoid mangling `Mr.Smith`). t.co links expanded to display form; the media's
+  own t.co is stripped once the photo renders.
+- Export uses `skipFonts: true` and **no `cacheBust`** (cacheBust appends `?ts` → `pbs.twimg.com`
+  404s the avatar → export fails). Same fix applied in `App.jsx`.
 
-## Env vars (client `VITE_` baked at build; server secret in Vercel only)
+## AI thread generator (`api/generate-thread.js` + `api/prompts/thread-generator.js`)
+- Flow: validate essay (≤ **10,000 words**, server + client) → verify the caller's Supabase JWT →
+  `record_generation()` **before** calling Gemini (so an out‑of‑credit user never triggers a paid
+  call; quota is in Postgres, not the client) → call Gemini → return `{ ok, thread, remaining }`.
+- **The prompt lives in `api/prompts/thread-generator.js`** (`THREAD_PROMPT_TEMPLATE` with a
+  `{{ESSAY}}` placeholder; `buildThreadPrompt(essay)` interpolates it and neutralises any
+  `--- ESSAY START/END ---` the user typed). Editing that file changes output for the tool page
+  AND the studio. **Do not break the `{n}/{N}` output format** — the carousel splitter reads it.
+- **Model gotcha (cost us a live outage):** Google **retired `gemini-2.5-flash` for new keys** →
+  404 "no longer available to new users" (still appears in the model list!). We now use the alias
+  **`gemini-flash-latest`** with pinned fallbacks (`gemini-3.6-flash`, `gemini-3.5-flash`). Run
+  **`node scripts/gemini-check.mjs`** to list/probe models this key can actually use (reads
+  `.env.local`, never prints the key). `gemini-2.5-pro` returns 429 (quota) on this key — Flash only.
+- **Vercel timeout:** a real generation took ~13s; Vercel's default function limit is 10s → set
+  `export const config = { maxDuration: 60 }`. Confirm the plan allows 60s (Hobby caps lower).
+- Studio: an **"✨ Essay → Thread (AI)"** collapsible panel in **Carousel mode only** fills the
+  carousel textarea, then the normal split/export pipeline takes over.
+- Handoff to carousel: `sessionStorage['n2p.generatedThread']`, consumed once (`takeHandoffThread`
+  in `src/lib/threadGen.js`). `CarouselTool` prefers it over its demo text.
+
+## Landing / marketing chrome
+- Warm **clay** palette, **Newsreader + Hanken Grotesk**. Keyword‑optimized H1/title/description
+  (title "Turn Tweets & Threads into Instagram Carousels"), image alt text, "Free to start" note.
+- **Sale counter**: one constant `LIFETIME_SPOTS_LEFT` in `src/pages/Landing.jsx` (currently 19) —
+  bump it as lifetime deals sell. Shown on hero note + pricing badge.
+- **Testimonial**: `public/testimonial1.png` in a section above pricing.
+- **Header**: 3‑col grid (brand / centered Pricing+Blog / actions). **Tools dropdown** + account
+  chip (signed‑in avatar). Mobile: hamburger only, flush right; nav in a dropdown.
+- **Footer**: brand + Product Hunt badge on top, then labelled columns (Free Tools / Notes2Pic /
+  More). Includes the **Needle backlink** (`useneedle.net/directory/notes2pic`) — a directory
+  verification link, keep it.
+- **Contact** page `/contact` (`src/pages/Contact.jsx`): email (`jeruelrichard@gmail.com`) +
+  "DM me on X" (`@jeruelrichard`). Pricing link smooth‑scrolls to the cards (`src/lib/scrollTo.js`).
+- **7 blog posts** in `content/blog/`. Blog tags **must be a YAML list** (`tags: [a, b]`) — a bare
+  string once threw `other.tags.filter is not a function` and **took down the whole SPA**;
+  `posts.js` now coerces to an array, but keep frontmatter clean.
+
+## SEO / GEO / analytics / verification
+- Prerender emits JSON‑LD (Org+WebSite everywhere; BlogPosting+Breadcrumb on posts; FAQPage on
+  posts and tool pages), robots.txt (allows AI crawlers), llms.txt, sitemap.xml (with `lastmod`),
+  rss.xml. `src/lib/seoMeta.js` is the single meta source.
+- **IndexNow [SHIPPED]**: key file `public/33156ab60a90df3f2985f6b356f7c0de.txt`; `scripts/indexnow.mjs`
+  runs as the last build step and pings Bing/Yandex with the sitemap URLs — **only on Vercel
+  production** builds, never fails the build.
+- **GA4**: wired, env‑gated on `VITE_GA4_ID`, fires `page_view` per route. (Owner has set the ID.)
+- **Site verifications** in `public/`: Google (`google199103b29621ffe8.html`) and StartupRanking
+  (`startupranking1371500320978910.html`). ⚠️ `vercel.json` `cleanUrls:true` 308‑redirects
+  `/x.html` → `/x`; most verifiers follow it. If StartupRanking's auto‑check fails, that redirect
+  is the suspect — confirm `web_fetch_vercel_url` on the `.html` URL returns the token.
+
+## Env vars (client `VITE_` baked at build; server secrets Vercel‑only)
 Client: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_FREEMIUS_PRODUCT_ID`,
-`VITE_FREEMIUS_PLAN_MONTHLY`, `VITE_FREEMIUS_PLAN_LIFETIME`, `VITE_GA4_ID` (optional; analytics
-is a no‑op when unset — set the GA4 Measurement ID in Vercel to turn tracking on).
-Server (Vercel): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `FREEMIUS_SECRET_KEY`.
-Build: `SITE_URL` — set to **`https://www.notes2pic.com`** (matches the served host; apex→www).
-See `.env.example`. `.env.local` is gitignored.
-
-## ✅ Deployed & live (was the old top blocker — now resolved)
-Live in production at `www.notes2pic.com`, auto‑deploying from `main`. The Freemius webhook,
-Supabase, and all env vars are wired in Vercel. The earlier sandbox/test lifetime grants on
-`beowulfagate9@gmail.com` and `jeruelrichard@gmail.com` were reset to free (entitlement rows
-deleted + export usage cleared) — they were catfish/test accounts, not real paying customers.
-
-## Share links (`/s/<id>`) — founder outreach tool [SHIPPED]
-Founder‑only branded pages for cold‑DM outreach (Instagram blocks attachments on first DMs, so
-you send a **link**; demo the **carousel**, not a single screenshot — that's the differentiator).
-- **Founder‑only**: `okemdinach383@gmail.com`, enforced by RLS on `shares` + the `shares` bucket.
-- `src/lib/shares.js` — `createShare()` uploads the rendered PNG blobs + inserts the row; short
-  unambiguous id. Studio has a founder‑gated **"Create share link"** button (`shareCurrent()` in
-  `App.jsx`) that copies the `/s/<id>` URL.
-- **`api/share.js`** — the `/s/:id` page is a **Vercel serverless function** (routed via a
-  `vercel.json` rewrite). It **MUST stay server‑rendered**: DM unfurlers don't run JS, so a
-  client SPA route would unfurl blank. It server‑renders OG tags + all slides in the initial HTML,
-  is `noindex`, swipeable (scroll‑snap + dots/nav), dark‑mode aware, with a branded 404. Note: it
-  hardcodes its own CSS/palette (can't import the SPA bundle) — a rebrand touches this file too.
-
-## Thread splitter — now intelligent (`src/lib/carousel.js`)
-`splitThread(text)` → `{ slides, numbered }`. Key behaviours (all deterministic, no AI):
-- **Pre‑numbered threads win.** Detects `1/11`, `1/`, `1.`, `(1)`, `Tweet 1`, lone `1`, etc. and
-  uses the author's own boundaries — 1 number = 1 slide. Numbering wins over the 300‑char soft
-  target (`SLIDE_MAX_CHARS`); a long tweet stays one slide and `drawSlide` auto‑shrinks the font.
-- **Style‑aware runs**: markers only chain with same‑style markers, so in‑body "Step 1/2/3" can't
-  poison the real "Tweet 1..10" run. (This was a real bug — a thread with "Step N" in the body
-  dumped everything into slide 5. Fixed.)
-- **False‑positive guards**: needs a real +1 run, caps marker numbers at 199 (so "2026 was…",
-  "5 reasons…", "300 subscribers…" aren't markers). Unnumbered text = even split, no orphans,
-  lists kept whole.
-- Editor no longer hard‑truncates at 300; hard cap is `SLIDE_HARD_MAX` (1000) so a long numbered
-  tweet isn't silently chopped.
-
-## SEO / GEO + analytics (shipped)
-- **Prerender** (`scripts/prerender.mjs`) now also emits: JSON‑LD (`Organization`+`WebSite`
-  everywhere; `BlogPosting`+`BreadcrumbList` on posts; `FAQPage` auto‑built from a post's `## FAQ`
-  section), per‑post article OG tags, `robots.txt` (explicitly allows AI crawlers: GPTBot,
-  OAI‑SearchBot, ClaudeBot, PerplexityBot, Google‑Extended, etc.), and `llms.txt`.
-- **`src/lib/seoMeta.js`** is the single meta source (`getMetaForPath` + `buildJsonLd`); the
-  client `Seo.jsx` and the prerender share it. `src/lib/posts.js` parses `author`/`updated`,
-  auto‑builds the FAQ, and computes related posts (by shared tags) for internal linking.
-- Blog template has author byline, "Updated" date, TOC, related‑posts block.
-- **GA4** wired via `src/lib/analytics.js` + `src/components/Analytics.jsx`, env‑gated on
-  `VITE_GA4_ID`, fires `page_view` on every SPA route change. **Set the ID in Vercel to activate.**
-- **OG image** `public/og-image.png` is a placeholder (square app icon) — replace with real 1200×630.
-
-## Landing / blog
-- Landing redesigned: warm **clay** palette, **Newsreader + Hanken Grotesk** fonts (in
-  `index.html` + `src/marketing.css`), demo‑led hero, real example images, animated carousel.
-- **3 blog posts** in `content/blog/`: `turn-x-posts-into-instagram-images`,
-  `twitter-thread-to-instagram-carousel`, `tweet-to-instagram-post`.
-- **Product Hunt badge** in the shared footer (`SiteChrome.jsx`, post_id `1199762`). Footer is
-  `flex-wrap` so the 250px badge drops to its own line on mobile.
-
-## ⏳ Open decision — pricing (NOT resolved)
-$10 lifetime vs $5/mo: a lifetime buyer pays for ~2 months then costs money forever, working
-against recurring‑revenue growth. Candidate: sell $5/mo directly, or "$5/mo, first 20 locked in
-forever" as the launch hook. Landing/checkout currently push **lifetime**. User's call.
+`VITE_FREEMIUS_PLAN_MONTHLY`, `VITE_FREEMIUS_PLAN_LIFETIME`, `VITE_GA4_ID`.
+Server (Vercel): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY` (for the
+generate‑thread JWT check), `FREEMIUS_SECRET_KEY`, **`GEMINI_API_KEY`**. Build: `SITE_URL`.
+`.env.local` is gitignored (`*.local`) — safe for local secrets like `GEMINI_API_KEY`.
 
 ## Owner‑task backlog (not code)
-Set `VITE_GA4_ID` in Vercel + GA4 "AI Traffic" channel; Google Search Console + Bing Webmaster +
-IndexNow (IndexNow not built — offer key file + submit script); Reddit/Product Hunt/directory
-distribution; replace `og-image.png`.
-
-## Other pending / status
-- **Google OAuth verification**: in progress. Privacy (`/privacy`) + Terms (`/terms`) pages
-  built & prerendered; contact email `jeruelrichard@gmail.com`. Google site‑verification file at
-  `public/google199103b29621ffe8.html`. Note: `vercel.json` `cleanUrls:true` 308‑redirects
-  `/x.html` → `/x`; Google usually follows it, but if file verification fails, switch to the
-  "HTML tag" method and add a `<meta name="google-site-verification">` to `index.html`.
-- **IP‑based anti‑abuse ban (6 months)**: user asked, we **deferred it** — hard IP bans have bad
-  false positives (CGNAT/office/VPN shared IPs) and are trivially bypassed. Recommended
-  alternative if revisited: soft rate‑limit *new signups* per IP via a Vercel function. Not built.
-- **Reset password**: DONE (AuthModal "Forgot your password?" → reset email → `SetPasswordModal`
-  on `PASSWORD_RECOVERY`).
-- **Carousel design**: default `drawSlide` look shipped; never re‑tuned against the user's Dan Koe
-  / KOE reference screenshots — a possible future polish.
+- **DONE**: Google OAuth verification, GSC, Bing Webmaster, directory distribution (Needle,
+  StartupRanking in progress), IndexNow, GA4 activation.
+- **Still open**: replace placeholder `public/og-image.png` with a real 1200×630; confirm
+  `GEMINI_API_KEY` is set in Vercel + a real generation works post‑deploy; finish StartupRanking
+  verification (upload + confirm the `.html` resolves).
+- **Pricing decision** (unresolved): $10 lifetime vs $5/mo. Now framed with the scarcity counter
+  ("first 20 buyers, N left"). Landing/checkout push lifetime.
 
 ## Dev gotchas that already bit us (don't rediscover)
-- **Blog posts MUST end in `.md`.** The loader is `import.meta.glob('content/blog/*.md')`, so a
-  file saved without the extension (e.g. `tweet-to-instagram-post`) is **silently dropped** —
-  committed and deployed but invisible. This bit us twice ("post not showing"). After adding a
-  post, run `npm run build` and confirm `prerendered /blog/<slug>` appears in the output.
-- **"Post not showing live" is usually NOT a cache.** The prod service worker (`public/sw.js`) is
-  **network‑first**, so online users get fresh content. When a post seems missing: (1) check the
-  `.md` extension, (2) confirm the Vercel deploy is READY for the right commit, (3) verify via
-  `web_fetch_vercel_url` on the real URL before blaming cache.
-- **Vite ignores `PORT` env** → the preview harness's autoPort failed until `vite.config.js` was
-  made to read `process.env.PORT`. Keep that.
-- **Stale service worker** on `localhost` serves old bundles even when hard‑refresh works.
-  `main.jsx` unregisters SWs in dev. If "my change isn't showing," Clear‑site‑data + close all tabs.
-- **Supabase auth redirect scheme**: local dev is `http://localhost:5173`, not `https` — the
-  Supabase redirect allow‑list must have the `http://` version or OAuth falls back to Site URL
-  (prod) and dumps you on the wrong origin.
-- **Supabase hides "email already exists"** on signup (empty `identities[]`, no error). AuthModal
-  detects that.
+- **`npm run dev` does NOT run `api/` functions** — Vite serves only the SPA; `/api/*` proxies to
+  **production**. To exercise serverless functions locally use `npx vercel dev`. For Gemini, the
+  `scripts/gemini-check.mjs` probe is faster than a full local server.
+- **The Browser pane reports `visibilityState: hidden`** → Chrome throttles `requestAnimationFrame`
+  to **zero** and `IntersectionObserver`/lazy‑loading never fires. So html‑to‑image exports and
+  `loading="lazy"` images appear "broken" **only in the pane** (not for real users). To verify an
+  export in‑pane, shim `requestAnimationFrame` onto `setTimeout` in‑page first.
+- **Blog posts MUST end in `.md`** (glob loader silently drops others) and **tags must be a YAML
+  list** (bare string crashes the SPA — see Landing/blog note).
+- **"Not showing live" is usually NOT cache** — SW is network‑first. Check `.md`, the deploy is
+  READY, then `web_fetch_vercel_url` before blaming cache. (WebFetch to notes2pic.com is blocked in
+  the sandbox — use the Vercel MCP `web_fetch_vercel_url`.)
+- **Vite ignores `PORT`** → `vite.config.js` patched to read `process.env.PORT`. Keep it.
+- **Stale SW on localhost** serves old bundles; `main.jsx` unregisters SWs in dev.
+- **Supabase OAuth redirect**: local dev is `http://localhost:5173` (not https) — must be in the
+  allow‑list, or Google login falls back to the prod Site URL. Tool‑page Google sign‑in now returns
+  to the current path (`redirectTo`), so those paths must be allow‑listed too (a wildcard is easiest).
+- **Supabase hides "email already exists"** (empty `identities[]`); AuthModal detects it.
+- **`skipFonts` + no `cacheBust`** on every html‑to‑image export (see Tweet screenshot).
 
 ## Testing convention (Supabase)
-Test users are created directly via SQL `insert into auth.users(...)` with **all** GoTrue token
-columns set to `''` (else password login 500s) and `email_confirmed_at = now()`. Always clean up
-test users afterward (cascades remove their exports/profiles). **Never delete the real accounts**:
-`okemdinach383@gmail.com` (founder), `beowulfagate9@gmail.com`, `jeruelrichard@gmail.com`,
+Create throwaway users via SQL `insert into auth.users(...)` with **all** GoTrue token columns
+`''` (else password login 500s) and `email_confirmed_at = now()`; call SECURITY DEFINER RPCs by
+`set_config('request.jwt.claims', json_build_object('sub', uid, 'role','authenticated')::text, true)`.
+**Always delete test users after** (cascades their exports/generations). **Never delete the real
+accounts**: `okemdinach383@gmail.com` (founder), `beowulfagate9@gmail.com`, `jeruelrichard@gmail.com`,
 `okembackup383@gmail.com`, `okemfcb383@gmail.com`.
 
 ## Verify locally
-`npm run dev` (studio at `/app`). `npm run build` runs client + SSR + prerender (emits
-`/privacy`, `/terms`, blog, sitemap.xml, rss.xml). `npm run lint`.
+`npm run dev` (studio at `/app`). `npm run build` = client + SSR + prerender (emits tool pages,
+blog, `/privacy`, `/terms`, `/contact`, sitemap.xml, rss.xml, robots.txt, llms.txt; IndexNow ping
+is prod‑only). `npm run lint`.

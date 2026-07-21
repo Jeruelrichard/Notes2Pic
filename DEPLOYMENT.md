@@ -7,8 +7,7 @@
 
 
 This app is a Vite/React SPA plus a Vercel serverless webhook (`api/freemius-webhook.js`),
-backed by Supabase (Auth + Postgres) and Freemius (payments). The old
-`api/lemonsqueezy-webhook.js` is disabled/commented out and kept only for reference.
+backed by Supabase (Auth + Postgres) and Freemius (payments).
 
 The Supabase project and database schema are **already created** (project ref
 `wrymzmmqzyhgxkvudoma`). The steps below are the remaining dashboard/config work.

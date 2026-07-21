@@ -12,19 +12,33 @@ import { buildThreadPrompt, MAX_ESSAY_WORDS } from './prompts/thread-generator.j
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
 const ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY
-const MODEL = 'gemini-2.5-flash'
-const GEMINI_TIMEOUT_MS = 55000
+// `gemini-flash-latest` is an ALIAS that always points at the current Flash
+// model. Deliberate choice: a pinned id (we shipped `gemini-2.5-flash`) got
+// retired by Google and returned 404 "no longer available to new users",
+// taking the feature down. An alias can shift behaviour under us, but the
+// prompt is explicit enough to survive a bump, and a silently-changed model is
+// a far gentler failure than a hard outage.
+// The fallbacks are pinned, working models probed with this key — if the alias
+// ever fails we degrade instead of dying. See scripts/gemini-check.mjs.
+const MODELS = ['gemini-flash-latest', 'gemini-3.6-flash', 'gemini-3.5-flash']
+const GEMINI_TIMEOUT_MS = 45000
+
+// Vercel kills a serverless function at 10s by default. A real generation
+// measured ~13s on a short essay (longer ones take more), so without this the
+// function is terminated mid-call and the user sees a gateway error even when
+// Gemini is working fine. Our own 45s abort sits safely under this ceiling.
+export const config = { maxDuration: 60 }
 
 function countWords(text) {
   return (text.trim().match(/\S+/g) || []).length
 }
 
-async function callGemini(prompt) {
+async function callGemini(prompt, model) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS)
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
       {
         method: 'POST',
         signal: controller.signal,
@@ -51,7 +65,12 @@ async function callGemini(prompt) {
 
     if (!response.ok) {
       const detail = await response.text().catch(() => '')
-      return { error: `Gemini returned ${response.status}`, detail: detail.slice(0, 400) }
+      // 404/400 = this model id is gone or unusable → worth trying the next one.
+      return {
+        error: `Gemini returned ${response.status}`,
+        detail: detail.slice(0, 400),
+        retryable: response.status === 404 || response.status === 400,
+      }
     }
 
     const data = await response.json()
@@ -147,8 +166,14 @@ export default async function handler(req, res) {
     return
   }
 
-  // 4) Only now does this cost money.
-  const result = await callGemini(buildThreadPrompt(essay))
+  // 4) Only now does this cost money. Walk the model list so a retired model id
+  // degrades to the next one instead of taking the feature down.
+  const prompt = buildThreadPrompt(essay)
+  let result
+  for (const model of MODELS) {
+    result = await callGemini(prompt, model)
+    if (!result.error || !result.retryable) break
+  }
   if (result.error) {
     res.status(502).json({ ok: false, error: result.error, ...(req.query?.debug ? { detail: result.detail } : {}) })
     return
