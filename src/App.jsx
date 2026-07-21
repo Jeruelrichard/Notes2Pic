@@ -25,6 +25,7 @@ import { getUsage, recordExport } from './lib/entitlements'
 import { checkoutUrlForPlan } from './lib/checkout'
 import { listProfiles, upsertProfile, deleteProfileById } from './lib/profiles'
 import { splitIntoSlides, splitThread, SLIDE_MAX_CHARS, SLIDE_HARD_MAX } from './lib/carousel'
+import { MAX_ESSAY_WORDS, countWords, generateThread } from './lib/threadGen'
 import { drawSlide } from './lib/carouselRender'
 import ShortSourcePreview from './components/ShortSourcePreview'
 import {
@@ -208,6 +209,12 @@ function App() {
   const [tweetLoading, setTweetLoading] = useState(false)
   const [tweetError, setTweetError] = useState('')
   const [founderWatermark, setFounderWatermark] = useState(false)
+  // Carousel mode's AI assist: essay in, thread out, straight into the textarea
+  // the splitter already reads. Same endpoint + quota as the free tool page.
+  const [aiOpen, setAiOpen] = useState(false)
+  const [aiEssay, setAiEssay] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState('')
   const [mediumPost, setMediumPost] = useState(starterMediumPost)
   const [carousel, setCarousel] = useState(starterCarousel)
   const [slideIndex, setSlideIndex] = useState(0)
@@ -682,6 +689,53 @@ function App() {
     reader.readAsDataURL(file)
   }
 
+  // Essay -> thread, then drop it straight into the carousel text so the
+  // existing splitThread/slide-editor/export pipeline takes over untouched.
+  async function generateCarouselThread(event) {
+    event?.preventDefault()
+    const words = countWords(aiEssay)
+    if (!aiEssay.trim() || words > MAX_ESSAY_WORDS) return
+    if (!isSupabaseConfigured) {
+      setAiError('Accounts are not configured yet.')
+      return
+    }
+    if (!user) {
+      setAuthModal({ open: true, reason: 'Sign in to generate a thread from your essay.' })
+      return
+    }
+    setAiLoading(true)
+    setAiError('')
+    try {
+      const result = await generateThread(aiEssay)
+      if (!result.ok) {
+        if (result.reason === 'generation_limit') {
+          setUpgradeModal({
+            open: true,
+            reason: 'You have used your free AI thread generation. Upgrade for unlimited generations.',
+          })
+        } else if (result.reason === 'not_authenticated') {
+          setAuthModal({ open: true, reason: 'Please sign in again to generate.' })
+        } else {
+          setAiError(result.error || 'Generation failed. Try again in a moment.')
+        }
+        return
+      }
+      const { slides, numbered } = splitThread(result.thread)
+      setCarousel((current) => ({ ...current, text: result.thread, slides }))
+      setSlideIndex(0)
+      setAiOpen(false)
+      setNotice(
+        numbered
+          ? `Thread generated and split into ${slides.length} slides using its own numbering.`
+          : `Thread generated and split into ${slides.length} slides.`,
+      )
+    } catch {
+      setAiError('Something went wrong generating that thread. Try again.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
   async function exportImage() {
     if (isCarouselMode && !carousel.slides.length) {
       setNotice('Split your text into slides before exporting.')
@@ -1093,6 +1147,44 @@ function App() {
 
           {isCarouselMode ? (
             <>
+              <div className="ai-panel">
+                <button
+                  type="button"
+                  className="ai-panel-toggle"
+                  aria-expanded={aiOpen}
+                  onClick={() => setAiOpen((open) => !open)}
+                >
+                  <Sparkles aria-hidden="true" />
+                  Essay → Thread (AI)
+                  <span className="ai-panel-hint">{aiOpen ? 'Hide' : 'Turn an essay into a thread'}</span>
+                </button>
+
+                {aiOpen ? (
+                  <form className="ai-panel-body" onSubmit={generateCarouselThread}>
+                    <textarea
+                      className="medium-textarea"
+                      value={aiEssay}
+                      onChange={(event) => setAiEssay(event.target.value)}
+                      placeholder="Paste your blog post, newsletter or draft here…"
+                      spellCheck={false}
+                    />
+                    <div className="ai-panel-actions">
+                      <span className={countWords(aiEssay) > MAX_ESSAY_WORDS ? 'ai-count over' : 'ai-count'}>
+                        {countWords(aiEssay).toLocaleString()} / {MAX_ESSAY_WORDS.toLocaleString()} words
+                      </span>
+                      <button
+                        type="submit"
+                        className="export-button"
+                        disabled={aiLoading || !aiEssay.trim() || countWords(aiEssay) > MAX_ESSAY_WORDS}
+                      >
+                        {aiLoading ? 'Generating…' : 'Generate thread'}
+                      </button>
+                    </div>
+                    {aiError ? <p className="ai-error">{aiError}</p> : null}
+                  </form>
+                ) : null}
+              </div>
+
               <label className="field full">
                 <span>Long post or thread</span>
                 <textarea

@@ -12,9 +12,10 @@ import { getPost } from '../lib/posts'
 // are always in the static HTML.
 const CarouselTool = lazy(() => import('../components/CarouselTool'))
 const TweetScreenshotTool = lazy(() => import('../components/TweetScreenshotTool'))
+const ThreadGeneratorTool = lazy(() => import('../components/ThreadGeneratorTool'))
 
 // Each tool page names its widget in the TOOL_PAGES config.
-const WIDGETS = { carousel: CarouselTool, tweet: TweetScreenshotTool }
+const WIDGETS = { carousel: CarouselTool, tweet: TweetScreenshotTool, thread: ThreadGeneratorTool }
 
 // Hydration-safe "are we on the client yet?" — false during SSR/first paint,
 // true after hydration, without a setState-in-effect.
@@ -27,7 +28,17 @@ function ToolSkeleton({ config }) {
   return (
     <div className="tool tool-skeleton" aria-hidden="true">
       <div className="tool-input">
-        {config.demo ? (
+        {config.widget === 'thread' ? (
+          <>
+            <span className="tool-label">Your essay</span>
+            <textarea
+              className="tool-textarea"
+              placeholder="Paste your blog post, newsletter or draft here…"
+              readOnly
+              tabIndex={-1}
+            />
+          </>
+        ) : config.demo ? (
           <>
             <span className="tool-label">Your thread</span>
             <textarea className="tool-textarea" defaultValue={config.demo} readOnly tabIndex={-1} />

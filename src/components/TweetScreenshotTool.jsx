@@ -345,7 +345,7 @@ export default function TweetScreenshotTool() {
           >
           <div
             ref={stageRef}
-            className={`export-stage short-stage short-x short-${theme} aspect-square`}
+            className={`export-stage short-stage short-x short-${theme}`}
             style={{ width: SIZE, height: stageHeight }}
           >
             <ShortSourcePreview

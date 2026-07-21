@@ -6,6 +6,12 @@
 .export-stage {
   position: relative;
   display: grid;
+  /* minmax(0, 1fr) pins the row/column to the stage's fixed size. With the
+     default `auto` track the row grows to its content, so a tall card's
+     `max-height: 100%` resolved against the GROWN row and never clamped —
+     which is how a tall photo escaped the canvas and got cut off. */
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   overflow: hidden;
   flex: 0 0 auto;
@@ -322,13 +328,29 @@
   color: #1d9bf0;
 }
 
-/* Attached tweet image */
+/* Attached tweet image.
+   The card is a flex column that never exceeds the canvas, and the photo is the
+   one part allowed to shrink (min-height: 0). So on a FIXED canvas — the
+   studio's Square/Portrait/Story choice — a tall photo scales down to fit
+   instead of being cropped off the bottom, while the header, text and footer
+   keep their natural size. On the tool page the canvas grows to the photo, so
+   nothing shrinks there. Either way the image is never cropped or distorted. */
+.x-card {
+  display: flex;
+  flex-direction: column;
+  /* Leave a little breathing room so a tall card never sits flush to the edge. */
+  max-height: calc(100% - 28px);
+}
+
 .x-photo {
   margin-top: 14px;
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid rgba(113, 118, 123, 0.34);
   line-height: 0;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
 }
 
 /* Never crop: show the photo at its true aspect ratio. Tall portrait shots get
@@ -336,6 +358,25 @@
    don't trade the user's image quality for a fixed square. */
 .x-photo img {
   display: block;
-  width: 100%;
+  width: auto;
   height: auto;
+  max-width: 100%;
+}
+
+/* On the studio's FIXED canvases, cap the photo's height so a tall image scales
+   down proportionally (width follows height) instead of the flex box squashing
+   it. Both dimensions are `auto` with two max constraints, so the browser keeps
+   the aspect ratio exactly — no crop, no stretch, no letterbox gaps.
+   The tool page's stage carries no aspect-* class because its canvas grows to
+   the image, so nothing is capped there. */
+.aspect-square .x-photo img {
+  max-height: 240px;
+}
+
+.aspect-portrait .x-photo img {
+  max-height: 360px;
+}
+
+.aspect-story .x-photo img {
+  max-height: 620px;
 }

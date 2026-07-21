@@ -40,6 +40,60 @@ What got trained in can get trained back out.`
 
 export const TOOL_PAGES = [
   {
+    slug: 'thread-generator',
+    path: '/thread-generator',
+    widget: 'thread',
+    navLabel: 'AI Threads Generator',
+    updated: '2026-07-21',
+    metaTitle: 'AI Twitter Thread Generator — Turn Any Essay Into a Thread',
+    metaDescription:
+      'Paste your essay, blog post or newsletter and get a ready-to-post X thread in seconds. Then turn it into an Instagram carousel with one click. Free to try.',
+    eyebrow: 'Free tool',
+    h1: 'Turn any essay into a thread',
+    subhead:
+      'Paste what you already wrote. Get a numbered, ready-to-post X thread in seconds — then send it straight to a carousel.',
+    steps: [
+      {
+        title: 'Paste your essay',
+        body: 'Drop in a blog post, newsletter or draft — up to 10,000 words. No formatting or clean-up needed.',
+      },
+      {
+        title: 'Generate the thread',
+        body: 'It rewrites your piece into numbered posts that keep your voice, your argument and your examples.',
+      },
+      {
+        title: 'Send it to a carousel',
+        body: 'One click hands the thread to the carousel maker, which splits it into Instagram-ready slides.',
+      },
+    ],
+    faq: [
+      {
+        q: 'How many threads can I generate for free?',
+        a: 'A free account includes one AI thread generation. After that, upgrading unlocks unlimited generations. Unlike the other tools, each generation runs a paid AI model, which is why it needs an account and has a limit.',
+      },
+      {
+        q: 'How long can my essay be?',
+        a: 'Up to 10,000 words — comfortably more than most blog posts or newsletter issues. There is a live word count as you paste, and anything longer is rejected before it is sent.',
+      },
+      {
+        q: 'Will it sound like me?',
+        a: 'It is told to keep your voice, your argument and your own examples, and not to invent facts. It restructures what you wrote rather than writing something new — and the result is fully editable before you use it.',
+      },
+      {
+        q: 'Can I edit the thread afterwards?',
+        a: 'Yes. The generated thread lands in an editable box, so you can rewrite any post, cut one, or fix the hook before turning it into a carousel.',
+      },
+      {
+        q: 'What do I do with the thread once I have it?',
+        a: 'Post it on X as-is, or hit “Turn this into a carousel” and the free carousel tool splits it into Instagram slides — one piece of writing, posted in two places.',
+      },
+    ],
+    related: {
+      slug: 'twitter-thread-to-instagram-carousel',
+      label: 'How to turn a Twitter thread into an Instagram carousel',
+    },
+  },
+  {
     slug: 'tweet-screenshot',
     path: '/tweet-screenshot',
     widget: 'tweet',

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import JSZip from 'jszip'
 import { splitThread } from '../lib/carousel'
+import { takeHandoffThread } from '../lib/threadGen'
 import { drawSlide } from '../lib/carouselRender'
 import { isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../lib/useAuth'
@@ -20,7 +21,9 @@ const ASPECT = { width: 1080, height: 1080 }
 // get here is identical to /app.
 export default function CarouselTool({ config }) {
   const { user } = useAuth()
-  const [text, setText] = useState(config.demo || '')
+  // A thread handed over from the AI generator wins over the demo text. Read
+  // once (takeHandoffThread clears it) so a refresh doesn't resurrect it.
+  const [text, setText] = useState(() => takeHandoffThread() || config.demo || '')
   const [theme, setTheme] = useState('dark')
   const [username, setUsername] = useState('')
   const [slideIndex, setSlideIndex] = useState(0)

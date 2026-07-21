@@ -71,6 +71,10 @@ function OutputCard({ sample }) {
   )
 }
 
+// 👉 Bump this as lifetime deals sell. Shown on the hero note and the pricing
+// card. Keep it honest — it's a real promise, not a fake urgency ticker.
+export const LIFETIME_SPOTS_LEFT = 19
+
 const slides = ['/slide-01.png', '/slide-02.png', '/slide-03.png', '/slide-04.png']
 
 function SlideCarousel() {
@@ -224,7 +228,8 @@ export default function Landing() {
           <p className="hero-note">
             <strong>Free to start</strong> &mdash; no card, no signup to preview
             <span className="sep" />
-            First 20 buyers lock in $10 (then $17)
+            $10 lifetime for the first 20 buyers, then $17 &mdash;{' '}
+            <strong>{LIFETIME_SPOTS_LEFT} left</strong>
           </p>
         </div>
 
@@ -326,6 +331,24 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="testimonial">
+        <div className="section-shell">
+          <div className="section-head center">
+            <span className="section-kicker">From a real user</span>
+            <h2>People are already posting with it.</h2>
+          </div>
+          <figure className="testimonial-figure">
+            <img
+              src="/testimonial1.png"
+              alt="A Notes2Pic user sharing how the tool helped them turn their writing into images."
+              width="1080"
+              height="1080"
+              loading="lazy"
+            />
+          </figure>
+        </div>
+      </section>
+
       <section className="section-shell pricing" id="pricing">
         <div className="section-head center">
           <span className="section-kicker">Pricing</span>
@@ -335,15 +358,19 @@ export default function Landing() {
 
         <div className="pricing-grid">
           <article className="price-card featured">
-            <span className="price-badge">First 20 buyers</span>
+            <span className="price-badge">{LIFETIME_SPOTS_LEFT} of 20 left</span>
             <span className="price-plan">Lifetime</span>
             <p className="price">
               $10<small>once</small>
             </p>
-            <p className="price-note">Then $17 &mdash; founding-member price, locked in forever</p>
+            <p className="price-note">
+              Then $17 &mdash; founding-member price, locked in forever.{' '}
+              <strong>Only {LIFETIME_SPOTS_LEFT} spots left.</strong>
+            </p>
             <ul className="price-list">
               <li><Check aria-hidden="true" /> Unlimited exports</li>
               <li><Check aria-hidden="true" /> Unlimited carousels</li>
+              <li><Check aria-hidden="true" /> Unlimited AI thread generations</li>
               <li><Check aria-hidden="true" /> No watermark</li>
               <li><Check aria-hidden="true" /> Unlimited saved profiles</li>
               <li><Check aria-hidden="true" /> Pay once, keep forever</li>
@@ -360,6 +387,7 @@ export default function Landing() {
             <ul className="price-list">
               <li><Check aria-hidden="true" /> 3 exports per month</li>
               <li><Check aria-hidden="true" /> 1 carousel per month</li>
+              <li><Check aria-hidden="true" /> 1 AI thread generation</li>
               <li><Check aria-hidden="true" /> Every template &amp; size</li>
               <li><Check aria-hidden="true" /> One saved profile</li>
             </ul>
@@ -377,6 +405,7 @@ export default function Landing() {
             <ul className="price-list">
               <li><Check aria-hidden="true" /> Unlimited exports</li>
               <li><Check aria-hidden="true" /> Unlimited carousels</li>
+              <li><Check aria-hidden="true" /> Unlimited AI thread generations</li>
               <li><Check aria-hidden="true" /> No watermark</li>
               <li><Check aria-hidden="true" /> Unlimited saved profiles</li>
               <li><Check aria-hidden="true" /> Cancel anytime</li>

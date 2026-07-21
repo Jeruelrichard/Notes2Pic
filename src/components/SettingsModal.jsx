@@ -42,13 +42,13 @@ export default function SettingsModal({
             </span>
           </div>
           {isPaid ? (
-            <p className="settings-hint">Unlimited watermark-free exports, unlimited carousels, and unlimited saved profiles. Thank you for supporting Notes2Pic.</p>
+            <p className="settings-hint">Unlimited watermark-free exports, unlimited carousels, unlimited AI thread generations, and unlimited saved profiles. Thank you for supporting Notes2Pic.</p>
           ) : (
             <>
               <p className="settings-hint">
                 {usage?.remaining ?? 3} free export{(usage?.remaining ?? 3) === 1 ? '' : 's'} left this month (with a watermark)
                 {' · '}
-                {usage?.carouselRemaining ?? 1} carousel left · one saved profile.
+                {usage?.carouselRemaining ?? 1} carousel · {usage?.threadsRemaining ?? 1} AI thread generation left · one saved profile.
               </p>
               <button type="button" className="upgrade-link block" onClick={onUpgrade}>
                 Upgrade for unlimited
