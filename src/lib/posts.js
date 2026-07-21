@@ -115,7 +115,11 @@ export const posts = Object.entries(rawPosts)
       updated: data.updated || data.modified || data.date || '',
       author: data.author || DEFAULT_AUTHOR,
       cover: data.cover || '',
-      tags: data.tags || [],
+      // Always an array. A post whose frontmatter says `tags: "foo"` (a string
+      // rather than a list) used to make the related-posts pass below throw,
+      // which broke the whole SPA's module import — one markdown typo must
+      // never be able to take the site down.
+      tags: Array.isArray(data.tags) ? data.tags : data.tags ? [data.tags] : [],
       readingTime: readingTime(content),
       toc: buildToc(content),
       faq: buildFaq(content),

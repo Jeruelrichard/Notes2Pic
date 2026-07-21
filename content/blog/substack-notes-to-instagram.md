@@ -2,7 +2,7 @@
 title: "How to Turn Substack Notes Into Instagram Posts"
 description: "Learn how to turn Substack Notes into Instagram posts with Notes2Pic — paste your Note, pick a profile, and export a clean, branded graphic in seconds."
 date: "2026-07-21"
-tags: "writer-repurposing"
+tags: [writer-repurposing]
 ---
 
 # How to Turn Substack Notes Into Instagram Posts
