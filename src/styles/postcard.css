@@ -315,3 +315,27 @@
 .short-x.short-light .x-metrics strong {
   color: #0f1419;
 }
+
+/* @mentions, #hashtags and links — X's link blue. Opt-in via the `highlight`
+   prop, so the studio's cards keep rendering plain text. */
+.x-entity {
+  color: #1d9bf0;
+}
+
+/* Attached tweet image */
+.x-photo {
+  margin-top: 14px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(113, 118, 123, 0.34);
+  line-height: 0;
+}
+
+/* Never crop: show the photo at its true aspect ratio. Tall portrait shots get
+   a taller canvas instead (the stage height is computed from the image), so we
+   don't trade the user's image quality for a fixed square. */
+.x-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}

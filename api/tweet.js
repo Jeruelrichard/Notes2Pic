@@ -78,9 +78,24 @@ async function fromSyndication(id, diag) {
       return null
     }
 
+    // X's raw `text` uses t.co shortlinks. Rebuild it the way X displays it:
+    // real links show their readable form, and the media's own t.co (which is
+    // just a pointer to the attached image) disappears entirely.
+    let text = data.text
+    for (const entry of data.entities?.urls || []) {
+      if (!entry?.url) continue
+      text = text.split(entry.url).join(entry.display_url || entry.expanded_url || entry.url)
+    }
+    for (const media of data.mediaDetails || []) {
+      if (media?.url) text = text.split(media.url).join('')
+    }
+    text = text.replace(/[ \t]+\n/g, '\n').trim()
+
+    const photo = data.photos?.[0] || null
+
     return {
       id,
-      text: data.text,
+      text,
       name: data.user?.name || '',
       handle: data.user?.screen_name || '',
       avatar: data.user?.profile_image_url_https || '',
@@ -93,7 +108,11 @@ async function fromSyndication(id, diag) {
       // the full body, never the text itself — so `text` above is the truncated
       // version. Flag it so the UI can say so instead of silently cutting off.
       truncated: Boolean(data.note_tweet),
-      photo: data.photos?.[0]?.url || null,
+      photo: photo?.url || null,
+      // Dimensions let the client size the canvas to the image instead of
+      // cropping it — tall portrait photos need a taller canvas, not a crop.
+      photoWidth: photo?.width || null,
+      photoHeight: photo?.height || null,
     }
   } catch (error) {
     diag.syndication = { error: error?.name === 'AbortError' ? 'timeout' : String(error?.message || error) }

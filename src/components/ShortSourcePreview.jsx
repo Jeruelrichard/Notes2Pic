@@ -30,6 +30,33 @@ export function SourceAvatar({ avatar, initials }) {
   )
 }
 
+// Absolute URLs, www./bare domains, @mentions, #hashtags — matched in one pass.
+// The TLD list is deliberate rather than "dot anything": a naive \w+\.\w+ turns
+// ordinary prose like "Mr.Smith" or "words.Next sentence" into fake links.
+const ENTITY_RE =
+  /(https?:\/\/[^\s]+|www\.[^\s]+|\b[\w-]+\.(?:com|net|org|io|co|ai|app|dev|me|xyz|so|gg|tv|fm|to|ly|sh|club|online|site|store|blog|news|info|biz|us|uk|ca|de|fr|jp|ng|eu|in|au)\b(?:\/[^\s]*)?|[@#]\w+)/gi
+
+// Split post text into plain runs and highlighted entities. Returns an array of
+// nodes so React keeps the surrounding whitespace/newlines intact (the card uses
+// white-space: pre-wrap, so newlines survive as text).
+function highlightEntities(text) {
+  const nodes = []
+  let last = 0
+  let match
+  ENTITY_RE.lastIndex = 0
+  while ((match = ENTITY_RE.exec(text)) !== null) {
+    if (match.index > last) nodes.push(text.slice(last, match.index))
+    nodes.push(
+      <span className="x-entity" key={`${match.index}-${match[0]}`}>
+        {match[0]}
+      </span>,
+    )
+    last = match.index + match[0].length
+  }
+  if (last < text.length) nodes.push(text.slice(last))
+  return nodes
+}
+
 function formatCount(value) {
   if (typeof value !== 'number' || value < 0) return null
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}M`
@@ -69,6 +96,8 @@ export default function ShortSourcePreview({
   timestamp,
   watermark,
   metrics,
+  highlight,
+  photo,
 }) {
   const byline = watermark ? (
     <div className="card-watermark" aria-hidden="true">
@@ -132,8 +161,16 @@ export default function ShortSourcePreview({
       </header>
 
       <p className="x-text" style={shortPostTextStyle}>
-        {post.text || 'Paste the post text here.'}
+        {highlight && post.text ? highlightEntities(post.text) : post.text || 'Paste the post text here.'}
       </p>
+
+      {photo ? (
+        <div className="x-photo">
+          {/* crossOrigin so the canvas isn't tainted on export — pbs.twimg.com
+              serves access-control-allow-origin: * */}
+          <img src={photo} alt="" crossOrigin="anonymous" />
+        </div>
+      ) : null}
 
       {metrics ? <MetricsRow metrics={metrics} /> : null}
 

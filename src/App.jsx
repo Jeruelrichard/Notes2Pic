@@ -207,6 +207,7 @@ function App() {
   const [tweetUrl, setTweetUrl] = useState('')
   const [tweetLoading, setTweetLoading] = useState(false)
   const [tweetError, setTweetError] = useState('')
+  const [founderWatermark, setFounderWatermark] = useState(false)
   const [mediumPost, setMediumPost] = useState(starterMediumPost)
   const [carousel, setCarousel] = useState(starterCarousel)
   const [slideIndex, setSlideIndex] = useState(0)
@@ -485,6 +486,7 @@ function App() {
         username: t.handle ? `@${t.handle}` : current.username,
         avatar: t.avatar || current.avatar,
         text: (t.text || '').slice(0, shortPostCharacterLimit),
+        photo: t.photo || '',
       }))
       setNotice('Tweet imported. Edit anything you like, then export.')
     } catch {
@@ -724,7 +726,9 @@ function App() {
         return
       }
 
-      const withWatermark = gate.watermark === true
+      // Founder normally never gets a watermark (is_paid bypass); this lets the
+      // founder deliberately turn it ON for demo screenshots.
+      const withWatermark = gate.watermark === true || (founder && founderWatermark)
 
       if (isCarouselMode) {
         await exportCarousel(withWatermark)
@@ -1349,6 +1353,17 @@ function App() {
             </div>
           </div>
 
+          {founder ? (
+            <label className="founder-watermark-toggle">
+              <input
+                type="checkbox"
+                checked={founderWatermark}
+                onChange={(event) => setFounderWatermark(event.target.checked)}
+              />
+              Show watermark <span>(founder only)</span>
+            </label>
+          ) : null}
+
           <button className="export-button" type="button" onClick={exportImage} disabled={isExporting}>
             <Download aria-hidden="true" />
             {isExporting
@@ -1458,6 +1473,8 @@ function App() {
                         badgeDate={badgeDate}
                         timestamp={timestamp}
                         watermark={captureWatermark}
+                        photo={post.photo}
+                        highlight
                       />
                     )}
                   </div>

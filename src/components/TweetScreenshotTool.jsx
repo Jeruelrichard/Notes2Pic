@@ -4,6 +4,7 @@ import { toPng } from 'html-to-image'
 import { isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../lib/useAuth'
 import { recordExport } from '../lib/entitlements'
+import { isFounder } from '../lib/shares'
 import {
   initials,
   formatBadgeDate,
@@ -19,6 +20,10 @@ import UpgradeModal from './UpgradeModal'
 // max-width 450px, so rendering the stage at 1080 would leave the card filling
 // only ~41% of the frame instead of ~83%.
 const SIZE = 540
+// Canvas grows for tall content (portrait photos, long text) rather than
+// cropping. 960 = a 1080x1920 export, the tallest Instagram accepts.
+const MIN_STAGE_H = 540
+const MAX_STAGE_H = 960
 const EXPORT_TIMEOUT_MS = 15000
 
 const EMPTY = { name: '', username: '', avatar: '', text: '', date: '' }
@@ -27,8 +32,9 @@ const EMPTY = { name: '', username: '', avatar: '', text: '', date: '' }
 // at 13px — past ~300 chars the text overflowed the card and got clipped by the
 // stage's overflow:hidden. This ladder keeps shrinking so the WHOLE tweet fits.
 // Deliberately separate from getShortPostTextStyle so the studio is unaffected.
-function getTweetTextStyle(text) {
-  const length = text.length
+function getTweetTextStyle(text, hasPhoto) {
+  // A photo eats roughly a third of the card, so start a tier lower.
+  const length = hasPhoto ? text.length + 320 : text.length
   const estimatedLines = Math.max(text.split('\n').length, Math.ceil(length / 26))
   let size = 24
   if (length > 900 || estimatedLines > 34) size = 9
@@ -52,6 +58,10 @@ export default function TweetScreenshotTool() {
   const [theme, setTheme] = useState('dark')
   const [showMetrics, setShowMetrics] = useState(false)
   const [truncated, setTruncated] = useState(false)
+  // Founder-only: normally the founder account never gets a watermark (is_paid
+  // bypass), so this exists to deliberately turn it ON for demo screenshots.
+  const founder = isFounder(user)
+  const [founderWatermark, setFounderWatermark] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [captureWatermark, setCaptureWatermark] = useState(false)
   const [notice, setNotice] = useState('')
@@ -64,6 +74,26 @@ export default function TweetScreenshotTool() {
   // a ref callback (runs on commit, unlike rAF-driven observers) plus a resize
   // listener, so it's right on first paint and stays right when rotated.
   const [previewScale, setPreviewScale] = useState(1)
+  const [stageHeight, setStageHeight] = useState(MIN_STAGE_H)
+
+  // Size the canvas to the rendered card instead of cropping to a square. We
+  // measure a few times because the photo's height only exists once it loads.
+  useEffect(() => {
+    let cancelled = false
+    const measure = () => {
+      if (cancelled) return
+      const card = stageRef.current?.querySelector('.x-card')
+      if (!card) return
+      const needed = Math.ceil(card.getBoundingClientRect().height / (previewScale || 1)) + 84
+      setStageHeight(Math.min(MAX_STAGE_H, Math.max(MIN_STAGE_H, needed)))
+    }
+    const timers = [60, 350, 900, 1800].map((ms) => setTimeout(measure, ms))
+    return () => {
+      cancelled = true
+      timers.forEach(clearTimeout)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post.text, post.photo, showMetrics, theme])
 
   const measureFrame = useCallback((node) => {
     const el = node || frameRef.current
@@ -94,7 +124,7 @@ export default function TweetScreenshotTool() {
   }, [measureFrame])
 
   const hasPost = Boolean(post.text)
-  const textStyle = useMemo(() => getTweetTextStyle(post.text || ''), [post.text])
+  const textStyle = useMemo(() => getTweetTextStyle(post.text || '', Boolean(post.photo)), [post.text, post.photo])
   const avatarInitials = useMemo(() => initials(post.name || '') || 'N2', [post.name])
   const when = post.date ? new Date(post.date) : new Date()
 
@@ -117,8 +147,11 @@ export default function TweetScreenshotTool() {
         name: t.name || '',
         username: t.handle ? `@${t.handle}` : '',
         avatar: t.avatar || '',
-        text: t.text || '',
+        // X appends a t.co link for the attached image; once we render the
+        // image itself that link is just noise, so drop it.
+        text: t.photo ? (t.text || '').replace(/\s*https?:\/\/t\.co\/\w+\s*$/, '') : t.text || '',
         date: t.date || '',
+        photo: t.photo || '',
         likes: t.likes,
         replies: t.replies,
         retweets: t.retweets,
@@ -166,7 +199,7 @@ export default function TweetScreenshotTool() {
         return
       }
 
-      const withWatermark = gate.watermark === true
+      const withWatermark = gate.watermark === true || (founder && founderWatermark)
       if (withWatermark) {
         setCaptureWatermark(true)
         // Let React paint the watermark into the stage before we capture it.
@@ -274,6 +307,16 @@ export default function TweetScreenshotTool() {
             />
             Show likes &amp; replies
           </label>
+          {founder ? (
+            <label className="tool-toggle">
+              <input
+                type="checkbox"
+                checked={founderWatermark}
+                onChange={(event) => setFounderWatermark(event.target.checked)}
+              />
+              Watermark <span className="tool-optional">(founder)</span>
+            </label>
+          ) : null}
         </div>
 
         <p className="tool-hint">
@@ -283,7 +326,11 @@ export default function TweetScreenshotTool() {
       </div>
 
       <div className="tool-preview">
-        <div className="tweet-stage-frame" ref={measureFrame}>
+        <div
+          className="tweet-stage-frame"
+          ref={measureFrame}
+          style={{ aspectRatio: `${SIZE} / ${stageHeight}` }}
+        >
           {/* Scale a WRAPPER, never the node we export. html-to-image captures
               the node's own transform, so scaling the stage itself produced a
               shrunken, corner-anchored PNG. The studio scales a wrapper too. */}
@@ -291,7 +338,7 @@ export default function TweetScreenshotTool() {
             className="tweet-stage-scaler"
             style={{
               width: SIZE,
-              height: SIZE,
+              height: stageHeight,
               transform: `scale(${previewScale})`,
               transformOrigin: 'top left',
             }}
@@ -299,7 +346,7 @@ export default function TweetScreenshotTool() {
           <div
             ref={stageRef}
             className={`export-stage short-stage short-x short-${theme} aspect-square`}
-            style={{ width: SIZE, height: SIZE }}
+            style={{ width: SIZE, height: stageHeight }}
           >
             <ShortSourcePreview
               avatarInitials={avatarInitials}
@@ -310,6 +357,8 @@ export default function TweetScreenshotTool() {
               timestamp={formatTimestamp(when)}
               watermark={captureWatermark}
               metrics={showMetrics ? { likes: post.likes, replies: post.replies, retweets: post.retweets } : null}
+              highlight
+              photo={post.photo}
             />
           </div>
           </div>

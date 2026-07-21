@@ -1271,3 +1271,25 @@ button:focus-visible {
   color: #b42318;
   font-size: 0.82rem;
 }
+
+/* Founder-only watermark switch. The founder account never gets a watermark
+   (is_paid bypass), so this exists to deliberately turn it ON for demos. */
+.founder-watermark-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4b5563;
+  cursor: pointer;
+}
+.founder-watermark-toggle input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.founder-watermark-toggle span {
+  font-weight: 400;
+  color: #98a2b3;
+}
