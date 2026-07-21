@@ -44,6 +44,9 @@ export const TOOL_PAGES = [
     path: '/tweet-screenshot',
     widget: 'tweet',
     navLabel: 'Twitter Screenshot Generator',
+    // Feeds <lastmod> in the sitemap — Bing uses it to schedule crawls. Bump
+    // this when the page's content meaningfully changes.
+    updated: '2026-07-21',
     metaTitle: 'Tweet Screenshot Generator — Paste a Link, Get a Clean Image',
     metaDescription:
       'Paste any tweet link and get a clean, high-res screenshot in seconds. No clutter, no cropping, no design skills. Free to preview.',
@@ -96,6 +99,7 @@ export const TOOL_PAGES = [
     slug: 'thread-to-carousel',
     widget: 'carousel',
     navLabel: 'Thread to Carousel Generator',
+    updated: '2026-07-21',
     path: '/thread-to-carousel',
     // SEO (metaTitle gets " | Notes2Pic" appended, like blog posts).
     metaTitle: 'Twitter Thread to Instagram Carousel — Free Tool',

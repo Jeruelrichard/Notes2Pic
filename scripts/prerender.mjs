@@ -102,7 +102,8 @@ const sitemap =
   sitemapUrls
     .map((path) => {
       const post = path.startsWith('/blog/') ? posts.find((item) => `/blog/${item.slug}` === path) : null
-      const stamp = post?.updated || post?.date
+      const tool = TOOL_PAGES.find((page) => page.path === path)
+      const stamp = post?.updated || post?.date || tool?.updated
       const lastmod = stamp ? `\n    <lastmod>${stamp}</lastmod>` : ''
       return `  <url>\n    <loc>${SITE_URL}${path}</loc>${lastmod}\n  </url>`
     })

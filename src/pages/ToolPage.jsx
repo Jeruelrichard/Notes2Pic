@@ -85,7 +85,7 @@ export default function ToolPage() {
           <p className="tool-subhead">{config.subhead}</p>
         </header>
 
-        <section className="tool-stage" aria-label="Carousel maker">
+        <section className="tool-stage" aria-label={config.h1}>
           {mounted ? (
             <Suspense fallback={<ToolSkeleton config={config} />}>
               <Widget config={config} />
