@@ -1297,6 +1297,7 @@ button:focus-visible {
 /* ============ carousel mode: AI essay -> thread panel ============ */
 .ai-panel {
   margin-bottom: 14px;
+  flex-shrink: 0; /* editor-panel is a fixed-height flex column on desktop; don't let it crush this to a line */
   border: 1px solid #d6dbe3;
   border-radius: 12px;
   background: #fbfcfe;
