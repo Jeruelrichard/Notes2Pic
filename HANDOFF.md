@@ -113,6 +113,13 @@ Serverless fetch of a public tweet — **no X API key, no cost**.
   in `src/lib/threadGen.js`). `CarouselTool` prefers it over its demo text.
 
 ## Landing / marketing chrome
+- **Hero = real product-demo video.** `HeroDemo` in `Landing.jsx` renders a silent, auto‑looping,
+  muted `<video>` (`public/hero-demo.mp4`, ~1.6MB H.264 @ 1280px wide) with a poster
+  (`public/hero-demo-poster.jpg`) and a reduced‑motion fallback (holds the poster, no autoplay).
+  Replaced the old CSS `samples`/`OutputCard` typing animation (both removed). Source recording was
+  a 70MB Cap clip — compressed with ffmpeg (`scale=1280:-2,fps=30`, libx264 CRF 30, `-an`,
+  `+faststart`). **Never commit a raw multi‑MB hero video; always compress first.** To swap the
+  demo, replace those two files in `public/` (keep the same names).
 - Warm **clay** palette, **Newsreader + Hanken Grotesk**. Keyword‑optimized H1/title/description
   (title "Turn Tweets & Threads into Instagram Carousels"), image alt text, "Free to start" note.
 - **Sale counter**: one constant `LIFETIME_SPOTS_LEFT` in `src/pages/Landing.jsx` (currently 19) —
@@ -146,8 +153,22 @@ Serverless fetch of a public tweet — **no X API key, no cost**.
 Client: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_FREEMIUS_PRODUCT_ID`,
 `VITE_FREEMIUS_PLAN_MONTHLY`, `VITE_FREEMIUS_PLAN_LIFETIME`, `VITE_GA4_ID`.
 Server (Vercel): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY` (for the
-generate‑thread JWT check), `FREEMIUS_SECRET_KEY`, **`GEMINI_API_KEY`**. Build: `SITE_URL`.
+generate‑thread JWT check), `FREEMIUS_SECRET_KEY`, **`GEMINI_API_KEY`**, **`LOOPS_API_KEY`**,
+**`LOOPS_WEBHOOK_SECRET`** (welcome‑email webhook). Build: `SITE_URL`.
 `.env.local` is gitignored (`*.local`) — safe for local secrets like `GEMINI_API_KEY`.
+
+## Lifecycle email (Loops)
+- **Auth emails stay on Supabase.** Signup‑confirmation + password‑reset are sent by Supabase
+  GoTrue (see `resetPasswordForEmail`/`signUp` in `AuthModal.jsx`). Customize their look in the
+  Supabase dashboard → **Authentication → Emails** (edit HTML + subject per template; keep the
+  `{{ .ConfirmationURL }}` link intact). We deliberately do NOT route these via Loops — a broken
+  hook there would block confirm/reset and lock users out.
+- **Welcome/onboarding is Loops.** New file `api/loops-webhook.js`: a **Supabase Database Webhook
+  on `public.profiles` INSERT** POSTs here; the endpoint checks a shared `x-webhook-secret`
+  (`LOOPS_WEBHOOK_SECRET`), upserts the contact into Loops, and fires a **`user_signed_up`** event.
+  The Loop workflow triggers on that event name, set to **once per contact**. Setup steps (Loops
+  key + workflow, Vercel env, the DB Webhook with the secret header) are done in dashboards, not
+  code. Note it fires at **signup**, before email confirmation.
 
 ## Owner‑task backlog (not code)
 - **DONE**: Google OAuth verification, GSC, Bing Webmaster, directory distribution (Needle,
@@ -178,6 +199,12 @@ generate‑thread JWT check), `FREEMIUS_SECRET_KEY`, **`GEMINI_API_KEY`**. Build
   to the current path (`redirectTo`), so those paths must be allow‑listed too (a wildcard is easiest).
 - **Supabase hides "email already exists"** (empty `identities[]`); AuthModal detects it.
 - **`skipFonts` + no `cacheBust`** on every html‑to‑image export (see Tweet screenshot).
+- **Fixed‑height flex column crushed a child to a line (desktop‑only).** The studio AI panel
+  (`.ai-panel`) rendered fine on mobile but collapsed to a 2px line on desktop, because the
+  desktop two‑column layout puts it in a fixed‑height `flex-direction:column` parent and it had no
+  `flex-shrink:0` — flexbox squeezed it to its borders (and `overflow:hidden` clipped the button,
+  making it unclickable). Fix: `flex-shrink:0`. Watch for this on any flex‑column child that only
+  breaks at wider widths.
 
 ## Testing convention (Supabase)
 Create throwaway users via SQL `insert into auth.users(...)` with **all** GoTrue token columns

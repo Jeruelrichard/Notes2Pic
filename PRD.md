@@ -133,10 +133,23 @@ brand palette also lives in `api/share.js` — a rebrand touches it too.
 
 - Prerendered-to-static-HTML landing (`/`), blog (`/blog`, `/blog/<slug>`), privacy, terms — for
   SEO/crawlability without JS. `/app` stays a client SPA.
-- Landing is demo-led: an animated hero showing post → image, three-outputs showcase with real
-  example images, an honest "what it does / doesn't do" section, pricing (lifetime featured),
-  close CTA.
+- Landing is demo-led: the hero is a **real screen recording of the app** (essay → thread, then
+  tweet → card) — a silent, auto-looping, muted `<video>` (`public/hero-demo.mp4`, ~1.6MB H.264,
+  1280px wide) with a poster still (`public/hero-demo-poster.jpg`) and reduced-motion fallback
+  (holds the poster). Then a three-outputs showcase with real example images, an honest "what it
+  does / doesn't do" section, pricing (lifetime featured), close CTA.
 - Blog is built for SEO **and** AI-citation (GEO): see §9.
+
+### 6.6 Lifecycle email (Loops)
+
+- **Auth emails (signup confirmation, password reset) stay with Supabase** — GoTrue sends them;
+  templates are customized in the Supabase dashboard (Authentication → Emails). We deliberately do
+  NOT route these through Loops: a bug there would lock users out of confirm/reset.
+- **Welcome/onboarding is Loops.** A **Supabase Database Webhook on `public.profiles` INSERT**
+  POSTs to `api/loops-webhook.js`, which (auth'd by a shared `x-webhook-secret` header /
+  `LOOPS_WEBHOOK_SECRET`) upserts the contact into Loops and fires a **`user_signed_up`** event
+  that the Loop workflow triggers on (set to **once per contact**). Fires at signup, i.e. before
+  email confirmation. Server env: `LOOPS_API_KEY`, `LOOPS_WEBHOOK_SECRET`.
 
 ## 7. Key user flows
 

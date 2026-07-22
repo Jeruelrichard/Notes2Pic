@@ -1,41 +1,9 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Check, Clipboard, Download, Sparkles, Wand2 } from 'lucide-react'
+import { ArrowRight, Check, Clipboard, Download, Sparkles } from 'lucide-react'
 import { MarketingLayout } from '../components/SiteChrome'
 import Seo from '../components/Seo'
 import { scrollToHashTarget } from '../lib/scrollTo'
-
-// Faithful-to-the-app example outputs. These drive both the hero demo loop
-// and the outputs showcase, so the page proves the value instead of describing it.
-const samples = [
-  {
-    skin: 'is-x',
-    avatar: '/nuelokemdilim.jpg',
-    name: 'Nuel Okemdilim',
-    id: '@nuel',
-    date: 'Jul 8',
-    draft: 'building in public is really just leaving a clear trail of what you’re learning and shipping.',
-    body: 'Building in public is really just leaving a clear trail of what you’re learning and shipping.',
-  },
-  {
-    skin: 'is-threads',
-    avatar: '/jerueldp.jpg',
-    name: 'jeruelrichard',
-    id: '2h',
-    date: '',
-    draft: 'there is so much signal on that app. time to actually start showing up.',
-    body: 'There is so much signal on that app. Time to actually start showing up.',
-  },
-  {
-    skin: 'is-substack',
-    avatar: '/okempfp.jpg',
-    name: 'Okem Dinach',
-    id: 'theokemdinach',
-    date: '',
-    draft: 'you don’t need permission to start. one honest sentence and the nerve to post it.',
-    body: 'You don’t need permission to start. One honest sentence, and the nerve to post it.',
-  },
-]
 
 const QUERY = '(prefers-reduced-motion: reduce)'
 function usePrefersReducedMotion() {
@@ -47,27 +15,6 @@ function usePrefersReducedMotion() {
     },
     () => window.matchMedia(QUERY).matches,
     () => false, // server snapshot: assume motion allowed, effect corrects on client
-  )
-}
-
-function OutputCard({ sample }) {
-  return (
-    <div className={`n2p-card ${sample.skin}`}>
-      <div className="n2p-head">
-        <span className="n2p-avatar">
-          <img src={sample.avatar} alt="" loading="lazy" />
-        </span>
-        <div className="n2p-id">
-          <strong>{sample.name}</strong>
-          <span>{sample.id}</span>
-        </div>
-      </div>
-      <p className="n2p-body">{sample.body}</p>
-      <div className="n2p-foot">
-        <span>{sample.date || 'Notes2Pic'}</span>
-        <span className="n2p-mark">made with Notes2Pic</span>
-      </div>
-    </div>
   )
 }
 
@@ -107,37 +54,23 @@ function SlideCarousel() {
 }
 
 function HeroDemo() {
+  // A real screen recording of the app (essay → thread, then tweet → card),
+  // compressed to a light silent loop. Under reduced-motion we hold the poster
+  // frame instead of autoplaying.
   const reduced = usePrefersReducedMotion()
-  const [i, setI] = useState(0)
-
-  useEffect(() => {
-    if (reduced) return
-    const t = setInterval(() => setI((n) => (n + 1) % samples.length), 4600)
-    return () => clearInterval(t)
-  }, [reduced])
-
-  const sample = samples[i]
 
   return (
     <div className="demo" aria-hidden="true">
-      <div className="demo-stage">
-        {/* key remounts the node each cycle so the CSS entrance animations replay */}
-        <div className="demo-source" key={`src-${i}`}>
-          <span className="demo-source-label">Your post</span>
-          <p>
-            {sample.draft}
-            {!reduced && <span className="caret" />}
-          </p>
-        </div>
-
-        <span className="demo-arrow">
-          <Wand2 aria-hidden="true" />
-        </span>
-
-        <div className="demo-output" key={`out-${i}`}>
-          <OutputCard sample={sample} />
-        </div>
-      </div>
+      <video
+        className="demo-video"
+        src="/hero-demo.mp4"
+        poster="/hero-demo-poster.jpg"
+        autoPlay={!reduced}
+        loop
+        muted
+        playsInline
+        preload="metadata"
+      />
     </div>
   )
 }

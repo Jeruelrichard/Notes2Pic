@@ -467,6 +467,15 @@ h3 {
   position: relative;
 }
 
+.demo-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  box-shadow: var(--shadow-lift);
+  background: var(--surface);
+}
+
 .demo-stage {
   position: relative;
   display: flex;
@@ -1426,7 +1435,10 @@ h3 {
 }
 
 .blog-post-body table {
+  display: block; /* becomes a scroll container so a wide table can't stretch the whole post on mobile */
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
   margin: 24px 0;
   border-collapse: collapse;
   font-size: 0.98rem;
@@ -1619,7 +1631,7 @@ h3 {
     grid-template-columns: 1fr;
   }
   .blog-post-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .blog-toc {
     display: none;
