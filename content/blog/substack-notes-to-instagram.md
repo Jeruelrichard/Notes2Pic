@@ -5,8 +5,6 @@ date: "2026-07-21"
 tags: [writer-repurposing]
 ---
 
-# How to Turn Substack Notes Into Instagram Posts
-
 You wrote a Note that actually landed with restacks, replies, someone quoting it back at you. It did well by Substack's standards. Then you remember that "well by Substack's standards" is still a much smaller room than the one your Instagram followers are standing in, and none of them saw it, because a Note doesn't leave Substack on its own.
 
 Turning it into an Instagram post takes less effort than writing the Note did in the first place — once you know the shape of what you're working with.
