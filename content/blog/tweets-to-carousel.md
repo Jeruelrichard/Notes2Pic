@@ -54,7 +54,7 @@ Say you've picked seven tweets ranked 1 (best) through 7 (weakest) by engagement
 
 ## Should You Screenshot the Original Tweets or Recreate Them as Branded Cards?
 
-Recreate them. [Raw screenshots](/blog/screenshot-a-tweet) work fine for a single post, but a compilation carousel is stitching together tweets from different months — different timestamps, sometimes different profile photos if you've rebranded since, inconsistent surrounding UI chrome. Screenshotted side by side, a "greatest hits" carousel ends up looking like a scrapbook instead of a cohesive post. Recreating each tweet as text on one consistent branded template removes all of that noise — every slide shares the same type, spacing, and signature, even though the words behind them were written months apart.
+Recreate them. [Raw screenshots](/blog/screenshot-a-tweet-without-clutter) work fine for a single post, but a compilation carousel is stitching together tweets from different months — different timestamps, sometimes different profile photos if you've rebranded since, inconsistent surrounding UI chrome. Screenshotted side by side, a "greatest hits" carousel ends up looking like a scrapbook instead of a cohesive post. Recreating each tweet as text on one consistent branded template removes all of that noise — every slide shares the same type, spacing, and signature, even though the words behind them were written months apart.
 
 ## How Do You Keep Branding Consistent Across Unrelated Tweets?
 
