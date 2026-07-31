@@ -26,7 +26,29 @@ if (rootElement.hasChildNodes()) {
 if ('serviceWorker' in navigator) {
   if (import.meta.env.PROD) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
+      navigator.serviceWorker.register('/sw.js').then((registration) => {
+        // Listen for new service worker installs
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing
+          if (!newWorker) return
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New update ready, notify and reload
+              console.log('New update installed. Reloading...')
+              window.location.reload()
+            }
+          })
+        })
+      })
+    })
+
+    // Listen for controlling service worker change and reload
+    let refreshing = false
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true
+        window.location.reload()
+      }
     })
   } else {
     // Dev: unregister any leftover service worker (e.g. registered by a previous

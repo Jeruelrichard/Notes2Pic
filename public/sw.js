@@ -1,4 +1,4 @@
-const cacheName = 'notes2pics-v3'
+const cacheName = 'notes2pics-v4'
 const appShell = ['/', '/manifest.webmanifest', '/favicon.svg', '/pwa-icon.svg']
 
 // Never cache or intercept auth/API/Supabase traffic — these carry tokens and

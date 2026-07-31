@@ -114,6 +114,7 @@ export function buildJsonLd(meta, origin) {
       '@type': 'WebSite',
       '@id': abs('/#website'),
       name: SITE_NAME,
+      alternateName: ['Notes2Pics', 'Notes2pic', 'notes2pic.com'],
       url: abs('/'),
       publisher: { '@id': abs('/#organization') },
     },
