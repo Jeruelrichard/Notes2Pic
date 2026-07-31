@@ -24,9 +24,7 @@ async function updateLoopsPlanStatus(email, planStatus) {
       },
       body: JSON.stringify({
         email: String(email).toLowerCase(),
-        userProperties: {
-          planStatus: planStatus,
-        },
+        planStatus: planStatus,
       }),
     })
     if (!res.ok) {
