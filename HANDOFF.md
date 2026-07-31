@@ -75,6 +75,11 @@ at 450px, so a 1080 stage would leave it filling ~41% — must stay 540). Shared
 styles: `src/components/ShortSourcePreview.jsx` + `src/styles/postcard.css` (one source, studio +
 tool pages both use it).
 
+## Comparison & About Us Pages (SEO Trust Engine)
+- **`/about`** (`About.jsx`) — storytelling and founder transparency page introducing Jeruel Richard and the manual-first product philosophy.
+- **`/comparison/:competitor`** (`ComparisonPage.jsx`) — dynamic comparison page layout driven by a centralized config **`src/lib/comparisons.js`**. Renders comparison parameters (features grid, at-a-glance pros/cons, key differences) comparing Notes2Pic to *TwitterShots*, *Pika.style*, *TweetPik*, and *Pikaso*.
+- **Routing & Footer**: Added to `AppShell.jsx` routes, `seoMeta.js` metadata keys, sitemap `listPrerenderPaths()`, and linked in the footer's dedicated **Alternatives** column so search engine crawlers can index them.
+
 ## Tweet screenshot tool (`api/tweet.js`)
 Serverless fetch of a public tweet — **no X API key, no cost**.
 - Source 1: `cdn.syndication.twimg.com/tweet-result` (X's own embed endpoint) — full data (text,
@@ -127,8 +132,7 @@ Serverless fetch of a public tweet — **no X API key, no cost**.
 - **Testimonial**: `public/testimonial1.png` in a section above pricing.
 - **Header**: 3‑col grid (brand / centered Pricing+Blog / actions). **Tools dropdown** + account
   chip (signed‑in avatar). Mobile: hamburger only, flush right; nav in a dropdown.
-- **Footer**: brand + Product Hunt badge on top, then labelled columns (Free Tools / Notes2Pic /
-  More).
+- **Footer**: brand + Product Hunt badge on top, then four columns: **Free Tools**, **Notes2Pic** (including newly added **About Us** link), **Alternatives** (featuring comparison links to TwitterShots, Pika.style, TweetPik, and Pikaso), and **More**.
 - **Contact** page `/contact` (`src/pages/Contact.jsx`): email (`jeruelrichard@gmail.com`) +
   "DM me on X" (`@jeruelrichard`). Pricing link smooth‑scrolls to the cards (`src/lib/scrollTo.js`).
 - **7 blog posts** in `content/blog/`. Blog tags **must be a YAML list** (`tags: [a, b]`) — a bare
@@ -168,6 +172,10 @@ generate‑thread JWT check), `FREEMIUS_SECRET_KEY`, **`GEMINI_API_KEY`**, **`LO
   The Loop workflow triggers on that event name, set to **once per contact**. Setup steps (Loops
   key + workflow, Vercel env, the DB Webhook with the secret header) are done in dashboards, not
   code. Note it fires at **signup**, before email confirmation.
+- **Billing status sync to Loops.** Custom contact properties `planStatus` and `totalExports` are synced:
+  - On signup (`api/loops-webhook.js`), they are initialized to `planStatus: 'free'` and `totalExports: 0`.
+  - On billing updates (`api/freemius-webhook.js`), `planStatus` is updated dynamically to the user's active billing tier (`monthly` or `lifetime`), or reverts to `free` on expiration.
+  - A backfill script `scripts/backfill-loops.js` was created to bulk sync existing users and entitlements.
 
 ## Owner‑task backlog (not code)
 - **DONE**: Google OAuth verification, GSC, Bing Webmaster, directory distribution (StartupRanking in progress), IndexNow, GA4 activation.
