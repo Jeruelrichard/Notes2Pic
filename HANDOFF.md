@@ -128,8 +128,7 @@ Serverless fetch of a public tweet — **no X API key, no cost**.
 - **Header**: 3‑col grid (brand / centered Pricing+Blog / actions). **Tools dropdown** + account
   chip (signed‑in avatar). Mobile: hamburger only, flush right; nav in a dropdown.
 - **Footer**: brand + Product Hunt badge on top, then labelled columns (Free Tools / Notes2Pic /
-  More). Includes the **Needle backlink** (`useneedle.net/directory/notes2pic`) — a directory
-  verification link, keep it.
+  More).
 - **Contact** page `/contact` (`src/pages/Contact.jsx`): email (`jeruelrichard@gmail.com`) +
   "DM me on X" (`@jeruelrichard`). Pricing link smooth‑scrolls to the cards (`src/lib/scrollTo.js`).
 - **7 blog posts** in `content/blog/`. Blog tags **must be a YAML list** (`tags: [a, b]`) — a bare
@@ -171,8 +170,7 @@ generate‑thread JWT check), `FREEMIUS_SECRET_KEY`, **`GEMINI_API_KEY`**, **`LO
   code. Note it fires at **signup**, before email confirmation.
 
 ## Owner‑task backlog (not code)
-- **DONE**: Google OAuth verification, GSC, Bing Webmaster, directory distribution (Needle,
-  StartupRanking in progress), IndexNow, GA4 activation.
+- **DONE**: Google OAuth verification, GSC, Bing Webmaster, directory distribution (StartupRanking in progress), IndexNow, GA4 activation.
 - **Still open**: replace placeholder `public/og-image.png` with a real 1200×630; confirm
   `GEMINI_API_KEY` is set in Vercel + a real generation works post‑deploy; finish StartupRanking
   verification (upload + confirm the `.html` resolves).
