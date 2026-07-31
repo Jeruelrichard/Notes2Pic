@@ -1,5 +1,6 @@
 import { posts, getPost } from './posts'
 import { TOOL_PAGES, getToolPage } from './toolPages'
+import { COMPARISONS, getComparison } from './comparisons'
 
 export const SITE_NAME = 'Notes2Pic'
 export const DEFAULT_DESCRIPTION =
@@ -91,6 +92,26 @@ export function getMetaForPath(pathname) {
       title: `Terms of Service | ${SITE_NAME}`,
       description: 'The terms that govern your use of Notes2Pic.',
       path: '/terms',
+    }
+  }
+  if (pathname === '/about') {
+    return {
+      ...base,
+      title: `About Us | ${SITE_NAME}`,
+      description: 'The story and philosophy behind Notes2Pic.',
+      path: '/about',
+    }
+  }
+  if (pathname.startsWith('/comparison/')) {
+    const slug = pathname.replace('/comparison/', '').replace(/\/$/, '')
+    const comp = getComparison(slug)
+    if (comp) {
+      return {
+        ...base,
+        title: `${comp.metaTitle}`,
+        description: comp.metaDescription,
+        path: pathname,
+      }
     }
   }
   return { ...base, title: `${SITE_NAME} — post-to-image studio`, description: DEFAULT_DESCRIPTION, path: pathname }
@@ -188,11 +209,13 @@ export function buildJsonLd(meta, origin) {
 export function listPrerenderPaths() {
   return [
     '/',
+    '/about',
     '/blog',
     '/contact',
     '/privacy',
     '/terms',
     ...TOOL_PAGES.map((page) => page.path),
+    ...COMPARISONS.map((comp) => comp.path),
     ...posts.map((post) => `/blog/${post.slug}`),
   ]
 }

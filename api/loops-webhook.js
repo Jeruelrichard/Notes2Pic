@@ -86,6 +86,10 @@ export default async function handler(req, res) {
     email: normalizedEmail,
     source: 'notes2pic-signup',
     subscribed: true,
+    userProperties: {
+      planStatus: 'free',
+      totalExports: 0,
+    },
   })
   if (!contact.ok) {
     console.error('Loops contact update failed', contact.status, contact.payload)

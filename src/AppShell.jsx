@@ -7,6 +7,8 @@ import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
 import Contact from './pages/Contact'
 import ToolPage from './pages/ToolPage'
+import About from './pages/About'
+import ComparisonPage from './pages/ComparisonPage'
 import { TOOL_PAGES } from './lib/toolPages'
 import Analytics from './components/Analytics'
 
@@ -48,6 +50,8 @@ export default function AppShell() {
       {TOOL_PAGES.map((page) => (
         <Route key={page.path} path={page.path} element={<ToolPage />} />
       ))}
+      <Route path="/about" element={<About />} />
+      <Route path="/comparison/:competitor" element={<ComparisonPage />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/contact" element={<Contact />} />

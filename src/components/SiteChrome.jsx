@@ -193,8 +193,17 @@ export function SiteFooter() {
           <nav className="site-footer-col">
             <h3>Notes2Pic</h3>
             <Link to="/app">App</Link>
+            <Link to="/about">About Us</Link>
             <Link to="/blog">Blog</Link>
             <Link to="/contact">Contact</Link>
+          </nav>
+
+          <nav className="site-footer-col">
+            <h3>Alternatives</h3>
+            <Link to="/comparison/twittershots">vs TwitterShots</Link>
+            <Link to="/comparison/pika">vs Pika.style</Link>
+            <Link to="/comparison/tweetpik">vs TweetPik</Link>
+            <Link to="/comparison/pikaso">vs Pikaso</Link>
           </nav>
 
           <nav className="site-footer-col">

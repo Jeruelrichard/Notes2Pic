@@ -7,6 +7,36 @@ export const config = { api: { bodyParser: false } }
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const FREEMIUS_SECRET_KEY = process.env.FREEMIUS_SECRET_KEY
+const LOOPS_API_KEY = process.env.LOOPS_API_KEY
+const LOOPS_BASE = 'https://app.loops.so/api/v1'
+
+async function updateLoopsPlanStatus(email, planStatus) {
+  if (!LOOPS_API_KEY) {
+    console.warn('Loops API key missing, skipping status sync')
+    return
+  }
+  try {
+    const res = await fetch(`${LOOPS_BASE}/contacts/update`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${LOOPS_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: String(email).toLowerCase(),
+        userProperties: {
+          planStatus: planStatus,
+        },
+      }),
+    })
+    if (!res.ok) {
+      const text = await res.text()
+      console.error('Failed to sync planStatus to Loops:', res.status, text)
+    }
+  } catch (err) {
+    console.error('Error syncing planStatus to Loops:', err)
+  }
+}
 
 // License events that should (re)sync a user's entitlement.
 const LICENSE_EVENTS = new Set([
@@ -128,6 +158,12 @@ export default async function handler(req, res) {
     console.error('Freemius entitlement upsert failed', error)
     return res.status(500).json({ error: 'Upsert failed' })
   }
+
+  // Update contact property in Loops
+  const activePlanStatus = (entitlement.status === 'active' || entitlement.status === 'cancelled') 
+    ? entitlement.plan 
+    : 'free'
+  await updateLoopsPlanStatus(email, activePlanStatus)
 
   return res.status(200).json({ ok: true, event: eventType, plan: entitlement.plan, status: entitlement.status })
 }
