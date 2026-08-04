@@ -4,6 +4,7 @@ import { ArrowRight, Check, Clipboard, Download, Sparkles } from 'lucide-react'
 import { MarketingLayout } from '../components/SiteChrome'
 import Seo from '../components/Seo'
 import { scrollToHashTarget } from '../lib/scrollTo'
+import { trackEvent } from '../lib/analytics'
 
 const QUERY = '(prefers-reduced-motion: reduce)'
 function usePrefersReducedMotion() {
@@ -149,11 +150,19 @@ export default function Landing() {
             design tool needed.
           </p>
           <div className="hero-actions">
-            <Link to="/app?checkout=lifetime" className="btn-primary">
+            <Link
+              to="/app?checkout=lifetime"
+              className="btn-primary"
+              onClick={() => trackEvent('click_hero_cta', { plan: 'lifetime' })}
+            >
               <Sparkles aria-hidden="true" />
               Get lifetime &mdash; $10
             </Link>
-            <Link to="/app" className="btn-secondary">
+            <Link
+              to="/app"
+              className="btn-secondary"
+              onClick={() => trackEvent('click_hero_cta', { plan: 'free' })}
+            >
               <Download aria-hidden="true" />
               Start free
             </Link>
@@ -308,7 +317,11 @@ export default function Landing() {
               <li><Check aria-hidden="true" /> Unlimited saved profiles</li>
               <li><Check aria-hidden="true" /> Pay once, keep forever</li>
             </ul>
-            <Link to="/app?checkout=lifetime" className="btn-primary block">
+            <Link
+              to="/app?checkout=lifetime"
+              className="btn-primary block"
+              onClick={() => trackEvent('click_pricing_cta', { plan: 'lifetime' })}
+            >
               Get lifetime
             </Link>
           </article>
@@ -324,7 +337,11 @@ export default function Landing() {
               <li><Check aria-hidden="true" /> Every template &amp; size</li>
               <li><Check aria-hidden="true" /> One saved profile</li>
             </ul>
-            <Link to="/app" className="btn-secondary block">
+            <Link
+              to="/app"
+              className="btn-secondary block"
+              onClick={() => trackEvent('click_pricing_cta', { plan: 'free' })}
+            >
               Start free
             </Link>
           </article>
@@ -343,7 +360,11 @@ export default function Landing() {
               <li><Check aria-hidden="true" /> Unlimited saved profiles</li>
               <li><Check aria-hidden="true" /> Cancel anytime</li>
             </ul>
-            <Link to="/app?checkout=monthly" className="btn-secondary block">
+            <Link
+              to="/app?checkout=monthly"
+              className="btn-secondary block"
+              onClick={() => trackEvent('click_pricing_cta', { plan: 'monthly' })}
+            >
               Go monthly
             </Link>
           </article>
@@ -356,11 +377,19 @@ export default function Landing() {
             Your next post could be your next <em>image worth sharing.</em>
           </h2>
           <div className="close-actions">
-            <Link to="/app?checkout=lifetime" className="btn-primary">
+            <Link
+              to="/app?checkout=lifetime"
+              className="btn-primary"
+              onClick={() => trackEvent('click_footer_band_cta', { plan: 'lifetime' })}
+            >
               <Sparkles aria-hidden="true" />
               Get lifetime &mdash; $10
             </Link>
-            <Link to="/app" className="btn-secondary">
+            <Link
+              to="/app"
+              className="btn-secondary"
+              onClick={() => trackEvent('click_footer_band_cta', { plan: 'free' })}
+            >
               <Clipboard aria-hidden="true" />
               Try it free
             </Link>

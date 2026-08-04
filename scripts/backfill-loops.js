@@ -20,7 +20,7 @@ async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-async function updateLoopsPlanStatus(email, planStatus) {
+async function updateLoopsContact(email, properties) {
   const normalizedEmail = String(email).toLowerCase().trim()
   try {
     const res = await fetch(`${LOOPS_BASE}/contacts/update`, {
@@ -31,12 +31,12 @@ async function updateLoopsPlanStatus(email, planStatus) {
       },
       body: JSON.stringify({
         email: normalizedEmail,
-        planStatus: planStatus,
+        ...properties,
       }),
     })
     
     if (res.ok) {
-      console.log(`Successfully synced ${normalizedEmail} -> planStatus: ${planStatus}`)
+      console.log(`Successfully synced ${normalizedEmail} -> properties:`, properties)
       return true
     } else {
       const text = await res.text()
@@ -60,19 +60,45 @@ async function run() {
     process.exit(1)
   }
 
-  console.log(`Fetched ${profiles.length} profiles. Fetching entitlements...`)
-  const { data: entitlements, error: eError } = await supabase
-    .from('entitlements')
-    .select('user_id, plan, status')
+  console.log(`Fetched ${profiles.length} profiles. Fetching entitlements, exports, and generations...`)
+  const [
+    { data: entitlements, error: eError },
+    { data: exports, error: expError },
+    { data: generations, error: genError }
+  ] = await Promise.all([
+    supabase.from('entitlements').select('user_id, plan, status'),
+    supabase.from('exports').select('user_id, created_at'),
+    supabase.from('generations').select('user_id, created_at')
+  ])
 
-  if (eError) {
-    console.error('Failed to fetch entitlements:', eError.message)
+  if (eError || expError || genError) {
+    console.error('Failed to fetch data from Supabase:', eError || expError || genError)
     process.exit(1)
   }
 
   const entitlementMap = {}
   for (const ent of entitlements || []) {
     entitlementMap[ent.user_id] = ent
+  }
+
+  const exportsMap = {}
+  const generationsMap = {}
+  const lastActiveMap = {}
+
+  for (const exp of exports || []) {
+    exportsMap[exp.user_id] = (exportsMap[exp.user_id] || 0) + 1
+    const dt = new Date(exp.created_at)
+    if (!lastActiveMap[exp.user_id] || dt > new Date(lastActiveMap[exp.user_id])) {
+      lastActiveMap[exp.user_id] = exp.created_at
+    }
+  }
+
+  for (const gen of generations || []) {
+    generationsMap[gen.user_id] = (generationsMap[gen.user_id] || 0) + 1
+    const dt = new Date(gen.created_at)
+    if (!lastActiveMap[gen.user_id] || dt > new Date(lastActiveMap[gen.user_id])) {
+      lastActiveMap[gen.user_id] = gen.created_at
+    }
   }
 
   console.log('Starting sync to Loops...')
@@ -88,7 +114,17 @@ async function run() {
       ? ent.plan
       : 'free'
 
-    const success = await updateLoopsPlanStatus(profile.email, planStatus)
+    const totalExports = exportsMap[profile.id] || 0
+    const totalGenerations = generationsMap[profile.id] || 0
+    const lastActiveAt = lastActiveMap[profile.id] || null
+
+    const success = await updateLoopsContact(profile.email, {
+      planStatus,
+      totalExports,
+      totalGenerations,
+      ...(lastActiveAt ? { lastActiveAt } : {})
+    })
+
     if (success) {
       successCount++
     } else {

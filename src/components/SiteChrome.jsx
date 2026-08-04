@@ -4,6 +4,7 @@ import { ChevronDown, Menu, X } from 'lucide-react'
 import { useAuth } from '../lib/useAuth'
 import { scrollToHashTarget } from '../lib/scrollTo'
 import { TOOL_PAGES } from '../lib/toolPages'
+import { trackEvent } from '../lib/analytics'
 
 const markSrc = '/notes2pics-mark-v2-quote-standalone.svg'
 
@@ -54,7 +55,13 @@ function ToolsMenu({ onNavigate }) {
         className="nav-dropdown-trigger"
         aria-expanded={open}
         aria-haspopup="true"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          const nextState = !open
+          setOpen(nextState)
+          if (nextState) {
+            trackEvent('click_nav_tools')
+          }
+        }}
       >
         Tools
         <ChevronDown aria-hidden="true" className={open ? 'flip' : ''} />
@@ -69,6 +76,7 @@ function ToolsMenu({ onNavigate }) {
               onClick={() => {
                 setOpen(false)
                 onNavigate?.()
+                trackEvent('click_nav_tool_item', { tool: tool.navLabel })
               }}
             >
               {tool.navLabel}
@@ -94,6 +102,7 @@ export function SiteHeader() {
   const handlePricing = (event) => {
     event.preventDefault()
     close()
+    trackEvent('click_nav_pricing')
     if (document.getElementById('pricing')) {
       scrollToHashTarget('pricing')
     } else {
@@ -120,7 +129,7 @@ export function SiteHeader() {
         </nav>
         <div className="site-header-actions">
           {user ? <AccountChip user={user} /> : (
-            <Link to="/app" className="site-nav-cta">
+            <Link to="/app" className="site-nav-cta" onClick={() => trackEvent('click_nav_open_app')}>
               Open app
             </Link>
           )}
@@ -140,13 +149,28 @@ export function SiteHeader() {
         <nav className="site-menu-mobile">
           <span className="site-menu-label">Free tools</span>
           {TOOL_PAGES.map((tool) => (
-            <Link key={tool.path} to={tool.path} onClick={close}>
+            <Link
+              key={tool.path}
+              to={tool.path}
+              onClick={() => {
+                close()
+                trackEvent('click_mobile_nav_tool_item', { tool: tool.navLabel })
+              }}
+            >
               {tool.navLabel}
             </Link>
           ))}
           <a href="/#pricing" onClick={handlePricing}>Pricing</a>
           <NavLink to="/blog" onClick={close}>Blog</NavLink>
-          <Link to="/app" onClick={close}>Open app</Link>
+          <Link
+            to="/app"
+            onClick={() => {
+              close()
+              trackEvent('click_mobile_nav_open_app')
+            }}
+          >
+            Open app
+          </Link>
           {user ? <span className="site-menu-email">Signed in as {user.email}</span> : null}
         </nav>
       ) : null}

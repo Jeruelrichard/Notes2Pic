@@ -172,10 +172,11 @@ generate‑thread JWT check), `FREEMIUS_SECRET_KEY`, **`GEMINI_API_KEY`**, **`LO
   The Loop workflow triggers on that event name, set to **once per contact**. Setup steps (Loops
   key + workflow, Vercel env, the DB Webhook with the secret header) are done in dashboards, not
   code. Note it fires at **signup**, before email confirmation.
-- **Billing status sync to Loops.** Custom contact properties `planStatus` and `totalExports` are synced:
-  - On signup (`api/loops-webhook.js`), they are initialized to `planStatus: 'free'` and `totalExports: 0`.
+- **Billing and Activity status sync to Loops.** Custom contact properties `planStatus`, `totalExports`, `totalGenerations`, and `lastActiveAt` are synced dynamically:
+  - On signup (`api/loops-webhook.js`), contacts are initialized to `planStatus: 'free'`, `totalExports: 0`, and `totalGenerations: 0`.
   - On billing updates (`api/freemius-webhook.js`), `planStatus` is updated dynamically to the user's active billing tier (`monthly` or `lifetime`), or reverts to `free` on expiration.
-  - A backfill script `scripts/backfill-loops.js` was created to bulk sync existing users and entitlements.
+  - On activity (`api/loops-activity-webhook.js` — triggered by Supabase Webhooks on `exports` and `generations` inserts), `totalExports`, `totalGenerations`, and `lastActiveAt` are synced in real-time.
+  - A backfill script `scripts/backfill-loops.js` was created to bulk sync planStatus, counts, and lastActiveAt for all existing users in the database.
 
 ## Owner‑task backlog (not code)
 - **DONE**: Google OAuth verification, GSC, Bing Webmaster, directory distribution (StartupRanking in progress), IndexNow, GA4 activation.

@@ -35,3 +35,9 @@ export function trackPageview(path) {
     page_title: document.title,
   })
 }
+
+export function trackEvent(name, params = {}) {
+  if (!GA_ID || typeof window === 'undefined' || typeof window.gtag !== 'function') return
+  window.gtag('event', name, params)
+}
+

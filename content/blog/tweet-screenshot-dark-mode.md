@@ -55,7 +55,7 @@ Part of it is genuinely survivorship bias: the build-in-public founders and essa
 - **The tweet is short and punchy.** A one-line quote or a spicy take doesn't ask anyone to read for more than two seconds, so the light-mode legibility edge barely matters.
 - **You want visual contrast in a light-heavy feed.** If most creators in your niche post white-background cards, a dark card is the one that stops the thumb.
 - **You're building a specific aesthetic.** Dan-Koe-style dark essay cards and "founder building in public at 2am" vibes lean dark on purpose — it's a brand decision, not a performance one.
-- **Your [carousel](/blog/twitter-thread-to-instagram-carousel) cover slide needs to feel like a title page**, not a wall of text — dark mode reads as more designed on a single cover slide.
+- **Your carousel cover slide needs to feel like a title page**, not a wall of text — dark mode reads as more designed on a single cover slide.
 
 ## When Light Mode Is the Better Call
 
@@ -76,7 +76,7 @@ Mapped to the three ways people actually use a screenshot tool:
 
 If you're still stuck, a 10-second gut check: read the text out loud. If it took you under two seconds, dark mode is fine. If you had to actually read it, use light and thank the proofreading research later.
 
-The good news: you don't have to commit blind either way. [Notes2Pic's screenshot tool](/blog/screenshot-a-tweet-without-clutter) lets you flip between modes on the same card before you export, so you can eyeball both against the actual tweet rather than guessing from a stat someone else made up.
+The good news: you don't have to commit blind either way. [Notes2Pic's screenshot tool](/tweet-screenshot) lets you flip between modes on the same card before you export, so you can eyeball both against the actual tweet rather than guessing from a stat someone else made up.
 
 ## Turn Any Tweet Into a Screenshot — Either Mode, One Click
 
