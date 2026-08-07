@@ -1,4 +1,4 @@
-import { useEffect, useRef, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Check, Clipboard, Download, Sparkles } from 'lucide-react'
 import { MarketingLayout } from '../components/SiteChrome'
@@ -117,6 +117,24 @@ export default function Landing() {
   // (and NOT returning the cancel) makes this survive StrictMode's double-invoke,
   // which would otherwise consume the flag then cancel the scroll.
   const didPricingScroll = useRef(false)
+  const [country, setCountry] = useState('')
+
+  useEffect(() => {
+    // Detect country for Purchasing Power Parity discounts
+    fetch('https://api.country.is')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.country) {
+          setCountry(data.country)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const isNG = country === 'NG'
+  const lifetimePrice = isNG ? '$3.70' : '$10'
+  const monthlyPrice = isNG ? '$1.50' : '$5'
+
   useEffect(() => {
     if (didPricingScroll.current) return
     const wantsPricing =
@@ -298,16 +316,33 @@ export default function Landing() {
           <p>Editing and previewing are always free. Paid removes the watermark and the limits.</p>
         </div>
 
+        {isNG && (
+          <div className="ppp-banner" style={{
+            background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
+            color: '#78350f',
+            padding: '12px 16px',
+            borderRadius: '10px',
+            fontSize: '0.9rem',
+            fontWeight: '700',
+            maxWidth: '600px',
+            margin: '0 auto 24px',
+            textAlign: 'center',
+            border: '1px solid #fcd34d',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+          }}>
+            🇳🇬 Purchasing Power Parity discount applied! Get 70% off monthly ({monthlyPrice}/mo) and 63% off lifetime ({lifetimePrice} once) at checkout.
+          </div>
+        )}
+
         <div className="pricing-grid">
           <article className="price-card featured">
-            <span className="price-badge">{LIFETIME_SPOTS_LEFT} of 20 left</span>
+            <span className="price-badge">{isNG ? 'PPP discount applied' : `${LIFETIME_SPOTS_LEFT} of 20 left`}</span>
             <span className="price-plan">Lifetime</span>
             <p className="price">
-              $10<small>once</small>
+              {lifetimePrice}<small>{isNG ? 'once (PPP applied)' : 'once'}</small>
             </p>
             <p className="price-note">
-              Then $17 &mdash; founding-member price, locked in forever.{' '}
-              <strong>Only {LIFETIME_SPOTS_LEFT} spots left.</strong>
+              {isNG ? 'Pay once, keep forever.' : `Then $17 &mdash; founding-member price, locked in forever. Only ${LIFETIME_SPOTS_LEFT} spots left.`}
             </p>
             <ul className="price-list">
               <li><Check aria-hidden="true" /> Unlimited exports</li>
@@ -349,9 +384,9 @@ export default function Landing() {
           <article className="price-card">
             <span className="price-plan">Monthly</span>
             <p className="price">
-              $5<small>/mo</small>
+              {monthlyPrice}<small>{isNG ? '/mo (PPP applied)' : '/mo'}</small>
             </p>
-            <p className="price-note-plain">Prefer to pay as you go</p>
+            <p className="price-note-plain">{isNG ? 'PPP discount applied' : 'Prefer to pay as you go'}</p>
             <ul className="price-list">
               <li><Check aria-hidden="true" /> Unlimited exports</li>
               <li><Check aria-hidden="true" /> Unlimited carousels</li>
@@ -383,7 +418,7 @@ export default function Landing() {
               onClick={() => trackEvent('click_footer_band_cta', { plan: 'lifetime' })}
             >
               <Sparkles aria-hidden="true" />
-              Get lifetime &mdash; $10
+              Get lifetime &mdash; {lifetimePrice}
             </Link>
             <Link
               to="/app"

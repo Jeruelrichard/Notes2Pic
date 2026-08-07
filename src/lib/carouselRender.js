@@ -39,12 +39,17 @@ export function drawSlide(ctx, opts) {
     width,
     height,
     watermark = false,
+    bgColor = null,
+    textColor = null,
   } = opts
 
   const isDark = theme === 'dark'
-  const bg = isDark ? '#0a0a0a' : '#faf9f6'
-  const fg = isDark ? '#f5f5f1' : '#141414'
-  const muted = isDark ? '#8a8a8a' : '#8a8a84'
+  const bg = bgColor || (isDark ? '#0a0a0a' : '#faf9f6')
+  const fg = textColor || (isDark ? '#f5f5f1' : '#141414')
+
+  // Muted color is used for footer metadata. If using custom colors,
+  // we will draw them with 60% opacity of the main text color.
+  const muted = textColor ? textColor : (isDark ? '#8a8a8a' : '#8a8a84')
 
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, width, height)
@@ -97,18 +102,27 @@ export function drawSlide(ctx, opts) {
     handleX = margin + avatarR * 2 + width * 0.022
   }
 
-  if (username) {
-    ctx.fillStyle = muted
-    ctx.font = `600 ${smallFont}px ${FONT_STACK}`
-    ctx.textAlign = 'left'
-    ctx.fillText(username.startsWith('@') ? username : `@${username}`, handleX, footerY)
-  }
+  if (username || total > 1) {
+    ctx.save()
+    if (textColor) {
+      ctx.globalAlpha = 0.60
+    }
+    
+    if (username) {
+      ctx.fillStyle = muted
+      ctx.font = `600 ${smallFont}px ${FONT_STACK}`
+      ctx.textAlign = 'left'
+      ctx.fillText(username.startsWith('@') ? username : `@${username}`, handleX, footerY)
+    }
 
-  if (total > 1) {
-    ctx.fillStyle = muted
-    ctx.font = `600 ${smallFont}px ${FONT_STACK}`
-    ctx.textAlign = 'right'
-    ctx.fillText(`${index + 1} / ${total}`, width - margin, footerY)
+    if (total > 1) {
+      ctx.fillStyle = muted
+      ctx.font = `600 ${smallFont}px ${FONT_STACK}`
+      ctx.textAlign = 'right'
+      ctx.fillText(`${index + 1} / ${total}`, width - margin, footerY)
+    }
+    
+    ctx.restore()
   }
 
   if (watermark) {

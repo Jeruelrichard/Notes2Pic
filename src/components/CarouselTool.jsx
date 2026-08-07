@@ -9,6 +9,7 @@ import { useAuth } from '../lib/useAuth'
 import { getUsage, recordExport } from '../lib/entitlements'
 import AuthModal from './AuthModal'
 import UpgradeModal from './UpgradeModal'
+import { PALETTES } from '../lib/profiles'
 
 // Instagram-native square. Preview draws at this resolution and is scaled down
 // with CSS; export renders at 2× for crisp PNGs.
@@ -25,6 +26,8 @@ export default function CarouselTool({ config }) {
   // once (takeHandoffThread clears it) so a refresh doesn't resurrect it.
   const [text, setText] = useState(() => takeHandoffThread() || config.demo || '')
   const [theme, setTheme] = useState('dark')
+  const [bgColor, setBgColor] = useState('#0A0A0A')
+  const [textColor, setTextColor] = useState('#F5F5F1')
   const [username, setUsername] = useState('')
   const [slideIndex, setSlideIndex] = useState(0)
   const [isExporting, setIsExporting] = useState(false)
@@ -58,8 +61,10 @@ export default function CarouselTool({ config }) {
       width: canvas.width,
       height: canvas.height,
       watermark: false,
+      bgColor,
+      textColor,
     })
-  }, [slides, safeIndex, total, theme, username])
+  }, [slides, safeIndex, total, theme, username, bgColor, textColor])
 
   async function buildZip(withWatermark) {
     const width = ASPECT.width * 2
@@ -79,6 +84,8 @@ export default function CarouselTool({ config }) {
         width,
         height,
         watermark: withWatermark,
+        bgColor,
+        textColor,
       })
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
       zip.file(`slide-${String(index + 1).padStart(2, '0')}.png`, blob)
@@ -157,26 +164,79 @@ export default function CarouselTool({ config }) {
           placeholder="Paste your X / Twitter thread here…"
           spellCheck={false}
         />
-        <div className="tool-controls">
-          <label>
-            Style
-            <select value={theme} onChange={(event) => setTheme(event.target.value)}>
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
-            </select>
-          </label>
-          <label>
-            Handle <span className="tool-optional">(optional)</span>
-            <input
-              type="text"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              placeholder="@you"
-            />
-          </label>
-          <span className="tool-count">
-            {total} slide{total === 1 ? '' : 's'}
-          </span>
+        <div className="tool-controls" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <label style={{ flex: '1 1 200px' }}>
+              Style & Brand Colors
+              <div className="brand-palette-options" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
+                {PALETTES.map((p) => (
+                  <button
+                    key={p.name}
+                    type="button"
+                    className={`color-swatch-btn ${theme === p.name ? 'active' : ''}`}
+                    style={{
+                      background: `linear-gradient(135deg, ${p.bg} 50%, ${p.text} 50%)`,
+                    }}
+                    title={p.label}
+                    onClick={() => {
+                      setTheme(p.name)
+                      setBgColor(p.bg)
+                      setTextColor(p.text)
+                    }}
+                  />
+                ))}
+                <button
+                  type="button"
+                  className={`color-swatch-btn custom-swatch-btn ${theme === 'custom' ? 'active' : ''}`}
+                  style={{
+                    background: 'linear-gradient(135deg, #ffffff 30%, #e2e8f0 30%, #e2e8f0 70%, #000000 70%)',
+                  }}
+                  title="Custom Colors"
+                  onClick={() => setTheme('custom')}
+                >
+                  🎨
+                </button>
+              </div>
+            </label>
+            <label style={{ flex: '1 1 120px' }}>
+              Handle <span className="tool-optional">(optional)</span>
+              <input
+                type="text"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                placeholder="@you"
+              />
+            </label>
+          </div>
+
+          {theme === 'custom' && (
+            <div className="custom-color-inputs" style={{ display: 'flex', gap: '16px' }}>
+              <label className="field" style={{ flex: 1, margin: 0 }}>
+                <span style={{ fontSize: '0.85rem' }}>Background</span>
+                <input
+                  type="color"
+                  value={bgColor || '#0A0A0A'}
+                  style={{ height: '38px', padding: '2px', cursor: 'pointer' }}
+                  onChange={(event) => setBgColor(event.target.value)}
+                />
+              </label>
+              <label className="field" style={{ flex: 1, margin: 0 }}>
+                <span style={{ fontSize: '0.85rem' }}>Text Color</span>
+                <input
+                  type="color"
+                  value={textColor || '#F5F5F1'}
+                  style={{ height: '38px', padding: '2px', cursor: 'pointer' }}
+                  onChange={(event) => setTextColor(event.target.value)}
+                />
+              </label>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span className="tool-count">
+              {total} slide{total === 1 ? '' : 's'}
+            </span>
+          </div>
         </div>
       </div>
 

@@ -23,7 +23,7 @@ import { isSupabaseConfigured } from './lib/supabaseClient'
 import { useAuth } from './lib/useAuth'
 import { getUsage, recordExport } from './lib/entitlements'
 import { checkoutUrlForPlan } from './lib/checkout'
-import { listProfiles, upsertProfile, deleteProfileById } from './lib/profiles'
+import { listProfiles, upsertProfile, deleteProfileById, PALETTES, parseTheme } from './lib/profiles'
 import { splitIntoSlides, splitThread, SLIDE_MAX_CHARS, SLIDE_HARD_MAX } from './lib/carousel'
 import { MAX_ESSAY_WORDS, countWords, generateThread } from './lib/threadGen'
 import { drawSlide } from './lib/carouselRender'
@@ -82,6 +82,8 @@ const starterMediumPost = {
     "A pattern I've noticed in stuck people:\n\nThey're always busy. They never stop moving. They have 47 tabs open and a notebook-sized to-do list. But if you ask them what they accomplished this week that actually matters, their mind goes blank.\n\nBusyness is a poor measure of value. If you focused on being useful instead, your life would change.",
   signature: '',
   theme: 'dark',
+  bgColor: '#0A0A0A',
+  textColor: '#F5F5F1',
 }
 
 const starterCarouselText =
@@ -94,6 +96,8 @@ const starterCarousel = {
   name: '',
   username: '',
   avatar: '',
+  bgColor: '#0A0A0A',
+  textColor: '#F5F5F1',
 }
 
 const exportTimeoutMs = 15000
@@ -244,6 +248,19 @@ function App() {
   const [captureWatermark, setCaptureWatermark] = useState(false)
 
   const isPaid = usage?.paid === true
+  const [country, setCountry] = useState('')
+
+  useEffect(() => {
+    // Detect country for Purchasing Power Parity discounts
+    fetch('https://api.country.is')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.country) {
+          setCountry(data.country)
+        }
+      })
+      .catch(() => {})
+  }, [])
   const freeRemaining = usage && !usage.paid ? usage.remaining : null
 
   const isMediumMode = contentMode === 'medium'
@@ -345,7 +362,10 @@ function App() {
       return
     }
 
-    const url = checkoutUrlForPlan(pendingCheckout, user.email)
+    const coupon = country === 'NG'
+      ? (pendingCheckout === 'lifetime' ? 'PPP_NGLIFE' : 'PPP_NG')
+      : ''
+    const url = checkoutUrlForPlan(pendingCheckout, user.email, coupon)
     if (url) {
       window.location.href = url // full-tab redirect to Freemius checkout
     } else {
@@ -354,7 +374,7 @@ function App() {
         setNotice('Checkout is not configured yet.')
       })
     }
-  }, [pendingCheckout, user, usage, isPaid])
+  }, [pendingCheckout, user, usage, isPaid, country])
 
   // Saved author profiles live per-user in Supabase; load them on sign-in.
   useEffect(() => {
@@ -442,6 +462,8 @@ function App() {
       width: canvas.width,
       height: canvas.height,
       watermark: false,
+      bgColor: carousel.bgColor,
+      textColor: carousel.textColor,
     })
   }, [isCarouselMode, carousel, slideIndex, carouselAvatarImage, currentAspect])
 
@@ -600,20 +622,34 @@ function App() {
   function applyProfile(profile) {
     if (!profile) return
     setSelectedProfileId(profile.id)
+    
+    // Parse theme colors from profile
+    const parsed = parseTheme(profile.theme || 'dark')
+    
     setPost((current) => ({
       ...current,
       name: profile.name,
       username: profile.username,
       source: profile.source || current.source,
       avatar: profile.avatar,
+      theme: parsed.type === 'preset' ? parsed.value : 'dark',
     }))
     setCarousel((current) => ({
       ...current,
       name: profile.name,
       username: profile.username,
       avatar: profile.avatar,
+      theme: parsed.type === 'preset' ? parsed.value : 'custom',
+      bgColor: parsed.bgColor,
+      textColor: parsed.textColor,
     }))
-    setMediumPost((current) => ({ ...current, signature: profile.signature || current.signature }))
+    setMediumPost((current) => ({
+      ...current,
+      signature: profile.signature || current.signature,
+      theme: parsed.type === 'preset' ? parsed.value : 'custom',
+      bgColor: parsed.bgColor,
+      textColor: parsed.textColor,
+    }))
   }
 
   function applyProfileById(profileId) {
@@ -865,6 +901,8 @@ function App() {
         width,
         height,
         watermark: withWatermark,
+        bgColor: carousel.bgColor,
+        textColor: carousel.textColor,
       })
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'))
       const number = String(index + 1).padStart(2, '0')
@@ -905,6 +943,8 @@ function App() {
           width,
           height,
           watermark: false,
+          bgColor: carousel.bgColor,
+          textColor: carousel.textColor,
         })
         blobs.push(await new Promise((resolve) => canvas.toBlob(resolve, 'image/png')))
       }
@@ -964,6 +1004,8 @@ function App() {
     const height = currentAspect.height * 2
     const typography = getMediumTypography(aspect)
     const isDark = mediumPost.theme === 'dark'
+    const bg = mediumPost.bgColor || (isDark ? '#000000' : '#fbfbf7')
+    const fg = mediumPost.textColor || (isDark ? '#f5f5f1' : '#111111')
     const textX = width * 0.12
     const maxTextWidth = width * 0.76
     const signatureGap = 34
@@ -973,7 +1015,7 @@ function App() {
     canvas.height = height
 
     const context = canvas.getContext('2d')
-    context.fillStyle = isDark ? '#000000' : '#fbfbf7'
+    context.fillStyle = bg
     context.fillRect(0, 0, width, height)
 
     let fontSize = typography.fontSize
@@ -994,7 +1036,7 @@ function App() {
       fontSize -= 1
     }
 
-    context.fillStyle = isDark ? '#f5f5f1' : '#111111'
+    context.fillStyle = fg
     context.font = `500 ${fontSize}px Trebuchet MS, Segoe UI, sans-serif`
     context.textBaseline = 'top'
 
@@ -1005,15 +1047,23 @@ function App() {
       y += lineHeight
     }
 
-    const markMuted = isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'
+    const markMuted = mediumPost.textColor 
+      ? mediumPost.textColor 
+      : (isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)')
 
     if (mediumPost.signature) {
       y += signatureGap
       const signatureTop = y
       context.textBaseline = 'top'
-      context.fillStyle = isDark ? '#727272' : '#8a8a84'
+      
+      context.save()
+      if (mediumPost.textColor) {
+        context.globalAlpha = 0.60
+      }
+      context.fillStyle = mediumPost.textColor ? fg : (isDark ? '#727272' : '#8a8a84')
       context.font = `500 ${signatureSize}px Trebuchet MS, Segoe UI, sans-serif`
       context.fillText(mediumPost.signature.toUpperCase(), textX, signatureTop)
+      context.restore()
 
       if (withWatermark) {
         // Fuse the watermark onto the signature's line — cropping it off means
@@ -1021,8 +1071,15 @@ function App() {
         const markSize = Math.max(11, Math.round(signatureSize * 0.82))
         context.font = `600 ${markSize}px Trebuchet MS, Segoe UI, sans-serif`
         context.textAlign = 'right'
+        
+        context.save()
+        if (mediumPost.textColor) {
+          context.globalAlpha = 0.40;
+        }
         context.fillStyle = markMuted
         context.fillText(productWatermark, width - textX, signatureTop + (signatureSize - markSize) / 2)
+        context.restore()
+        
         context.textAlign = 'left'
       }
     } else if (withWatermark) {
@@ -1033,8 +1090,15 @@ function App() {
       context.font = `600 ${markSize}px Trebuchet MS, Segoe UI, sans-serif`
       context.textAlign = 'right'
       context.textBaseline = 'top'
+      
+      context.save()
+      if (mediumPost.textColor) {
+        context.globalAlpha = 0.40;
+      }
       context.fillStyle = markMuted
       context.fillText(productWatermark, width - textX, y)
+      context.restore()
+      
       context.textAlign = 'left'
     }
 
@@ -1229,16 +1293,61 @@ function App() {
                     onChange={(event) => updateCarousel('username', event.target.value)}
                   />
                 </label>
-                <label className="field">
-                  <span>Theme</span>
-                  <select
-                    value={carousel.theme}
-                    onChange={(event) => updateCarousel('theme', event.target.value)}
-                  >
-                    <option value="dark">Dark</option>
-                    <option value="light">Light</option>
-                  </select>
-                </label>
+                <div className="field" style={{ gridColumn: 'span 2' }}>
+                  <span>Theme & Brand Colors</span>
+                  <div className="brand-palette-options" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
+                    {PALETTES.map((p) => (
+                      <button
+                        key={p.name}
+                        type="button"
+                        className={`color-swatch-btn ${carousel.theme === p.name ? 'active' : ''}`}
+                        style={{
+                          background: `linear-gradient(135deg, ${p.bg} 50%, ${p.text} 50%)`,
+                        }}
+                        title={p.label}
+                        onClick={() => {
+                          updateCarousel('theme', p.name)
+                          updateCarousel('bgColor', p.bg)
+                          updateCarousel('textColor', p.text)
+                        }}
+                      />
+                    ))}
+                    <button
+                      type="button"
+                      className={`color-swatch-btn custom-swatch-btn ${carousel.theme === 'custom' ? 'active' : ''}`}
+                      style={{
+                        background: 'linear-gradient(135deg, #ffffff 30%, #e2e8f0 30%, #e2e8f0 70%, #000000 70%)',
+                      }}
+                      title="Custom Colors"
+                      onClick={() => updateCarousel('theme', 'custom')}
+                    >
+                      🎨
+                    </button>
+                  </div>
+
+                  {carousel.theme === 'custom' && (
+                    <div className="custom-color-inputs" style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
+                      <label className="field" style={{ flex: 1, margin: 0 }}>
+                        <span style={{ fontSize: '0.8rem' }}>Background</span>
+                        <input
+                          type="color"
+                          value={carousel.bgColor || '#0A0A0A'}
+                          style={{ height: '38px', padding: '2px', cursor: 'pointer' }}
+                          onChange={(event) => updateCarousel('bgColor', event.target.value)}
+                        />
+                      </label>
+                      <label className="field" style={{ flex: 1, margin: 0 }}>
+                        <span style={{ fontSize: '0.8rem' }}>Text Color</span>
+                        <input
+                          type="color"
+                          value={carousel.textColor || '#F5F5F1'}
+                          style={{ height: '38px', padding: '2px', cursor: 'pointer' }}
+                          onChange={(event) => updateCarousel('textColor', event.target.value)}
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
                 <label className="upload-row">
                   <ImagePlus aria-hidden="true" />
                   <span>Avatar</span>
@@ -1340,16 +1449,61 @@ function App() {
                   />
                 </label>
 
-                <label className="field">
-                  <span>Theme</span>
-                  <select
-                    value={mediumPost.theme}
-                    onChange={(event) => updateMediumPost('theme', event.target.value)}
-                  >
-                    <option value="dark">Dark</option>
-                    <option value="light">Light</option>
-                  </select>
-                </label>
+                <div className="field" style={{ gridColumn: 'span 2' }}>
+                  <span>Theme & Brand Colors</span>
+                  <div className="brand-palette-options" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
+                    {PALETTES.map((p) => (
+                      <button
+                        key={p.name}
+                        type="button"
+                        className={`color-swatch-btn ${mediumPost.theme === p.name ? 'active' : ''}`}
+                        style={{
+                          background: `linear-gradient(135deg, ${p.bg} 50%, ${p.text} 50%)`,
+                        }}
+                        title={p.label}
+                        onClick={() => {
+                          updateMediumPost('theme', p.name)
+                          updateMediumPost('bgColor', p.bg)
+                          updateMediumPost('textColor', p.text)
+                        }}
+                      />
+                    ))}
+                    <button
+                      type="button"
+                      className={`color-swatch-btn custom-swatch-btn ${mediumPost.theme === 'custom' ? 'active' : ''}`}
+                      style={{
+                        background: 'linear-gradient(135deg, #ffffff 30%, #e2e8f0 30%, #e2e8f0 70%, #000000 70%)',
+                      }}
+                      title="Custom Colors"
+                      onClick={() => updateMediumPost('theme', 'custom')}
+                    >
+                      🎨
+                    </button>
+                  </div>
+
+                  {mediumPost.theme === 'custom' && (
+                    <div className="custom-color-inputs" style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
+                      <label className="field" style={{ flex: 1, margin: 0 }}>
+                        <span style={{ fontSize: '0.8rem' }}>Background</span>
+                        <input
+                          type="color"
+                          value={mediumPost.bgColor || '#0A0A0A'}
+                          style={{ height: '38px', padding: '2px', cursor: 'pointer' }}
+                          onChange={(event) => updateMediumPost('bgColor', event.target.value)}
+                        />
+                      </label>
+                      <label className="field" style={{ flex: 1, margin: 0 }}>
+                        <span style={{ fontSize: '0.8rem' }}>Text Color</span>
+                        <input
+                          type="color"
+                          value={mediumPost.textColor || '#F5F5F1'}
+                          style={{ height: '38px', padding: '2px', cursor: 'pointer' }}
+                          onChange={(event) => updateMediumPost('textColor', event.target.value)}
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
 
               </div>
             </>
@@ -1550,16 +1704,25 @@ function App() {
                   <div
                     className={
                       isMediumMode
-                        ? `export-stage medium-stage medium-${mediumPost.theme} aspect-${aspect}`
+                        ? `export-stage medium-stage medium-${mediumPost.theme === 'custom' ? 'custom' : mediumPost.theme} aspect-${aspect}`
                         : `export-stage short-stage short-${shortSourceKey} short-${post.theme} aspect-${aspect}`
                     }
                     ref={exportRef}
-                    style={{ width: `${currentAspect.width}px`, height: `${currentAspect.height}px` }}
+                    style={{
+                      width: `${currentAspect.width}px`,
+                      height: `${currentAspect.height}px`,
+                      ...(isMediumMode && mediumPost.bgColor ? { backgroundColor: mediumPost.bgColor } : {}),
+                      ...(isMediumMode && mediumPost.textColor ? { color: mediumPost.textColor } : {}),
+                    }}
                   >
                     {isMediumMode ? (
                       <article className="medium-content">
                         <p style={mediumTextStyle}>{mediumPost.text || 'Paste your medium-form content here.'}</p>
-                        {mediumPost.signature ? <span>{mediumPost.signature}</span> : null}
+                        {mediumPost.signature ? (
+                          <span style={mediumPost.textColor ? { color: 'inherit', opacity: 0.6 } : {}}>
+                            {mediumPost.signature}
+                          </span>
+                        ) : null}
                       </article>
                     ) : (
                       <ShortSourcePreview
@@ -1600,6 +1763,7 @@ function App() {
         reason={upgradeModal.reason}
         userId={user?.id}
         email={user?.email}
+        country={country}
         onClose={() => setUpgradeModal({ open: false, reason: '' })}
       />
       <SettingsModal

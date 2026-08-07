@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ImagePlus, X } from 'lucide-react'
+import { PALETTES, parseTheme } from '../lib/profiles'
 
 const empty = { name: '', username: '', avatar: '', signature: '' }
 
@@ -7,7 +8,17 @@ const empty = { name: '', username: '', avatar: '', signature: '' }
 // The parent remounts this via `key` each time it opens, so useState seeds
 // cleanly from `initial` without a prop-syncing effect.
 export default function ProfileFormModal({ open, title, initial, submitLabel, busy, onSubmit, onClose, dismissable = true }) {
-  const [form, setForm] = useState({ ...empty, ...(initial || {}) })
+  const [form, setForm] = useState(() => {
+    const base = { ...empty, ...(initial || {}) }
+    const parsed = parseTheme(base.theme || 'dark')
+    return {
+      ...base,
+      themeType: parsed.type,
+      themeValue: parsed.value,
+      bgColor: parsed.bgColor,
+      textColor: parsed.textColor,
+    }
+  })
   const [error, setError] = useState('')
 
   if (!open) return null
@@ -34,7 +45,22 @@ export default function ProfileFormModal({ open, title, initial, submitLabel, bu
       setError('All four fields are required — name, username, avatar, and signature.')
       return
     }
-    onSubmit({ name, username, avatar: form.avatar, signature })
+
+    // Serialize theme/colors based on selection
+    let serializedTheme
+    if (form.themeType === 'custom') {
+      serializedTheme = `custom:${form.bgColor}|${form.textColor}`
+    } else {
+      serializedTheme = `palette:${form.themeValue}`
+    }
+
+    onSubmit({
+      name,
+      username,
+      avatar: form.avatar,
+      signature,
+      theme: serializedTheme,
+    })
   }
 
   return (
@@ -83,6 +109,72 @@ export default function ProfileFormModal({ open, title, initial, submitLabel, bu
               placeholder="Shown on medium-form posts"
             />
           </label>
+
+          <div className="field full">
+            <span>Brand Design</span>
+            <div className="brand-palette-options" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+              {PALETTES.map((p) => (
+                <button
+                  key={p.name}
+                  type="button"
+                  className={`color-swatch-btn ${form.themeType === 'preset' && form.themeValue === p.name ? 'active' : ''}`}
+                  style={{
+                    background: `linear-gradient(135deg, ${p.bg} 50%, ${p.text} 50%)`,
+                  }}
+                  title={p.label}
+                  onClick={() =>
+                    setForm((current) => ({
+                      ...current,
+                      themeType: 'preset',
+                      themeValue: p.name,
+                      bgColor: p.bg,
+                      textColor: p.text,
+                    }))
+                  }
+                />
+              ))}
+              <button
+                type="button"
+                className={`color-swatch-btn custom-swatch-btn ${form.themeType === 'custom' ? 'active' : ''}`}
+                style={{
+                  background: 'linear-gradient(135deg, #ffffff 30%, #e2e8f0 30%, #e2e8f0 70%, #000000 70%)',
+                }}
+                title="Custom Colors"
+                onClick={() =>
+                  setForm((current) => ({
+                    ...current,
+                    themeType: 'custom',
+                    themeValue: 'custom',
+                  }))
+                }
+              >
+                🎨
+              </button>
+            </div>
+
+            {form.themeType === 'custom' && (
+              <div className="custom-color-inputs" style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
+                <label className="field" style={{ flex: 1 }}>
+                  <span style={{ fontSize: '0.85rem' }}>Background</span>
+                  <input
+                    type="color"
+                    value={form.bgColor}
+                    style={{ height: '38px', padding: '2px', cursor: 'pointer' }}
+                    onChange={(event) => update('bgColor', event.target.value)}
+                  />
+                </label>
+                <label className="field" style={{ flex: 1 }}>
+                  <span style={{ fontSize: '0.85rem' }}>Text Color</span>
+                  <input
+                    type="color"
+                    value={form.textColor}
+                    style={{ height: '38px', padding: '2px', cursor: 'pointer' }}
+                    onChange={(event) => update('textColor', event.target.value)}
+                  />
+                </label>
+              </div>
+            )}
+          </div>
 
           <button type="submit" className="export-button" disabled={busy}>
             {busy ? 'Saving…' : submitLabel || 'Save profile'}
