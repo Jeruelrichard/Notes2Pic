@@ -239,8 +239,8 @@ Hunt / AlternativeTo listings, GA4 "AI Traffic" channel setup.
 `okemdinach383@gmail.com` is hardcoded in `is_paid()` to always be paid (unlimited, no watermark)
 and is the sole authorized uploader for share links. It therefore **cannot** validate the payment
 pipeline — always test real purchases with a different email. Real accounts (never delete):
-`okemdinach383@gmail.com`, `beowulfagate9@gmail.com`, `jeruelrichard@gmail.com`,
-`okembackup383@gmail.com`, `okemfcb383@gmail.com`.
+`okemdinach383@gmail.com` (founder), `ugochukwuprincewill91@gmail.com` (lifetime), `jeruelrichard@gmail.com`,
+`okemfcb383@gmail.com`.
 
 ## 13. Risks & open questions
 

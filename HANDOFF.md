@@ -1,6 +1,6 @@
 # Notes2Pic — Session Handoff / Project State
 
-> Working handoff doc for picking up in a fresh session. Last updated: 2026‑07‑21.
+> Working handoff doc for picking up in a fresh session. Last updated: 2026-08-07.
 > Brand name is **"Notes2Pic"** (no trailing "s"). The repo folder is still `Notes2pics`
 > and some asset filenames/package name keep the old `notes2pics` spelling — that's fine,
 > only user‑visible text must read "Notes2Pic".
@@ -218,8 +218,8 @@ Create throwaway users via SQL `insert into auth.users(...)` with **all** GoTrue
 `''` (else password login 500s) and `email_confirmed_at = now()`; call SECURITY DEFINER RPCs by
 `set_config('request.jwt.claims', json_build_object('sub', uid, 'role','authenticated')::text, true)`.
 **Always delete test users after** (cascades their exports/generations). **Never delete the real
-accounts**: `okemdinach383@gmail.com` (founder), `beowulfagate9@gmail.com`, `jeruelrichard@gmail.com`,
-`okembackup383@gmail.com`, `okemfcb383@gmail.com`.
+accounts**: `okemdinach383@gmail.com` (founder), `ugochukwuprincewill91@gmail.com` (lifetime), `jeruelrichard@gmail.com`,
+`okemfcb383@gmail.com`.
 
 ## Verify locally
 `npm run dev` (studio at `/app`). `npm run build` = client + SSR + prerender (emits tool pages,

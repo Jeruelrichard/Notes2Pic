@@ -191,6 +191,53 @@ export const COMPARISONS = [
       },
     ],
   },
+  {
+    slug: 'canva',
+    path: '/comparison/canva',
+    competitorName: 'Canva',
+    metaTitle: 'Notes2Pic vs Canva — Fast Writer Quotes vs Complex Graphic Design',
+    metaDescription:
+      'Compare Notes2Pic vs Canva. Canva is a heavy, general-purpose design canvas. Notes2Pic is a specialized, 10-second visual studio for writers to turn text and threads into branded Instagram images. Try free.',
+    h1: 'Notes2Pic vs Canva',
+    subhead:
+      'Canva is built for graphic designers who need multi-layered layouts, shapes, and templates. Notes2Pic is built for writers who want their text formatted into clean, beautiful social media posts in seconds without the learning curve.',
+    atGlance: [
+      {
+        type: 'pros',
+        text: 'Notes2Pic: Laser-focused on text content. Just paste your writing, select a template (Short or Medium form), and download in 10 seconds. Automatically splits long threads into carousels. Sells for $5/mo or $10 lifetime.',
+      },
+      {
+        type: 'pros',
+        text: 'Canva: A massive, drag-and-drop design tool. Excellent for flyers, logos, videos, and multi-asset marketing campaigns.',
+      },
+      {
+        type: 'cons',
+        text: 'Design Overwhelm: Canva requires aligning text boxes, choosing font pairs, and tweaking margins manually. Notes2Pic uses automated editorial design rules so you never look like an amateur.',
+      },
+    ],
+    featuresTable: [
+      { feature: 'Core Audience', competitor: 'Graphic designers & marketer teams', notes2pic: 'Writers, bloggers, & content creators' },
+      { feature: 'Learning Curve', competitor: 'Medium (Hundreds of tools, layers, & assets)', notes2pic: 'None (Select template and export in seconds)' },
+      { feature: 'Workflow Speed', competitor: 'Slower (Manual design, alignment, & sizing)', notes2pic: 'Instant (10-second text-to-image conversion)' },
+      { feature: 'Multi-slide Carousels', competitor: 'Manual page duplication & text cutting', notes2pic: 'Automatic split-and-number thread parsing' },
+      { feature: 'Creator Profiles', competitor: 'Brand kit available (Paid only, from $13/mo)', notes2pic: 'Save unlimited handles, names, & brand colors ($10 lifetime)' },
+      { feature: 'Pricing Model', competitor: 'Free (Basic) or $13-$30/month (Subscriptions)', notes2pic: 'Free or $10 Lifetime deal (Unlimited exports)' },
+    ],
+    sections: [
+      {
+        title: 'Speed of Content Repurposing vs. Canvas Design',
+        body: 'Canva operates on a blank canvas model where you drag, scale, and align text blocks manually. This offers maximum creative freedom but is incredibly slow for writers who produce posts daily. Notes2Pic uses a structured input system: paste your text, and our editor immediately maps it to an exact, beautiful layout with perfect line-heights, letter-spacing, and avatar positioning. You get professional-looking images in 10 seconds instead of 10 minutes.',
+      },
+      {
+        title: 'Automated Thread-to-Carousel Parsing',
+        body: 'Creating a multi-slide Instagram carousel in Canva requires duplicating pages, dragging new text boxes, manually splitting paragraphs, and numbering each slide. Notes2Pic automates this entire process: you drop in a long thread or essay, and our carousel engine automatically segments the text at sentence boundaries, adds slide numbers, and exports them in a structured ZIP archive.',
+      },
+      {
+        title: 'Distraction-Free Environment for Writers',
+        body: 'Canva is packed with millions of templates, graphics, photos, and animated assets, which can easily lead to decision paralysis. Notes2Pic is a focused, quiet studio built specifically for writing. It helps you focus on what matters — your ideas — while ensuring they look premium, readable, and consistent on social media.',
+      },
+    ],
+  },
 ]
 
 export function getComparison(slug) {

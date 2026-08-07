@@ -174,7 +174,7 @@ export default function Landing() {
               onClick={() => trackEvent('click_hero_cta', { plan: 'lifetime' })}
             >
               <Sparkles aria-hidden="true" />
-              Get lifetime &mdash; $10
+              Get lifetime &mdash; {lifetimePrice}
             </Link>
             <Link
               to="/app"
@@ -188,7 +188,7 @@ export default function Landing() {
           <p className="hero-note">
             <strong>Free to start</strong> &mdash; no card, no signup to preview
             <span className="sep" />
-            $10 lifetime for the first 20 buyers, then $17 &mdash;{' '}
+            {isNG ? `${lifetimePrice} lifetime (PPP applied)` : `$10 lifetime for the first 20 buyers, then $17`} &mdash;{' '}
             <strong>{LIFETIME_SPOTS_LEFT} left</strong>
           </p>
         </div>

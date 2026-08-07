@@ -228,6 +228,7 @@ export function SiteFooter() {
             <Link to="/comparison/pika">vs Pika.style</Link>
             <Link to="/comparison/tweetpik">vs TweetPik</Link>
             <Link to="/comparison/pikaso">vs Pikaso</Link>
+            <Link to="/comparison/canva">vs Canva</Link>
           </nav>
 
           <nav className="site-footer-col">

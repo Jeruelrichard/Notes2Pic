@@ -15,7 +15,7 @@ const SITE_URL = (
   .replace(/\/$/, '')
 
 const server = await import(pathToFileURL(join(root, 'dist-server', 'entry-server.js')).href)
-const { render, listPrerenderPaths, posts, buildJsonLd, DEFAULT_DESCRIPTION, TOOL_PAGES } = server
+const { render, listPrerenderPaths, posts, buildJsonLd, DEFAULT_DESCRIPTION, TOOL_PAGES, COMPARISONS } = server
 
 const template = await readFile(join(distDir, 'index.html'), 'utf8')
 
@@ -167,6 +167,12 @@ const llms =
   `- [Notes2Pic studio](${SITE_URL}/app): the free editor.\n` +
   `- [Pricing](${SITE_URL}/#pricing): free, $5/mo, or $10 lifetime.\n` +
   `- [Blog](${SITE_URL}/blog): guides on repurposing writing into images.\n\n` +
+  `## Free standalone tools\n` +
+  TOOL_PAGES.map((page) => `- [${page.metaTitle}](${SITE_URL}${page.path}): ${page.metaDescription}`).join('\n') +
+  `\n\n` +
+  `## Competitor Alternatives & Comparisons\n` +
+  COMPARISONS.map((comp) => `- [Notes2Pic vs ${comp.competitorName}](${SITE_URL}${comp.path}): ${comp.metaDescription}`).join('\n') +
+  `\n\n` +
   `## Blog\n` +
   posts.map((post) => `- [${post.title}](${SITE_URL}/blog/${post.slug}): ${post.description}`).join('\n') +
   `\n`

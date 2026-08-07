@@ -25,12 +25,12 @@ export function getMetaForPath(pathname) {
     }
   }
   if (pathname === '/app') {
-    return { ...base, title: `Studio | ${SITE_NAME}`, description: DEFAULT_DESCRIPTION, path: '/app' }
+    return { ...base, title: `Studio | ${SITE_NAME}`, description: DEFAULT_DESCRIPTION, path: '/app', noindex: true }
   }
   if (pathname === '/blog') {
     return {
       ...base,
-      title: `Blog | ${SITE_NAME}`,
+      title: `Content Repurposing Blog & Guides | ${SITE_NAME}`,
       description:
         'Guides on content repurposing, growing on X and Threads, and turning your posts into images that get reach.',
       path: '/blog',
