@@ -213,6 +213,7 @@ function App() {
   // the splitter already reads. Same endpoint + quota as the free tool page.
   const [aiOpen, setAiOpen] = useState(false)
   const [aiEssay, setAiEssay] = useState('')
+  const isAiEssayLink = /^(https?:\/\/[^\s]+)$/i.test(aiEssay.trim())
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
   const [mediumPost, setMediumPost] = useState(starterMediumPost)
@@ -694,7 +695,7 @@ function App() {
   async function generateCarouselThread(event) {
     event?.preventDefault()
     const words = countWords(aiEssay)
-    if (!aiEssay.trim() || words > MAX_ESSAY_WORDS) return
+    if (!aiEssay.trim() || (!isAiEssayLink && words > MAX_ESSAY_WORDS)) return
     if (!isSupabaseConfigured) {
       setAiError('Accounts are not configured yet.')
       return
@@ -1165,17 +1166,21 @@ function App() {
                       className="medium-textarea"
                       value={aiEssay}
                       onChange={(event) => setAiEssay(event.target.value)}
-                      placeholder="Paste your blog post, newsletter or draft here…"
+                      placeholder="Paste your blog post, newsletter draft or article link here…"
                       spellCheck={false}
                     />
                     <div className="ai-panel-actions">
-                      <span className={countWords(aiEssay) > MAX_ESSAY_WORDS ? 'ai-count over' : 'ai-count'}>
-                        {countWords(aiEssay).toLocaleString()} / {MAX_ESSAY_WORDS.toLocaleString()} words
-                      </span>
+                      {isAiEssayLink ? (
+                        <span className="ai-count">Article link detected</span>
+                      ) : (
+                        <span className={countWords(aiEssay) > MAX_ESSAY_WORDS ? 'ai-count over' : 'ai-count'}>
+                          {countWords(aiEssay).toLocaleString()} / {MAX_ESSAY_WORDS.toLocaleString()} words
+                        </span>
+                      )}
                       <button
                         type="submit"
                         className="export-button"
-                        disabled={aiLoading || !aiEssay.trim() || countWords(aiEssay) > MAX_ESSAY_WORDS}
+                        disabled={aiLoading || !aiEssay.trim() || (!isAiEssayLink && countWords(aiEssay) > MAX_ESSAY_WORDS)}
                       >
                         {aiLoading ? 'Generating…' : 'Generate thread'}
                       </button>

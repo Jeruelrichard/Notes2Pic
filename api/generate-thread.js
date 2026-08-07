@@ -65,11 +65,13 @@ async function callGemini(prompt, model) {
 
     if (!response.ok) {
       const detail = await response.text().catch(() => '')
-      // 404/400 = this model id is gone or unusable → worth trying the next one.
+      // Retry on model retirement (404/400) or transient API overloads/rate limits (503/500/429)
+      const status = response.status
+      const retryable = status === 404 || status === 400 || status === 503 || status === 500 || status === 429
       return {
-        error: `Gemini returned ${response.status}`,
+        error: `Gemini returned ${status}`,
         detail: detail.slice(0, 400),
-        retryable: response.status === 404 || response.status === 400,
+        retryable,
       }
     }
 
@@ -114,11 +116,104 @@ export default async function handler(req, res) {
   }
 
   // 1) Validate the input before doing anything expensive.
-  const essay = typeof req.body === 'object' ? req.body?.essay : undefined
+  let essay = typeof req.body === 'object' ? req.body?.essay : undefined
   if (!essay || typeof essay !== 'string' || !essay.trim()) {
     res.status(400).json({ ok: false, error: 'Paste an essay first.' })
     return
   }
+
+  // Detect if the input is a URL and extract content via Jina Reader JSON API
+  const isLink = /^(https?:\/\/[^\s]+)$/i.test(essay.trim())
+  if (isLink) {
+    try {
+      const jinaUrl = `https://r.jina.ai/${encodeURIComponent(essay.trim())}`
+      const headers = {
+        'Accept': 'application/json'
+      }
+      if (process.env.JINA_API_KEY) {
+        headers['Authorization'] = `Bearer ${process.env.JINA_API_KEY}`
+      }
+      const response = await fetch(jinaUrl, { headers })
+      if (!response.ok) {
+        throw new Error(`Jina Reader API returned status ${response.status}`)
+      }
+      const json = await response.json()
+      const data = json.data || {}
+      
+      const httpStatus = data.httpStatus || 200
+      if (httpStatus < 200 || httpStatus >= 300) {
+        res.status(400).json({
+          ok: false,
+          error: `Could not access the link (HTTP ${httpStatus}). The website may be private or protected by anti-bot measures. Please copy and paste the text directly.`,
+        })
+        return
+      }
+
+      const rawContent = (data.content || '').trim()
+
+      // Strip markdown noise so Gemini gets clean prose, not image links and
+      // nav elements that cause it to hallucinate from the title alone.
+      function cleanArticleText(md) {
+        return md
+          // Remove markdown images: ![alt](url)
+          .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+          // Remove markdown links but keep their text: [text](url) → text
+          .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+          // Remove leftover raw URLs on their own line
+          .replace(/^https?:\/\/\S+$/gm, '')
+          // Remove heading markers (### etc) but keep the text
+          .replace(/^#{1,6}\s+/gm, '')
+          // Remove horizontal rules
+          .replace(/^[\s]*[-*_]{3,}[\s]*$/gm, '')
+          // Remove HTML tags that sometimes leak through
+          .replace(/<[^>]+>/g, '')
+          // Collapse multiple blank lines into one
+          .replace(/\n{3,}/g, '\n\n')
+          .trim()
+      }
+
+      const content = cleanArticleText(rawContent)
+      if (content.length < 200) {
+        res.status(400).json({
+          ok: false,
+          error: 'Could not extract sufficient text from this link. This usually happens if the article is private, behind a paywall, or requires a login. Please copy and paste the text directly.',
+        })
+        return
+      }
+
+      // Check for common bot-blocks or login pages
+      const lowercaseContent = content.toLowerCase()
+      const blockedPhrases = [
+        'please enable javascript',
+        'cloudflare',
+        'verify you are human',
+        'sign in to',
+        'login to',
+        'log in to continue',
+        'robot check',
+        'captcha'
+      ]
+      
+      const isBlocked = blockedPhrases.some(phrase => lowercaseContent.includes(phrase))
+      if (isBlocked) {
+        res.status(400).json({
+          ok: false,
+          error: 'Access was blocked or redirected to a login page by the target website. Please copy and paste the text directly.',
+        })
+        return
+      }
+
+      essay = content
+    } catch (err) {
+      console.error('Link extraction error:', err)
+      res.status(400).json({
+        ok: false,
+        error: 'Could not fetch or parse the link. Make sure the URL is correct and public, or copy and paste the text directly.',
+      })
+      return
+    }
+  }
+
   const words = countWords(essay)
   if (words > MAX_ESSAY_WORDS) {
     res.status(400).json({

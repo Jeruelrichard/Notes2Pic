@@ -21,8 +21,9 @@ export default function ThreadGeneratorTool() {
   const [authModal, setAuthModal] = useState({ open: false, reason: '' })
   const [upgradeModal, setUpgradeModal] = useState({ open: false, reason: '' })
 
+  const isLink = useMemo(() => /^(https?:\/\/[^\s]+)$/i.test(essay.trim()), [essay])
   const words = useMemo(() => countWords(essay), [essay])
-  const overLimit = words > MAX_ESSAY_WORDS
+  const overLimit = !isLink && words > MAX_ESSAY_WORDS
 
   async function generate(event) {
     event?.preventDefault()
@@ -95,13 +96,17 @@ export default function ThreadGeneratorTool() {
             className="tool-textarea"
             value={essay}
             onChange={(event) => setEssay(event.target.value)}
-            placeholder="Paste your blog post, newsletter or draft here…"
+            placeholder="Paste your blog post, newsletter draft or article link here…"
             spellCheck={false}
           />
           <div className="tool-controls">
-            <span className={`tool-count ${overLimit ? 'over' : ''}`}>
-              {words.toLocaleString()} / {MAX_ESSAY_WORDS.toLocaleString()} words
-            </span>
+            {isLink ? (
+              <span className="tool-count">Article link detected</span>
+            ) : (
+              <span className={`tool-count ${overLimit ? 'over' : ''}`}>
+                {words.toLocaleString()} / {MAX_ESSAY_WORDS.toLocaleString()} words
+              </span>
+            )}
             <button
               type="submit"
               className="btn-primary"
