@@ -117,8 +117,34 @@ export default function CarouselTool({ config }) {
     }
     setIsExporting(true)
     try {
-      // Gate 2: server-authoritative limit + watermark decision. A whole carousel
-      // counts as one export (and free is capped at one carousel/month).
+      // Pre-flight: read-only check so users out of credits see the upgrade
+      // prompt immediately, and we know the watermark decision before rendering.
+      // The credit itself is consumed only AFTER successful generation.
+      const usage = await getUsage()
+      if (!usage?.authenticated) {
+        setAuthModal({ open: true, reason: 'Please sign in again to download.' })
+        return
+      }
+      const userIsPaid = usage.paid === true
+      if (!userIsPaid && usage.remaining <= 0) {
+        setUpgradeModal({
+          open: true,
+          reason: 'You’ve used your 3 free exports this month. Upgrade for unlimited, watermark-free exports.',
+        })
+        return
+      }
+      if (!userIsPaid && usage.carouselRemaining <= 0) {
+        setUpgradeModal({
+          open: true,
+          reason: 'Your free plan includes one carousel per month. Upgrade for unlimited carousels.',
+        })
+        return
+      }
+
+      // Step 1: generate + download the zip (no credit consumed yet).
+      await buildZip(!userIsPaid)
+
+      // Step 2: consume the credit AFTER successful generation.
       const gate = await recordExport('carousel')
       if (!gate?.allowed) {
         if (gate?.reason === 'limit_reached') {
@@ -136,7 +162,7 @@ export default function CarouselTool({ config }) {
         }
         return
       }
-      await buildZip(gate.watermark === true)
+
       getUsage().catch(() => {})
       setNotice(
         gate.remaining === null || gate.remaining === undefined

@@ -794,8 +794,88 @@ function App() {
     setIsExporting(true)
 
     try {
-      // Gate 2: server-authoritative limit + watermark decision.
-      // A whole carousel counts as a single export (and, on free, is capped at one/month).
+      // Pre-flight: fresh, read-only eligibility check. This catches "out of
+      // credits" immediately AND gives us the watermark decision before we
+      // spend time rendering. The credit itself is consumed only AFTER the
+      // image is successfully generated (see Step 2 below), so a failed
+      // render (timeout, canvas error, etc.) never burns a credit.
+      const freshUsage = await getUsage()
+      setUsage(freshUsage)
+
+      if (!freshUsage?.authenticated) {
+        setAuthModal({ open: true, reason: 'Please sign in again to export.' })
+        return
+      }
+
+      const userIsPaid = freshUsage.paid === true
+
+      if (!userIsPaid) {
+        if (freshUsage.remaining <= 0) {
+          setUpgradeModal({
+            open: true,
+            reason: 'You have used your 3 free exports this month. Upgrade for unlimited, watermark-free exports.',
+          })
+          setNotice('Free export limit reached.')
+          return
+        }
+        if (isCarouselMode && freshUsage.carouselRemaining <= 0) {
+          setUpgradeModal({
+            open: true,
+            reason: 'Your free plan includes one carousel per month. Upgrade for unlimited carousels.',
+          })
+          setNotice('Free carousel limit reached (1 per month).')
+          return
+        }
+      }
+
+      // Founder normally never gets a watermark (is_paid bypass); this lets the
+      // founder deliberately turn it ON for demo screenshots.
+      const withWatermark = !userIsPaid || (founder && founderWatermark)
+
+      // ── Step 1: generate the image (no credit consumed yet) ─────
+      let generatedUrl = null
+      let generatedBlob = null
+      let downloadFilename = ''
+
+      if (isCarouselMode) {
+        generatedBlob = await generateCarouselZip(withWatermark)
+        downloadFilename = `notes2pic-carousel-${aspect}.zip`
+      } else if (isMediumMode) {
+        const canvas = renderMediumCanvas(withWatermark)
+        generatedUrl = canvas.toDataURL('image/png')
+        downloadFilename = `notes2pic-medium-${aspect}.png`
+      } else {
+        if (withWatermark) {
+          setCaptureWatermark(true)
+          // Let React paint the watermark into the stage before capture.
+          await new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+          )
+        }
+
+        try {
+          generatedUrl = await Promise.race([
+            toPng(exportRef.current, {
+              pixelRatio: 2,
+              // No cacheBust: it appends ?<timestamp> to image URLs and
+              // pbs.twimg.com 404s on that, which breaks exporting an
+              // imported tweet's avatar.
+              skipFonts: true,
+              backgroundColor: exportBackground,
+            }),
+            new Promise((_, reject) => {
+              window.setTimeout(() => reject(new Error('Export timed out')), exportTimeoutMs)
+            }),
+          ])
+          downloadFilename = `notes2pic-${contentMode}-${aspect}.png`
+        } finally {
+          if (withWatermark) setCaptureWatermark(false)
+        }
+      }
+
+      // ── Step 2: consume the credit AFTER successful generation ──
+      // If image generation above threw, we never reach here and no credit
+      // is burned. This is the key fix for the phantom-credit bug.
       const gate = await recordExport(contentMode)
 
       if (!gate?.allowed) {
@@ -817,62 +897,33 @@ function App() {
         return
       }
 
-      // Founder normally never gets a watermark (is_paid bypass); this lets the
-      // founder deliberately turn it ON for demo screenshots.
-      const withWatermark = gate.watermark === true || (founder && founderWatermark)
-
-      if (isCarouselMode) {
-        await exportCarousel(withWatermark)
-        getUsage().then(setUsage).catch(() => {})
-        setNotice(
-          gate.remaining === null || gate.remaining === undefined
-            ? `Exported ${carousel.slides.length}-slide carousel (.zip).`
-            : `Exported ${carousel.slides.length}-slide carousel. ${gate.remaining} free export${gate.remaining === 1 ? '' : 's'} left this month.`,
-        )
-        return
-      }
-
-      if (isMediumMode) {
-        exportMediumImage(withWatermark)
+      // ── Step 3: trigger the download ────────────────────────────
+      const anchor = document.createElement('a')
+      if (generatedBlob) {
+        anchor.href = URL.createObjectURL(generatedBlob)
       } else {
-        if (withWatermark) {
-          setCaptureWatermark(true)
-          // Let React paint the watermark into the stage before capture.
-          await new Promise((resolve) =>
-            requestAnimationFrame(() => requestAnimationFrame(resolve)),
-          )
-        }
-
-        try {
-          const dataUrl = await Promise.race([
-            toPng(exportRef.current, {
-              pixelRatio: 2,
-              // No cacheBust: it appends ?<timestamp> to image URLs and
-              // pbs.twimg.com 404s on that, which breaks exporting an
-              // imported tweet's avatar.
-              skipFonts: true,
-              backgroundColor: exportBackground,
-            }),
-            new Promise((_, reject) => {
-              window.setTimeout(() => reject(new Error('Export timed out')), exportTimeoutMs)
-            }),
-          ])
-          const anchor = document.createElement('a')
-          anchor.href = dataUrl
-          anchor.download = `notes2pic-${contentMode}-${aspect}.png`
-          anchor.click()
-        } finally {
-          if (withWatermark) setCaptureWatermark(false)
-        }
+        anchor.href = generatedUrl
       }
+      anchor.download = downloadFilename
+      anchor.click()
+      if (generatedBlob) URL.revokeObjectURL(anchor.href)
 
       // Reflect the consumed export in the account UI.
       getUsage().then(setUsage).catch(() => {})
-      setNotice(
-        gate.remaining === null || gate.remaining === undefined
-          ? `Exported ${currentAspect.size} PNG.`
-          : `Exported ${currentAspect.size} PNG. ${gate.remaining} free export${gate.remaining === 1 ? '' : 's'} left this month.`,
-      )
+      const remaining = gate.remaining
+      if (isCarouselMode) {
+        setNotice(
+          remaining === null || remaining === undefined
+            ? `Exported ${carousel.slides.length}-slide carousel (.zip).`
+            : `Exported ${carousel.slides.length}-slide carousel. ${remaining} free export${remaining === 1 ? '' : 's'} left this month.`,
+        )
+      } else {
+        setNotice(
+          remaining === null || remaining === undefined
+            ? `Exported ${currentAspect.size} PNG.`
+            : `Exported ${currentAspect.size} PNG. ${remaining} free export${remaining === 1 ? '' : 's'} left this month.`,
+        )
+      }
     } catch {
       setNotice('Export failed. Try again, and upload avatar images instead of using external image URLs.')
     } finally {
@@ -880,7 +931,9 @@ function App() {
     }
   }
 
-  async function exportCarousel(withWatermark = false) {
+  // Generates the carousel zip blob without triggering a download.
+  // The caller is responsible for recording the export and downloading.
+  async function generateCarouselZip(withWatermark = false) {
     const width = currentAspect.width * 2
     const height = currentAspect.height * 2
     const zip = new JSZip()
@@ -909,12 +962,7 @@ function App() {
       zip.file(`slide-${number}.png`, blob)
     }
 
-    const zipBlob = await zip.generateAsync({ type: 'blob' })
-    const anchor = document.createElement('a')
-    anchor.href = URL.createObjectURL(zipBlob)
-    anchor.download = `notes2pic-carousel-${aspect}.zip`
-    anchor.click()
-    URL.revokeObjectURL(anchor.href)
+    return await zip.generateAsync({ type: 'blob' })
   }
 
   const founder = isFounder(user)
@@ -1105,13 +1153,7 @@ function App() {
     return canvas
   }
 
-  function exportMediumImage(withWatermark = false) {
-    const canvas = renderMediumCanvas(withWatermark)
-    const anchor = document.createElement('a')
-    anchor.href = canvas.toDataURL('image/png')
-    anchor.download = `notes2pic-medium-${aspect}.png`
-    anchor.click()
-  }
+
 
   return (
     <main className="app-shell">

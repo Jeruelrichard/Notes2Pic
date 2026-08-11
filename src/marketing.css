@@ -2378,6 +2378,19 @@ h3 {
   background: var(--clay-tint);
   border-block: 1px solid var(--line);
 }
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  justify-content: center;
+  max-width: 960px;
+  margin: 0 auto;
+}
+@media (min-width: 768px) {
+  .testimonials-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 .testimonial-figure {
   margin: 0 auto;
   max-width: 460px;
@@ -2389,3 +2402,4 @@ h3 {
   border-radius: 18px;
   box-shadow: var(--shadow-card);
 }
+

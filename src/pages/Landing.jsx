@@ -294,18 +294,29 @@ export default function Landing() {
       <section className="testimonial">
         <div className="section-shell">
           <div className="section-head center">
-            <span className="section-kicker">From a real user</span>
+            <span className="section-kicker">From our users</span>
             <h2>People are already posting with it.</h2>
           </div>
-          <figure className="testimonial-figure">
-            <img
-              src="/testimonial1.png"
-              alt="A Notes2Pic user sharing how the tool helped them turn their writing into images."
-              width="1080"
-              height="1080"
-              loading="lazy"
-            />
-          </figure>
+          <div className="testimonials-grid">
+            <figure className="testimonial-figure">
+              <img
+                src="/testimonial1.png"
+                alt="A Notes2Pic user sharing how the tool helped them turn their writing into images."
+                width="1080"
+                height="1080"
+                loading="lazy"
+              />
+            </figure>
+            <figure className="testimonial-figure">
+              <img
+                src="/testimonial2.png"
+                alt="A Notes2Pic user testimonial showing an X post designed as a card."
+                width="1080"
+                height="1080"
+                loading="lazy"
+              />
+            </figure>
+          </div>
         </div>
       </section>
 

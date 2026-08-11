@@ -3,7 +3,7 @@ import { Download, Link2, Loader2 } from 'lucide-react'
 import { toPng } from 'html-to-image'
 import { isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../lib/useAuth'
-import { recordExport } from '../lib/entitlements'
+import { getUsage, recordExport } from '../lib/entitlements'
 import { isFounder } from '../lib/shares'
 import {
   initials,
@@ -185,21 +185,25 @@ export default function TweetScreenshotTool() {
     }
     setIsExporting(true)
     try {
-      // Gate 2: server-authoritative limit + watermark decision.
-      const gate = await recordExport('short')
-      if (!gate?.allowed) {
-        if (gate?.reason === 'limit_reached') {
-          setUpgradeModal({
-            open: true,
-            reason: 'You’ve used your 3 free exports this month. Upgrade for unlimited, watermark-free exports.',
-          })
-        } else {
-          setAuthModal({ open: true, reason: 'Please sign in again to download.' })
-        }
+      // Pre-flight: read-only check so users out of credits see the upgrade
+      // prompt immediately, and we know the watermark decision before rendering.
+      // The credit itself is consumed only AFTER successful image generation.
+      const usage = await getUsage()
+      if (!usage?.authenticated) {
+        setAuthModal({ open: true, reason: 'Please sign in again to download.' })
+        return
+      }
+      const userIsPaid = usage.paid === true
+      if (!userIsPaid && usage.remaining <= 0) {
+        setUpgradeModal({
+          open: true,
+          reason: 'You\u2019ve used your 3 free exports this month. Upgrade for unlimited, watermark-free exports.',
+        })
         return
       }
 
-      const withWatermark = gate.watermark === true || (founder && founderWatermark)
+      // ── Step 1: generate the image (no credit consumed yet) ─────
+      const withWatermark = !userIsPaid || (founder && founderWatermark)
       if (withWatermark) {
         setCaptureWatermark(true)
         // Let React paint the watermark into the stage before we capture it.
@@ -210,11 +214,13 @@ export default function TweetScreenshotTool() {
           new Promise((resolve) => window.setTimeout(resolve, 250)),
         ])
       }
+
+      let dataUrl
       try {
         // Race a timeout like the studio does: html-to-image can stall (e.g. a
         // throttled rAF in a background tab), and a spinner that never resolves
         // is worse than an error you can retry.
-        const dataUrl = await Promise.race([
+        dataUrl = await Promise.race([
           toPng(stageRef.current, {
             pixelRatio: 2,
             // NO cacheBust: it appends ?<timestamp> to image URLs, and
@@ -228,13 +234,29 @@ export default function TweetScreenshotTool() {
             window.setTimeout(() => reject(new Error('Export timed out')), EXPORT_TIMEOUT_MS)
           }),
         ])
-        const anchor = document.createElement('a')
-        anchor.href = dataUrl
-        anchor.download = 'notes2pic-tweet.png'
-        anchor.click()
       } finally {
         if (withWatermark) setCaptureWatermark(false)
       }
+
+      // ── Step 2: consume the credit AFTER successful generation ──
+      const gate = await recordExport('short')
+      if (!gate?.allowed) {
+        if (gate?.reason === 'limit_reached') {
+          setUpgradeModal({
+            open: true,
+            reason: 'You\u2019ve used your 3 free exports this month. Upgrade for unlimited, watermark-free exports.',
+          })
+        } else {
+          setAuthModal({ open: true, reason: 'Please sign in again to download.' })
+        }
+        return
+      }
+
+      // ── Step 3: trigger the download ────────────────────────────
+      const anchor = document.createElement('a')
+      anchor.href = dataUrl
+      anchor.download = 'notes2pic-tweet.png'
+      anchor.click()
 
       setNotice(
         gate.remaining === null || gate.remaining === undefined
