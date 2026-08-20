@@ -13,9 +13,15 @@ import { getPost } from '../lib/posts'
 const CarouselTool = lazy(() => import('../components/CarouselTool'))
 const TweetScreenshotTool = lazy(() => import('../components/TweetScreenshotTool'))
 const ThreadGeneratorTool = lazy(() => import('../components/ThreadGeneratorTool'))
+const HeadlineGeneratorTool = lazy(() => import('../components/HeadlineGeneratorTool'))
 
 // Each tool page names its widget in the TOOL_PAGES config.
-const WIDGETS = { carousel: CarouselTool, tweet: TweetScreenshotTool, thread: ThreadGeneratorTool }
+const WIDGETS = {
+  carousel: CarouselTool,
+  tweet: TweetScreenshotTool,
+  thread: ThreadGeneratorTool,
+  headline: HeadlineGeneratorTool,
+}
 
 // Hydration-safe "are we on the client yet?" — false during SSR/first paint,
 // true after hydration, without a setState-in-effect.
@@ -28,12 +34,18 @@ function ToolSkeleton({ config }) {
   return (
     <div className="tool tool-skeleton" aria-hidden="true">
       <div className="tool-input">
-        {config.widget === 'thread' ? (
+        {config.widget === 'thread' || config.widget === 'headline' ? (
           <>
-            <span className="tool-label">Your essay</span>
+            <span className="tool-label">
+              {config.widget === 'headline' ? 'Your article or draft' : 'Your essay'}
+            </span>
             <textarea
               className="tool-textarea"
-              placeholder="Paste your blog post, newsletter or draft here…"
+              placeholder={
+                config.widget === 'headline'
+                  ? 'Paste your blog post, newsletter draft, or article notes here…'
+                  : 'Paste your blog post, newsletter or draft here…'
+              }
               readOnly
               tabIndex={-1}
             />

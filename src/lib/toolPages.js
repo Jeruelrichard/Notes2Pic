@@ -40,6 +40,56 @@ What got trained in can get trained back out.`
 
 export const TOOL_PAGES = [
   {
+    slug: 'headline-generator',
+    path: '/headline-generator',
+    widget: 'headline',
+    navLabel: 'AI Headline Generator',
+    updated: '2026-08-20',
+    metaTitle: 'AI Headline & Hook Generator — Create Viral Headlines from Any Article',
+    metaDescription:
+      'Paste your draft, essay, or article to generate high-converting, controversial headlines and subheadlines in Dan Koe, Tim Denning, and contrarian creator styles. Free to try.',
+    eyebrow: 'Free tool',
+    h1: 'Turn any article into viral headlines & hooks',
+    subhead:
+      'Paste your draft or notes. Generate magnetic, scroll-stopping headlines and subheadlines in top creator styles — then turn them into carousels with one click.',
+    steps: [
+      {
+        title: 'Paste your draft or article',
+        body: 'Drop in your raw text, draft notes, or newsletter essay — up to 10,000 words. No formatting needed.',
+      },
+      {
+        title: 'Generate creator headlines',
+        body: 'Gemini analyzes the core tension and crafts 6 distinct angles across Dan Koe, Tim Denning, contrarian, and high-curiosity styles.',
+      },
+      {
+        title: 'Turn into an Instagram carousel',
+        body: 'One click sets your favorite headline and subhead as Slide 1 and hands the full article to the carousel maker.',
+      },
+    ],
+    faq: [
+      {
+        q: 'How does the headline generator work?',
+        a: 'It reads your draft to understand the central argument, counterintuitive insights, and emotional payoff. Then it formats bold headlines and subheadlines using proven creator copywriting formulas.',
+      },
+      {
+        q: 'What creator styles are included?',
+        a: 'You get options inspired by Dan Koe (philosophy & systems contrast), Tim Denning (brutal honesty & life lessons), Hussain Ibarra (contrarian hot takes), and high-curiosity transformation stories.',
+      },
+      {
+        q: 'Can I turn the headline directly into an Instagram post?',
+        a: 'Yes! Clicking “Turn into Carousel” automatically places your chosen headline & subhead as the opening hook slide and opens the Carousel studio.',
+      },
+      {
+        q: 'How many generations do I get for free?',
+        a: 'Every free account includes an AI generation. Upgraded plans unlock unlimited generations.',
+      },
+    ],
+    related: {
+      slug: 'instagram-carousel-hook',
+      label: 'How to write a killer Instagram carousel hook',
+    },
+  },
+  {
     slug: 'thread-generator',
     path: '/thread-generator',
     widget: 'thread',

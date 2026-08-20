@@ -26,3 +26,5 @@ dist-server
 
 # Personal learning notes (not part of the product)
 LEARNING.md
+
+.vercel
