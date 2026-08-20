@@ -305,21 +305,44 @@
    pass `metrics`, so its cards render exactly as before). */
 .x-metrics {
   display: flex;
-  gap: 18px;
+  align-items: center;
+  gap: 22px;
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid rgba(113, 118, 123, 0.28);
-  color: #8b98a5;
+  color: #71767b;
   font-size: 0.86rem;
 }
 
-.x-metrics strong {
-  color: #f7f9f9;
-  font-weight: 800;
+.x-metric-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
 }
 
-.short-x.short-light .x-metrics strong {
-  color: #0f1419;
+.x-metric-item .metric-icon {
+  flex-shrink: 0;
+  stroke-width: 1.9px;
+  color: #71767b;
+}
+
+.short-x.short-light .x-metric-item .metric-icon {
+  color: #536471;
+}
+
+.x-metric-item.metric-likes .metric-icon {
+  color: #f91880 !important;
+  fill: #f91880 !important;
+}
+
+.x-metric-item span {
+  color: #71767b;
+  font-weight: 500;
+}
+
+.short-x.short-light .x-metric-item span {
+  color: #536471;
 }
 
 /* @mentions, #hashtags and links — X's link blue. Opt-in via the `highlight`

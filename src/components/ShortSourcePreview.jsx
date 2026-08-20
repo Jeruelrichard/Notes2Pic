@@ -1,4 +1,4 @@
-import { Bookmark } from 'lucide-react'
+import { Bookmark, Heart, MessageCircle, Repeat2 } from 'lucide-react'
 import '../styles/postcard.css'
 
 // The short-post card, shared by the studio (/app) and the free tool pages.
@@ -65,24 +65,34 @@ function formatCount(value) {
 }
 
 // Optional engagement row (replies / reposts / likes). Only rendered when a
-// caller passes `metrics`, so the studio's cards are untouched.
+// caller passes `metrics`, with iconic red heart and comment bubble.
 function MetricsRow({ metrics }) {
-  const items = [
-    ['replies', metrics.replies],
-    ['reposts', metrics.retweets],
-    ['likes', metrics.likes],
-  ]
-    .map(([label, value]) => [label, formatCount(value)])
-    .filter(([, value]) => value !== null)
+  const hasReplies = typeof metrics?.replies === 'number'
+  const hasRetweets = typeof metrics?.retweets === 'number'
+  const hasLikes = typeof metrics?.likes === 'number'
 
-  if (!items.length) return null
+  if (!hasReplies && !hasRetweets && !hasLikes) return null
+
   return (
     <div className="x-metrics">
-      {items.map(([label, value]) => (
-        <span key={label}>
-          <strong>{value}</strong> {label}
+      {hasReplies ? (
+        <span className="x-metric-item" title="Replies">
+          <MessageCircle size={15} className="metric-icon" aria-hidden="true" />
+          <span>{formatCount(metrics.replies)}</span>
         </span>
-      ))}
+      ) : null}
+      {hasRetweets ? (
+        <span className="x-metric-item" title="Reposts">
+          <Repeat2 size={16} className="metric-icon" aria-hidden="true" />
+          <span>{formatCount(metrics.retweets)}</span>
+        </span>
+      ) : null}
+      {hasLikes ? (
+        <span className="x-metric-item metric-likes" title="Likes">
+          <Heart size={15} fill="#f91880" color="#f91880" className="metric-icon" aria-hidden="true" />
+          <span>{formatCount(metrics.likes)}</span>
+        </span>
+      ) : null}
     </div>
   )
 }
