@@ -101,7 +101,7 @@ Not really. The AI thread generator works from writing you've already published 
 
 ### Can I batch-create carousels on the free plan?
 
-You can run the full workflow — essay to thread to carousel — once a month on the free tier, which is enough to test whether the process fits how you write. Producing a genuine week of carousels from multiple pieces needs unlimited generations and exports, which is what the paid plan removes the caps on.
+You can run the full workflow — essay to thread to carousel — on the free tier with 3 free AI thread generations and up to 3 carousels a month, which is enough to test whether the process fits how you write. Producing a genuine week of carousels continuously needs unlimited generations and exports, which is what the paid plan removes the caps on.
 
 ### What if my essay isn't already numbered like a thread?
 

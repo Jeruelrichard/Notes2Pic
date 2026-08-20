@@ -70,7 +70,7 @@ The mistake most new pages make is treating every post like it needs to be a car
 
 Once you've found the quotes and thought through the niche, the actual production shouldn't be the bottleneck. A [dedicated quote maker](https://notes2pic.com/blog/instagram-quote-maker) handles the single-image side, and for compiling several quotes into one themed carousel, [turning a run of tweets into a carousel](https://notes2pic.com/blog/tweets-to-carousel) or [converting a single tweet into a clean image](https://notes2pic.com/blog/tweet-to-image-converter) covers most of what a quote page actually needs day to day. If sizing is tripping you up, [our carousel size guide](https://notes2pic.com/blog/instagram-carousel-size) covers the exact dimensions Instagram expects.
 
-I built Notes2Pic with exactly this kind of repackaging in mind, turning text you've already found or written into a branded image or carousel in a few clicks. The free plan caps you at three exports and one carousel a month with a watermark, enough to test the workflow before deciding whether it's worth paying for.
+I built Notes2Pic with exactly this kind of repackaging in mind, turning text you've already found or written into a branded image or carousel in a few clicks. The free plan gives you 5 exports and up to 3 carousels a month with a watermark, enough to test the workflow before deciding whether it's worth paying for.
 
 ## The Short Version
 

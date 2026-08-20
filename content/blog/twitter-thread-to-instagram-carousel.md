@@ -73,7 +73,7 @@ If what you actually have is a handful of standalone tweets rather than one cont
 | Text resizing | Manual, per slide | Automatic |
 | Consistency across slides | You maintain it by hand | Built in |
 | Design skill required | Some | None |
-| Cost | Free (but not your time) | Free tier: 1 carousel a month, watermarked. $5/mo or $10 lifetime (first 20 spots, then $17) removes both |
+| Cost | Free (but not your time) | Free tier: 3 carousels a month, watermarked. $5/mo or $10 lifetime (first 20 spots, then $17) removes both |
 
 Neither is "wrong." If you enjoy designing, Canva gives you more creative control. If the design step is the reason your threads never make it to Instagram, that's the problem worth solving directly.
 
@@ -105,7 +105,7 @@ No. The structure is already decided by your thread, one idea per slide, in orde
 Yes, the process is identical, since a Substack Note or a short newsletter excerpt has the same sequential-idea structure a thread does. [How to Turn Substack Notes Into Instagram Posts](/blog/substack-notes-to-instagram) covers that version specifically, and [newsletter-to-thread](/blog/newsletter-to-thread) covers turning a full newsletter into a thread first if it isn't one already.
 
 ### Is there a free way to do this?
-Manually, yes. Canva's free tier covers it, at the cost of the 20 to 40 minutes per carousel described above. Notes2Pic also has a free tier: one carousel a month, watermarked, if you want to try the fast way first. Removing the watermark and the monthly cap is $5/month or a $10 lifetime deal (first 20 spots, then $17).
+Manually, yes. Canva's free tier covers it, at the cost of the 20 to 40 minutes per carousel described above. Notes2Pic also has a free tier: 3 carousels a month, watermarked, if you want to try the fast way first. Removing the watermark and the monthly cap is $5/month or a $10 lifetime deal (first 20 spots, then $17).
 
 ## Turn Your Next Thread Into a Carousel Right Now
 

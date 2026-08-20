@@ -98,7 +98,7 @@ No. Pick a template, paste your text, export. There's no blank canvas to fill in
 Square (1080×1080) is the safe default for the main feed. Portrait (1080×1350) gives you more vertical space if your text runs long.
 
 ### Is there a limit on how many I can make for free?
-The free tier includes 3 exports every rolling 30 days, each with the watermark. Upgrading removes both the cap and the watermark.
+The free tier includes 5 exports every rolling 30 days, each with the watermark. Upgrading removes both the cap and the watermark.
 
 ## Turn Your Next Tweet Into a Post in Under a Minute
 

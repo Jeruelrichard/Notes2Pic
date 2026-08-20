@@ -58,7 +58,7 @@ Even with a good tool, a few habits undercut the result:
 1. Paste the tweet's link. Notes2Pic reads the public post and pulls the text, name, handle, and avatar automatically. No manual retyping. Working from text you saved somewhere else, or you'd just rather type it? Short-post mode in the main editor still takes plain pasted text the way it always has.
 2. Check the pulled details and adjust anything that needs it, then save it as an author profile so the next tweet from the same account fills in even faster.
 3. Choose your size (more on picking the right one below).
-4. Export. Editing and previewing are free with no account required. Signing in is only needed to export. The free tier includes 3 exports and 1 carousel every 30 days, one saved profile, with a small watermark on the output. A $5/month plan, or a $10 lifetime deal (first 20 spots, then $17), removes both the watermark and the caps.
+4. Export. Editing and previewing are free with no account required. Signing in is only needed to export. The free tier includes 5 exports and 3 carousels every 30 days, one saved profile, with a small watermark on the output. A $5/month plan, or a $10 lifetime deal (first 20 spots, then $17), removes both the watermark and the caps.
 
 If Instagram specifically is where this is headed, [Tweet to Instagram Post: The Fastest Way to Repost](/blog/tweet-to-instagram-post) walks through the sizing and posting details for that one destination.
 

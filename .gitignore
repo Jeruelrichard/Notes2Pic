@@ -24,7 +24,8 @@ dist-server
 *.sln
 *.sw?
 
-# Personal learning notes (not part of the product)
+# Personal learning notes & LinkedIn drafts (not part of the product)
 LEARNING.md
+content/linkedin/
 
 .vercel

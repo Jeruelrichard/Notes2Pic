@@ -63,17 +63,17 @@ deliberately doesn't do. Reference feel: Buttondown (writer-first restraint) × 
 A client-rendered SPA editor with three content modes:
 
 1. **Short post** — platform-style cards (X / Threads / Substack) with avatar, name, handle,
-   source, date, verified-looking layout. Capped at 500 chars; preserves line breaks.
+   source, date, verified-looking layout. Capped at 500 chars; preserves line breaks. Supports single-photo and **multi-image grids (1 to 4 attached images)** with native X layouts and SVG engagement indicators.
 2. **Medium form** — a single strong line/quote set on a clean canvas, dark or light theme.
    Preserves line breaks, spacing, indentation; auto-fits all text into the image.
 3. **Carousels** — long text auto-split into slides, exported as a `.zip` of PNGs. This is the
-   differentiator (no free single-screenshot tool does this).
+   differentiator (no free single-screenshot tool does this). Includes full-bleed **background photo uploads** with dimming/tint overlay sliders and **left / center text alignment**.
 
 Cross-cutting:
 - Save reusable **author profiles** (name, username, source, avatar, signature) per user.
 - Upload an avatar image for reliable PNG export.
 - Canvas sizes: Square (1080×1080), Portrait (1080×1350), Story.
-- Multiple visual templates.
+- Multiple visual templates and full dark mode.
 - Live preview === export output (single render source of truth, `src/lib/carouselRender.js`).
 
 ### 6.2 Intelligent thread splitter
@@ -99,10 +99,10 @@ by character count (`src/lib/carousel.js`):
 
 - Editing/previewing: free, no account.
 - **Exporting requires sign-in** (Supabase Auth: email/password or Google OAuth).
-- **Free tier:** 3 exports per rolling 30 days (watermarked "made with Notes2Pic"), 1 carousel
-  per 30 days (still consumes 1 of the 3 credits), 1 saved profile.
-- **Paid tier:** unlimited exports, unlimited carousels, no watermark, unlimited saved profiles.
-- Limits are enforced **server-side** by the `record_export()` Postgres RPC (can't be bypassed
+- **Free tier:** 5 exports per rolling 30 days (watermarked "made with Notes2Pic"), 3 carousels
+  per 30 days (consumes from the 5 export credits pool), 3 lifetime AI thread generations, unlimited 100% free viral headline generations, 1 saved profile.
+- **Paid tier:** unlimited exports, unlimited carousels, unlimited AI thread generations, no watermark, unlimited saved profiles.
+- Limits are enforced **server-side** by the `record_export()` and `record_generation()` Postgres RPCs (can't be bypassed
   from the browser). Entitlements are written **only** by the Freemius webhook (service-role key).
 
 ### 6.4 Share links (`/s/<id>`) — founder outreach tool [SHIPPED]

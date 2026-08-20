@@ -14,14 +14,15 @@ Indie writers who already post on X, Threads, and Substack — Substackers and b
 
 ## Product Purpose
 
-Notes2Pic turns a written post into a clean, on-brand, Instagram-ready image — short-post cards, medium-form quotes, and multi-slide carousels — with no blank canvas and no design skill required. It exists because writers lose the momentum of a good post when turning it into a visual is slow and ugly. Success is a visitor watching the transformation, believing "that's my post, and it looks great," and starting a free export within the first session.
+Notes2Pic turns written posts and essays into clean, on-brand, Instagram-ready visual content — short-post cards, medium-form quotes, multi-slide carousels, and viral AI thread/headline generation — with no blank canvas and no design skill required. It exists because writers lose the momentum of a good post when turning it into a visual is slow and friction-heavy. Success is a visitor pasting text or a link, getting an export-ready visual in seconds, and sharing their writing across visual feeds.
 
 ## Conversion & proof
 
 - Primary and secondary CTA: Primary is **Get lifetime ($10, founding-member price)**. Secondary is **Start free** for visitors not ready to pay — free editing/preview, sign-in only to export.
+- Free Tools Suite: SEO entry points at `/headline-generator`, `/thread-generator`, `/tweet-screenshot`, and `/thread-to-carousel`.
 - The line a visitor remembers after 10 seconds: "It turns my posts into branded images in seconds."
 - Belief ladder: (1) I understand what this does at a glance — it's my post, as an image. (2) The output actually looks good, not template-y. (3) It's genuinely faster than what I do now. (4) The lifetime deal is a real, limited founding-member offer worth locking in over waiting.
-- Proof on hand: Pre-launch — no testimonials or user counts yet. Lean on the live demo of the transformation and the real example images the tool produces as the proof, plus the honest founding-member framing (first 20 buyers at $10, then $17). Do not fabricate testimonials, logos, or user numbers.
+- Proof on hand: Live product demo video on the landing page, authentic user testimonial (`public/testimonial1.png`), and free instant preview tools across all formats. Honest founding-member framing (first 20 buyers at $10).
 
 ## Brand Personality
 

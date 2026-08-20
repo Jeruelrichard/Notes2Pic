@@ -70,7 +70,7 @@ Give it real time before drawing conclusions, too. A single strong Reel or a sin
 
 If you're already writing threads, tweets, or newsletter sections, you have a natural advantage on the conversion side of this equation. [A run of your best tweets stitched into a carousel](https://notes2pic.com/blog/tweets-to-carousel) or [a broader batch of X posts turned into images](https://notes2pic.com/blog/turn-x-posts-into-instagram-images) both convert directly into the save-worthy, structured content that wins the engagement half of the growth equation. Sizing questions are covered in [our full carousel size guide](https://notes2pic.com/blog/instagram-carousel-size), and for a quick single idea that doesn't need the full carousel treatment, [a straight tweet-to-image conversion](https://notes2pic.com/blog/tweet-to-instagram-post) or [a dedicated quote graphic](https://notes2pic.com/blog/instagram-quote-maker) covers that gap.
 
-I built Notes2Pic to make the conversion side of this fast: paste text you've already written and it splits into a branded carousel in a few clicks, so the bottleneck isn't design time. The free plan caps you at three exports and one carousel a month, watermarked, enough to see if it fits your workflow before paying for it.
+I built Notes2Pic to make the conversion side of this fast: paste text you've already written and it splits into a branded carousel in a few clicks, so the bottleneck isn't design time. The free plan gives you 5 exports and up to 3 carousels a month, watermarked, enough to see if it fits your workflow before paying for it.
 
 ## The Short Version
 

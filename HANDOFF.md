@@ -63,17 +63,22 @@ watermark‑free by default, so the toggle turns it ON for demo shots).
 Config‑driven: **`src/lib/toolPages.js`** (data) → **`src/pages/ToolPage.jsx`** (one template,
 `WIDGETS` map) → routes auto‑generated in `src/AppShell.jsx` from `TOOL_PAGES`. A new tool page =
 a config entry + a widget. SEO meta, sitemap + `lastmod`, IndexNow ping, the header **Tools**
-dropdown, and the footer "Free Tools" column all derive from that config automatically. Three live:
+dropdown, and the footer "Free Tools" column all derive from that config automatically. Four live:
+- **`/headline-generator`** (`HeadlineGeneratorTool.jsx`) — 100% free creator viral headline & hook generator (takes 0 credits). Few-shot trained on **136 real-world Substack archives** across Dan Koe, Tim Denning, and Hussain Ibarra. Single unified CTA at the bottom hands off to `/thread-generator`.
 - **`/thread-to-carousel`** (`CarouselTool.jsx`) — paste thread → live carousel preview → download
   zip. Reuses `splitThread` + `drawSlide` + the sign‑in/quota export path.
 - **`/tweet-screenshot`** (`TweetScreenshotTool.jsx`) — paste a tweet link → we fetch it →
-  render the studio's short‑post card → export. See "Tweet screenshot" below.
+  render the studio's short‑post card → export. Supports **multi-image grids (1 to 4 photos)** and native engagement icons. See "Tweet screenshot" below.
 - **`/thread-generator`** (`ThreadGeneratorTool.jsx`) — paste an essay → Gemini → thread →
   "Turn this into a carousel" hands off to `/thread-to-carousel`. See "AI thread generator" below.
 Each tool's stage renders at **540px** and exports at `pixelRatio: 2` → 1080 (the card is capped
 at 450px, so a 1080 stage would leave it filling ~41% — must stay 540). Shared card markup +
 styles: `src/components/ShortSourcePreview.jsx` + `src/styles/postcard.css` (one source, studio +
 tool pages both use it).
+
+## Carousel Background Images & Text Alignment
+- **Background Images**: Carousel-wide background image upload (`bgImage`) rendered with center-cover scaling and darkness/tint overlay (`bgOverlay` slider, `bgOverlayColor`).
+- **Text Alignment**: Supports `left` and `center` text alignment (`textAlign: 'left' | 'center'`), rendered dynamically in `src/lib/carouselRender.js`.
 
 ## Comparison & About Us Pages (SEO Trust Engine)
 - **`/about`** (`About.jsx`) — storytelling and founder transparency page introducing Jeruel Richard and the manual-first product philosophy.
@@ -83,10 +88,12 @@ tool pages both use it).
 ## Tweet screenshot tool (`api/tweet.js`)
 Serverless fetch of a public tweet — **no X API key, no cost**.
 - Source 1: `cdn.syndication.twimg.com/tweet-result` (X's own embed endpoint) — full data (text,
-  name, handle, avatar, verified, date, likes/replies/retweets, photo + dims). Source 2 fallback:
+  name, handle, avatar, verified, date, likes/replies/retweets, **all 1 to 4 photos** + dims). Source 2 fallback:
   `publish.twitter.com/oembed` (text + author only). **Works from Vercel's IPs** (verified).
+- **Multi-image grids (1, 2, 3, 4 photos)**: rendered using native CSS Grid (`.x-photos-grid .grid-2`, `.grid-3`, `.grid-4`) with 16px outer radius and 3px gap.
+- **Engagement Icons**: native vector SVGs (`Heart`, `MessageCircle`, `Repeat2`) replace plain text metric labels.
 - **Long‑form ("note") tweets**: syndication returns only a `note_tweet` *id*, not the full body,
-  so `text` is truncated (~he first chunk). We flag `truncated` and the UI shows an editable box.
+  so `text` is truncated (~the first chunk). We flag `truncated` and the UI shows an editable box.
 - **Photos**: rendered uncropped at true aspect ratio; the tool page's canvas GROWS (540→up to 960
   = a 1080×1920 export) for tall images; the studio keeps its fixed Square/Portrait/Story and the
   photo shrinks to fit (`.x-card` flex column, `min-height:0` on `.x-photo`, grid track
@@ -96,6 +103,12 @@ Serverless fetch of a public tweet — **no X API key, no cost**.
   own t.co is stripped once the photo renders.
 - Export uses `skipFonts: true` and **no `cacheBust`** (cacheBust appends `?ts` → `pbs.twimg.com`
   404s the avatar → export fails). Same fix applied in `App.jsx`.
+
+## AI Headline Generator (`api/generate-headline.js` + `api/prompts/headline-generator.js`)
+- **100% Free Forever Tool**: No token/auth required, spends 0 database credits.
+- **Few-Shot Creator DNA Library (`api/prompts/headline-examples.js`)**: In-context reference library containing 136 real-world Substack essay titles and subtitles from Dan Koe (50 posts), Tim Denning (50 posts), and Hussain Ibarra (36 posts).
+- Generates 6 distinct categorized angles (Dan Koe Philosophy, Dan Koe Systems, Tim Denning Brutal Honesty, Tim Denning Counterintuitive Lessons, Hussain Ibarra Contrarian Reset, Hussain Ibarra Future-Proof Skills).
+- Integrated handoff (`handoffEssayToThread`) sets `sessionStorage['n2p.handoffEssay']` and routes to `/thread-generator`.
 
 ## AI thread generator (`api/generate-thread.js` + `api/prompts/thread-generator.js`)
 - Flow: validate essay (≤ **10,000 words**, server + client) → verify the caller's Supabase JWT →
