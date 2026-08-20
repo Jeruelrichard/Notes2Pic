@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../lib/useAuth'
 import AuthModal from './AuthModal'
 import UpgradeModal from './UpgradeModal'
-import { MAX_ESSAY_WORDS, countWords, generateHeadlines, handoffHeadlineCarousel } from '../lib/headlineGen'
+import { MAX_ESSAY_WORDS, countWords, generateHeadlines, handoffEssayToThread } from '../lib/headlineGen'
 
 const sampleDraft = `A pattern I've noticed in stuck creators and entrepreneurs:
 
@@ -87,9 +87,9 @@ export default function HeadlineGeneratorTool() {
     setTimeout(() => setCopiedIndex(null), 2000)
   }
 
-  function handleTurnIntoCarousel(item) {
-    handoffHeadlineCarousel(item.headline, item.subhead, essay)
-    navigate('/thread-to-carousel')
+  function handleTurnIntoThread() {
+    handoffEssayToThread(essay)
+    navigate('/thread-generator')
   }
 
   function loadSample() {
@@ -233,25 +233,25 @@ export default function HeadlineGeneratorTool() {
                     {item.subhead}
                   </p>
                 </div>
-
-                <div style={{ marginTop: '4px' }}>
-                  <button
-                    type="button"
-                    className="btn-primary"
-                    onClick={() => handleTurnIntoCarousel(item)}
-                    style={{ width: '100%', fontSize: '0.85rem', padding: '9px 12px', justifyContent: 'center' }}
-                  >
-                    Turn into Carousel
-                    <ArrowRight size={15} aria-hidden="true" />
-                  </button>
-                </div>
               </div>
             ))}
+
+            <div style={{ marginTop: '6px' }}>
+              <button
+                type="button"
+                className="btn-primary block"
+                onClick={handleTurnIntoThread}
+                style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: '0.95rem' }}
+              >
+                Turn this essay into a thread
+                <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            </div>
           </div>
         ) : (
           <div className="thread-placeholder">
             <Sparkles aria-hidden="true" />
-            <p>Your viral headlines and subheadlines will appear here, ready to convert into a carousel.</p>
+            <p>Your viral headlines and subheadlines will appear here, ready to turn into a thread.</p>
           </div>
         )}
 

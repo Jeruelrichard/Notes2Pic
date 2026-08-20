@@ -51,7 +51,7 @@ export const TOOL_PAGES = [
     eyebrow: 'Free tool',
     h1: 'Turn any article into viral headlines & hooks',
     subhead:
-      'Paste your draft or notes. Generate magnetic, scroll-stopping headlines and subheadlines in top creator styles — then turn them into carousels with one click.',
+      'Paste your draft or notes. Generate magnetic, scroll-stopping headlines and subheadlines in top creator styles — then turn the whole piece into a thread with one click.',
     steps: [
       {
         title: 'Paste your draft or article',
@@ -62,8 +62,8 @@ export const TOOL_PAGES = [
         body: 'Gemini analyzes the core tension and crafts 6 distinct angles across Dan Koe, Tim Denning, contrarian, and high-curiosity styles.',
       },
       {
-        title: 'Turn into an Instagram carousel',
-        body: 'One click sets your favorite headline and subhead as Slide 1 and hands the full article to the carousel maker.',
+        title: 'Turn into a thread',
+        body: 'One click hands your full essay to the AI Thread Generator to turn it into a numbered, ready-to-post thread.',
       },
     ],
     faq: [
@@ -76,8 +76,8 @@ export const TOOL_PAGES = [
         a: 'You get options inspired by Dan Koe (philosophy & systems contrast), Tim Denning (brutal honesty & life lessons), Hussain Ibarra (contrarian hot takes), and high-curiosity transformation stories.',
       },
       {
-        q: 'Can I turn the headline directly into an Instagram post?',
-        a: 'Yes! Clicking “Turn into Carousel” automatically places your chosen headline & subhead as the opening hook slide and opens the Carousel studio.',
+        q: 'Can I turn my essay into a full thread afterward?',
+        a: 'Yes! Below your generated headline options, click “Turn this essay into a thread” to automatically hand off your article into the AI Thread Generator.',
       },
       {
         q: 'How many generations do I get for free?',

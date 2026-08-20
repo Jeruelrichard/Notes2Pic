@@ -5,7 +5,7 @@ import { isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../lib/useAuth'
 import AuthModal from './AuthModal'
 import UpgradeModal from './UpgradeModal'
-import { HANDOFF_KEY, MAX_ESSAY_WORDS, countWords, generateThread } from '../lib/threadGen'
+import { HANDOFF_KEY, MAX_ESSAY_WORDS, countWords, generateThread, takeHandoffEssay } from '../lib/threadGen'
 
 // Paste an essay → Gemini turns it into a numbered thread → one click hands it
 // to the carousel tool. The quota is enforced server-side (see
@@ -13,7 +13,7 @@ import { HANDOFF_KEY, MAX_ESSAY_WORDS, countWords, generateThread } from '../lib
 export default function ThreadGeneratorTool() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [essay, setEssay] = useState('')
+  const [essay, setEssay] = useState(() => takeHandoffEssay() || '')
   const [thread, setThread] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

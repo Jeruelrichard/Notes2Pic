@@ -9,6 +9,7 @@ export const MAX_ESSAY_WORDS = 10000
 // Where a generated thread is parked when handing off to the carousel tool.
 // sessionStorage rather than a query string: a thread is far too long for a URL.
 export const HANDOFF_KEY = 'n2p.generatedThread'
+export const HANDOFF_ESSAY_KEY = 'n2p.handoffEssay'
 
 export function countWords(text) {
   return ((text || '').trim().match(/\S+/g) || []).length
@@ -19,6 +20,17 @@ export function takeHandoffThread() {
   try {
     const value = sessionStorage.getItem(HANDOFF_KEY)
     if (value) sessionStorage.removeItem(HANDOFF_KEY)
+    return value || ''
+  } catch {
+    return ''
+  }
+}
+
+// Read the handed-off essay (e.g. from the headline generator) exactly once.
+export function takeHandoffEssay() {
+  try {
+    const value = sessionStorage.getItem(HANDOFF_ESSAY_KEY)
+    if (value) sessionStorage.removeItem(HANDOFF_ESSAY_KEY)
     return value || ''
   } catch {
     return ''

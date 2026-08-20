@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient'
-import { HANDOFF_KEY } from './threadGen'
+import { HANDOFF_ESSAY_KEY } from './threadGen'
 
 export const MAX_ESSAY_WORDS = 10000
 
@@ -7,12 +7,9 @@ export function countWords(text) {
   return ((text || '').trim().match(/\S+/g) || []).length
 }
 
-export function handoffHeadlineCarousel(headline, subhead, essay) {
-  const hookSlide = `${headline}\n\n${subhead}`
-  const bodyText = essay.trim()
-  const combined = `${hookSlide}\n\n---\n\n${bodyText}`
+export function handoffEssayToThread(essay) {
   try {
-    sessionStorage.setItem(HANDOFF_KEY, combined)
+    sessionStorage.setItem(HANDOFF_ESSAY_KEY, essay.trim())
   } catch {
     // sessionStorage fallback
   }
