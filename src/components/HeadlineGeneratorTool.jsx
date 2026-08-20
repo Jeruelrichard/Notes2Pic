@@ -1,10 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Check, Copy, Loader2, Sparkles } from 'lucide-react'
-import { isSupabaseConfigured } from '../lib/supabaseClient'
-import { useAuth } from '../lib/useAuth'
-import AuthModal from './AuthModal'
-import UpgradeModal from './UpgradeModal'
 import { MAX_ESSAY_WORDS, countWords, generateHeadlines, handoffEssayToThread } from '../lib/headlineGen'
 
 const sampleDraft = `A pattern I've noticed in stuck creators and entrepreneurs:
@@ -16,7 +12,6 @@ Busyness is a poor measure of value. In fact, most busyness is just sophisticate
 If you stop obsessing over being busy and focus ruthlessly on being useful instead, your output, audience, and revenue will transform in 90 days.`
 
 export default function HeadlineGeneratorTool() {
-  const { user } = useAuth()
   const navigate = useNavigate()
   const [essay, setEssay] = useState('')
   const [results, setResults] = useState([])
@@ -24,8 +19,6 @@ export default function HeadlineGeneratorTool() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [copiedIndex, setCopiedIndex] = useState(null)
-  const [authModal, setAuthModal] = useState({ open: false, reason: '' })
-  const [upgradeModal, setUpgradeModal] = useState({ open: false, reason: '' })
 
   const isLink = useMemo(() => /^(https?:\/\/[^\s]+)$/i.test(essay.trim()), [essay])
   const words = useMemo(() => countWords(essay), [essay])
@@ -35,44 +28,18 @@ export default function HeadlineGeneratorTool() {
     event?.preventDefault()
     if (!essay.trim() || overLimit || isLink) return
 
-    if (!isSupabaseConfigured) {
-      setError('Sign-in isn’t configured in this environment.')
-      return
-    }
-
-    if (!user) {
-      setAuthModal({
-        open: true,
-        reason: 'Sign in to generate headlines. Your free account includes one generation.',
-      })
-      return
-    }
-
     setLoading(true)
     setError('')
     setNotice('')
     try {
       const outcome = await generateHeadlines(essay)
       if (!outcome.ok) {
-        if (outcome.reason === 'generation_limit') {
-          setUpgradeModal({
-            open: true,
-            reason: 'You’ve used your free AI generation. Upgrade for unlimited generations.',
-          })
-        } else if (outcome.reason === 'not_authenticated') {
-          setAuthModal({ open: true, reason: 'Please sign in again to generate.' })
-        } else {
-          setError(outcome.error || 'Generation failed. Try again in a moment.')
-        }
+        setError(outcome.error || 'Generation failed. Try again in a moment.')
         return
       }
 
       setResults(outcome.results || [])
-      setNotice(
-        outcome.remaining === null || outcome.remaining === undefined
-          ? 'Generated 6 viral headline angles.'
-          : `Generated 6 viral headline angles. ${outcome.remaining} free generation${outcome.remaining === 1 ? '' : 's'} left.`,
-      )
+      setNotice('Generated 6 viral headline angles.')
     } catch {
       setError('Something went wrong generating headlines. Try again in a moment.')
     } finally {
@@ -257,19 +224,6 @@ export default function HeadlineGeneratorTool() {
 
         {notice ? <p className="tool-notice">{notice}</p> : null}
       </div>
-
-      <AuthModal
-        open={authModal.open}
-        reason={authModal.reason}
-        redirectTo={typeof window !== 'undefined' ? window.location.pathname : '/app'}
-        onClose={() => setAuthModal({ open: false, reason: '' })}
-      />
-      <UpgradeModal
-        open={upgradeModal.open}
-        email={user?.email}
-        reason={upgradeModal.reason}
-        onClose={() => setUpgradeModal({ open: false, reason: '' })}
-      />
     </div>
   )
 }

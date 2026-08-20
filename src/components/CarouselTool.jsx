@@ -129,14 +129,14 @@ export default function CarouselTool({ config }) {
       if (!userIsPaid && usage.remaining <= 0) {
         setUpgradeModal({
           open: true,
-          reason: 'You’ve used your 3 free exports this month. Upgrade for unlimited, watermark-free exports.',
+          reason: 'You’ve used your 5 free exports this month. Upgrade for unlimited, watermark-free exports.',
         })
         return
       }
       if (!userIsPaid && usage.carouselRemaining <= 0) {
         setUpgradeModal({
           open: true,
-          reason: 'Your free plan includes one carousel per month. Upgrade for unlimited carousels.',
+          reason: 'Your free plan includes 3 carousels per month. Upgrade for unlimited carousels.',
         })
         return
       }
@@ -147,15 +147,15 @@ export default function CarouselTool({ config }) {
       // Step 2: consume the credit AFTER successful generation.
       const gate = await recordExport('carousel')
       if (!gate?.allowed) {
-        if (gate?.reason === 'limit_reached') {
+        if (gate?.reason === 'limit_reached' || gate?.reason === 'export_limit') {
           setUpgradeModal({
             open: true,
-            reason: 'You’ve used your 3 free exports this month. Upgrade for unlimited, watermark-free exports.',
+            reason: 'You’ve used your 5 free exports this month. Upgrade for unlimited, watermark-free exports.',
           })
         } else if (gate?.reason === 'carousel_limit') {
           setUpgradeModal({
             open: true,
-            reason: 'Your free plan includes one carousel per month. Upgrade for unlimited carousels.',
+            reason: 'Your free plan includes 3 carousels per month. Upgrade for unlimited carousels.',
           })
         } else {
           setAuthModal({ open: true, reason: 'Please sign in again to download.' })

@@ -93,7 +93,7 @@ export default function TweetScreenshotTool() {
       timers.forEach(clearTimeout)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [post.text, post.photo, showMetrics, theme])
+  }, [post.text, post.photo, post.photos, showMetrics, theme])
 
   const measureFrame = useCallback((node) => {
     const el = node || frameRef.current
@@ -124,34 +124,37 @@ export default function TweetScreenshotTool() {
   }, [measureFrame])
 
   const hasPost = Boolean(post.text)
-  const textStyle = useMemo(() => getTweetTextStyle(post.text || '', Boolean(post.photo)), [post.text, post.photo])
+  const hasMedia = Boolean(post.photo || post.photos?.length)
+  const textStyle = useMemo(() => getTweetTextStyle(post.text || '', hasMedia), [post.text, hasMedia])
   const avatarInitials = useMemo(() => initials(post.name || '') || 'N2', [post.name])
   const when = post.date ? new Date(post.date) : new Date()
 
   async function fetchTweet(event) {
     event?.preventDefault()
-    const trimmed = url.trim()
-    if (!trimmed) return
+    if (!url.trim()) return
+
     setLoading(true)
     setError('')
     setNotice('')
     try {
-      const response = await fetch(`/api/tweet?url=${encodeURIComponent(trimmed)}`)
+      const response = await fetch(`/api/tweet?url=${encodeURIComponent(url.trim())}`)
       const data = await response.json()
       if (!response.ok || !data?.ok) {
         setError(data?.error || 'Could not read that tweet. Check the link and try again.')
         return
       }
       const t = data.tweet
+      const tweetPhotos = t.photos && t.photos.length > 0 ? t.photos : t.photo ? [{ url: t.photo }] : []
       setPost({
         name: t.name || '',
         username: t.handle ? `@${t.handle}` : '',
         avatar: t.avatar || '',
         // X appends a t.co link for the attached image; once we render the
         // image itself that link is just noise, so drop it.
-        text: t.photo ? (t.text || '').replace(/\s*https?:\/\/t\.co\/\w+\s*$/, '') : t.text || '',
+        text: (t.photo || tweetPhotos.length > 0) ? (t.text || '').replace(/\s*https?:\/\/t\.co\/\w+\s*$/, '') : t.text || '',
         date: t.date || '',
         photo: t.photo || '',
+        photos: tweetPhotos,
         likes: t.likes,
         replies: t.replies,
         retweets: t.retweets,
@@ -197,7 +200,7 @@ export default function TweetScreenshotTool() {
       if (!userIsPaid && usage.remaining <= 0) {
         setUpgradeModal({
           open: true,
-          reason: 'You\u2019ve used your 3 free exports this month. Upgrade for unlimited, watermark-free exports.',
+          reason: 'You\u2019ve used your 5 free exports this month. Upgrade for unlimited, watermark-free exports.',
         })
         return
       }
@@ -241,10 +244,10 @@ export default function TweetScreenshotTool() {
       // ── Step 2: consume the credit AFTER successful generation ──
       const gate = await recordExport('short')
       if (!gate?.allowed) {
-        if (gate?.reason === 'limit_reached') {
+        if (gate?.reason === 'limit_reached' || gate?.reason === 'export_limit') {
           setUpgradeModal({
             open: true,
-            reason: 'You\u2019ve used your 3 free exports this month. Upgrade for unlimited, watermark-free exports.',
+            reason: 'You\u2019ve used your 5 free exports this month. Upgrade for unlimited, watermark-free exports.',
           })
         } else {
           setAuthModal({ open: true, reason: 'Please sign in again to download.' })
@@ -381,6 +384,7 @@ export default function TweetScreenshotTool() {
               metrics={showMetrics ? { likes: post.likes, replies: post.replies, retweets: post.retweets } : null}
               highlight
               photo={post.photo}
+              photos={post.photos}
             />
           </div>
           </div>

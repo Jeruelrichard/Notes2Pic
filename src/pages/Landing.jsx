@@ -377,9 +377,10 @@ export default function Landing() {
             <p className="price">$0</p>
             <p className="price-note-plain">No account needed to edit &amp; preview</p>
             <ul className="price-list">
-              <li><Check aria-hidden="true" /> 3 exports per month</li>
-              <li><Check aria-hidden="true" /> 1 carousel per month</li>
-              <li><Check aria-hidden="true" /> 1 AI thread generation</li>
+              <li><Check aria-hidden="true" /> 5 exports per month</li>
+              <li><Check aria-hidden="true" /> 3 carousels per month</li>
+              <li><Check aria-hidden="true" /> 3 AI thread generations</li>
+              <li><Check aria-hidden="true" /> Unlimited viral headline generator</li>
               <li><Check aria-hidden="true" /> Every template &amp; size</li>
               <li><Check aria-hidden="true" /> One saved profile</li>
             </ul>

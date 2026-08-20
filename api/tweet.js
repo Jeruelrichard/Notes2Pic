@@ -91,7 +91,15 @@ async function fromSyndication(id, diag) {
     }
     text = text.replace(/[ \t]+\n/g, '\n').trim()
 
-    const photo = data.photos?.[0] || null
+    const photos = (data.photos || [])
+      .map((p) => ({
+        url: p.url || '',
+        width: p.width || null,
+        height: p.height || null,
+      }))
+      .filter((p) => Boolean(p.url))
+
+    const photo = photos[0]?.url || null
 
     return {
       id,
@@ -108,11 +116,12 @@ async function fromSyndication(id, diag) {
       // the full body, never the text itself — so `text` above is the truncated
       // version. Flag it so the UI can say so instead of silently cutting off.
       truncated: Boolean(data.note_tweet),
-      photo: photo?.url || null,
+      photo,
+      photos,
       // Dimensions let the client size the canvas to the image instead of
       // cropping it — tall portrait photos need a taller canvas, not a crop.
-      photoWidth: photo?.width || null,
-      photoHeight: photo?.height || null,
+      photoWidth: photos[0]?.width || null,
+      photoHeight: photos[0]?.height || null,
     }
   } catch (error) {
     diag.syndication = { error: error?.name === 'AbortError' ? 'timeout' : String(error?.message || error) }
@@ -147,6 +156,8 @@ async function fromOembed(id, diag) {
       verified: false,
       date: '',
       likes: null,
+      photo: null,
+      photos: [],
     }
   } catch (error) {
     diag.oembed = { error: error?.name === 'AbortError' ? 'timeout' : String(error?.message || error) }

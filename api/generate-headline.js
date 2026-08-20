@@ -1,8 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
 import { buildHeadlinePrompt, MAX_ESSAY_WORDS } from './prompts/headline-generator.js'
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
-const ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 const MODELS = ['gemini-flash-latest', 'gemini-3.6-flash', 'gemini-3.5-flash']
 const GEMINI_TIMEOUT_MS = 45000
@@ -102,7 +99,7 @@ export default async function handler(req, res) {
     return
   }
 
-  if (!GEMINI_API_KEY || !SUPABASE_URL || !ANON_KEY) {
+  if (!GEMINI_API_KEY) {
     res.status(500).json({ ok: false, error: 'Headline generation is not configured on this server.' })
     return
   }
@@ -132,43 +129,7 @@ export default async function handler(req, res) {
     return
   }
 
-  // 2) Identify the caller from their Supabase access token
-  const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '')
-  if (!token) {
-    res.status(401).json({ ok: false, error: 'Sign in to generate headlines.', reason: 'not_authenticated' })
-    return
-  }
-
-  const supabase = createClient(SUPABASE_URL, ANON_KEY, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-
-  const { data: userData, error: userError } = await supabase.auth.getUser()
-  if (userError || !userData?.user) {
-    res.status(401).json({ ok: false, error: 'Your session expired. Sign in again.', reason: 'not_authenticated' })
-    return
-  }
-
-  // 3) Spend quota before calling Gemini
-  const { data: gate, error: gateError } = await supabase.rpc('record_generation')
-  if (gateError) {
-    res.status(500).json({ ok: false, error: 'Could not check your plan. Try again.' })
-    return
-  }
-  if (!gate?.allowed) {
-    res.status(402).json({
-      ok: false,
-      error: 'You have used your free AI generation. Upgrade for unlimited generations.',
-      reason: 'generation_limit',
-      plan: gate?.plan || 'free',
-      used: gate?.used,
-      limit: gate?.limit,
-    })
-    return
-  }
-
-  // 4) Call Gemini with prompt
+  // 2) Call Gemini with prompt (100% free tool, no credits consumed)
   const prompt = buildHeadlinePrompt(essay)
   let lastError = null
   for (const model of MODELS) {
@@ -178,7 +139,6 @@ export default async function handler(req, res) {
       res.status(200).json({
         ok: true,
         results: outcome.results,
-        remaining: gate.remaining,
         model,
       })
       return

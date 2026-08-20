@@ -583,6 +583,7 @@ function App() {
         return
       }
       const t = data.tweet
+      const tweetPhotos = t.photos && t.photos.length > 0 ? t.photos : t.photo ? [{ url: t.photo }] : []
       setPost((current) => ({
         ...current,
         source: 'X',
@@ -591,6 +592,7 @@ function App() {
         avatar: t.avatar || current.avatar,
         text: (t.text || '').slice(0, shortPostCharacterLimit),
         photo: t.photo || '',
+        photos: tweetPhotos,
       }))
       setNotice('Tweet imported. Edit anything you like, then export.')
     } catch {
@@ -838,7 +840,7 @@ function App() {
         if (result.reason === 'generation_limit') {
           setUpgradeModal({
             open: true,
-            reason: 'You have used your free AI thread generation. Upgrade for unlimited generations.',
+            reason: 'You have used your 3 free AI thread generations. Upgrade for unlimited generations.',
           })
         } else if (result.reason === 'not_authenticated') {
           setAuthModal({ open: true, reason: 'Please sign in again to generate.' })
@@ -903,17 +905,17 @@ function App() {
         if (freshUsage.remaining <= 0) {
           setUpgradeModal({
             open: true,
-            reason: 'You have used your 3 free exports this month. Upgrade for unlimited, watermark-free exports.',
+            reason: 'You have used your 5 free exports this month. Upgrade for unlimited, watermark-free exports.',
           })
-          setNotice('Free export limit reached.')
+          setNotice('Free export limit reached (5 per month).')
           return
         }
         if (isCarouselMode && freshUsage.carouselRemaining <= 0) {
           setUpgradeModal({
             open: true,
-            reason: 'Your free plan includes one carousel per month. Upgrade for unlimited carousels.',
+            reason: 'Your free plan includes 3 carousels per month. Upgrade for unlimited carousels.',
           })
-          setNotice('Free carousel limit reached (1 per month).')
+          setNotice('Free carousel limit reached (3 per month).')
           return
         }
       }
@@ -969,18 +971,18 @@ function App() {
       const gate = await recordExport(contentMode)
 
       if (!gate?.allowed) {
-        if (gate?.reason === 'limit_reached') {
+        if (gate?.reason === 'limit_reached' || gate?.reason === 'export_limit') {
           setUpgradeModal({
             open: true,
-            reason: 'You have used your 3 free exports this month. Upgrade for unlimited, watermark-free exports.',
+            reason: 'You have used your 5 free exports this month. Upgrade for unlimited, watermark-free exports.',
           })
-          setNotice('Free export limit reached.')
+          setNotice('Free export limit reached (5 per month).')
         } else if (gate?.reason === 'carousel_limit') {
           setUpgradeModal({
             open: true,
-            reason: 'Your free plan includes one carousel per month. Upgrade for unlimited carousels.',
+            reason: 'Your free plan includes 3 carousels per month. Upgrade for unlimited carousels.',
           })
-          setNotice('Free carousel limit reached (1 per month).')
+          setNotice('Free carousel limit reached (3 per month).')
         } else {
           setAuthModal({ open: true, reason: 'Please sign in again to export.' })
         }
@@ -1987,6 +1989,7 @@ function App() {
                         timestamp={timestamp}
                         watermark={captureWatermark}
                         photo={post.photo}
+                        photos={post.photos}
                         highlight
                       />
                     )}

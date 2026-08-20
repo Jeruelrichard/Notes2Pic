@@ -45,9 +45,9 @@ there are **free SEO tool pages** and an **AI thread generator** (see those sect
 - `shares` — unlisted `/s/<id>` share pages; RLS locks inserts to the founder email. Paired with a
   **public `shares` storage bucket** (public read; founder‑only upload).
 - RPCs (SECURITY DEFINER):
-  - `record_export(p_kind)` → `{allowed, watermark, remaining, reason}`. 3/month + 1 carousel/month
+  - `record_export(p_kind)` → `{allowed, watermark, remaining, reason}`. 5/month + 3 carousels/month
     caps + watermark decision.
-  - `record_generation()` → `{allowed, remaining, reason}`. **1 lifetime free**, paid = unlimited.
+  - `record_generation()` → `{allowed, remaining, reason}`. **3 lifetime free**, paid = unlimited.
     Reason `generation_limit` when a free user is out. Inserts only via this RPC.
   - `get_usage()` → `{authenticated, paid, plan, remaining, carouselRemaining, threadsRemaining}`.
   - `is_paid(uuid)` → expiration‑aware; **contains the founder bypass** (below).

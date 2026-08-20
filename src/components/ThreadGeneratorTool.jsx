@@ -37,7 +37,7 @@ export default function ThreadGeneratorTool() {
     if (!user) {
       setAuthModal({
         open: true,
-        reason: 'Sign in to generate your thread. Your free account includes one generation.',
+        reason: 'Sign in to generate your thread. Your free account includes 3 generations.',
       })
       return
     }
@@ -51,7 +51,7 @@ export default function ThreadGeneratorTool() {
         if (result.reason === 'generation_limit') {
           setUpgradeModal({
             open: true,
-            reason: 'You’ve used your free AI thread generation. Upgrade for unlimited generations.',
+            reason: 'You’ve used your 3 free AI thread generations. Upgrade for unlimited generations.',
           })
         } else if (result.reason === 'not_authenticated') {
           setAuthModal({ open: true, reason: 'Please sign in again to generate.' })

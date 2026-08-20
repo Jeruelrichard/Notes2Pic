@@ -98,12 +98,27 @@ export default function ShortSourcePreview({
   metrics,
   highlight,
   photo,
+  photos,
 }) {
   const byline = watermark ? (
     <div className="card-watermark" aria-hidden="true">
       {PRODUCT_WATERMARK}
     </div>
   ) : null
+
+  const photoList = (
+    Array.isArray(photos) && photos.length > 0
+      ? photos
+      : Array.isArray(post?.photos) && post.photos.length > 0
+        ? post.photos
+        : photo
+          ? [photo]
+          : post?.photo
+            ? [post.photo]
+            : []
+  )
+    .map((p) => (typeof p === 'string' ? { url: p } : p))
+    .filter((p) => Boolean(p?.url))
 
   if (sourceKey === 'substack') {
     return (
@@ -164,11 +179,40 @@ export default function ShortSourcePreview({
         {highlight && post.text ? highlightEntities(post.text) : post.text || 'Paste the post text here.'}
       </p>
 
-      {photo ? (
+      {photoList.length === 1 ? (
         <div className="x-photo">
           {/* crossOrigin so the canvas isn't tainted on export — pbs.twimg.com
               serves access-control-allow-origin: * */}
-          <img src={photo} alt="" crossOrigin="anonymous" />
+          <img src={photoList[0].url} alt="" crossOrigin="anonymous" />
+        </div>
+      ) : photoList.length === 2 ? (
+        <div className="x-photos-grid grid-2">
+          <div className="x-photo-item">
+            <img src={photoList[0].url} alt="" crossOrigin="anonymous" />
+          </div>
+          <div className="x-photo-item">
+            <img src={photoList[1].url} alt="" crossOrigin="anonymous" />
+          </div>
+        </div>
+      ) : photoList.length === 3 ? (
+        <div className="x-photos-grid grid-3">
+          <div className="x-photo-item item-left">
+            <img src={photoList[0].url} alt="" crossOrigin="anonymous" />
+          </div>
+          <div className="x-photo-item item-top-right">
+            <img src={photoList[1].url} alt="" crossOrigin="anonymous" />
+          </div>
+          <div className="x-photo-item item-bottom-right">
+            <img src={photoList[2].url} alt="" crossOrigin="anonymous" />
+          </div>
+        </div>
+      ) : photoList.length >= 4 ? (
+        <div className="x-photos-grid grid-4">
+          {photoList.slice(0, 4).map((p, idx) => (
+            <div key={idx} className="x-photo-item">
+              <img src={p.url} alt="" crossOrigin="anonymous" />
+            </div>
+          ))}
         </div>
       ) : null}
 

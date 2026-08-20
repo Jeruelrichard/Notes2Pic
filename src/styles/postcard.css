@@ -353,7 +353,66 @@
   justify-content: center;
 }
 
-/* Never crop: show the photo at its true aspect ratio. Tall portrait shots get
+/* Multi-photo grids (2, 3, 4 images) */
+.x-photos-grid {
+  margin-top: 14px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(113, 118, 123, 0.34);
+  line-height: 0;
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 320px;
+  background: rgba(113, 118, 123, 0.1);
+  min-height: 0;
+}
+
+.x-photos-grid.grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.x-photos-grid.grid-3 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.x-photos-grid.grid-3 .item-left {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
+}
+
+.x-photos-grid.grid-3 .item-top-right {
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+}
+
+.x-photos-grid.grid-3 .item-bottom-right {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+}
+
+.x-photos-grid.grid-4 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.x-photo-item {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.x-photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Never crop: show the single photo at its true aspect ratio. Tall portrait shots get
    a taller canvas instead (the stage height is computed from the image), so we
    don't trade the user's image quality for a fixed square. */
 .x-photo img {
@@ -369,14 +428,17 @@
    the aspect ratio exactly — no crop, no stretch, no letterbox gaps.
    The tool page's stage carries no aspect-* class because its canvas grows to
    the image, so nothing is capped there. */
-.aspect-square .x-photo img {
+.aspect-square .x-photo img,
+.aspect-square .x-photos-grid {
   max-height: 240px;
 }
 
-.aspect-portrait .x-photo img {
+.aspect-portrait .x-photo img,
+.aspect-portrait .x-photos-grid {
   max-height: 360px;
 }
 
-.aspect-story .x-photo img {
+.aspect-story .x-photo img,
+.aspect-story .x-photos-grid {
   max-height: 620px;
 }

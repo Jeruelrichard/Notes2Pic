@@ -81,7 +81,7 @@ export const TOOL_PAGES = [
       },
       {
         q: 'How many generations do I get for free?',
-        a: 'Every free account includes an AI generation. Upgraded plans unlock unlimited generations.',
+        a: 'The AI Headline Generator is 100% free forever — generate as many creator headlines as you want without using any credits.',
       },
     ],
     related: {
@@ -119,7 +119,7 @@ export const TOOL_PAGES = [
     faq: [
       {
         q: 'How many threads can I generate for free?',
-        a: 'A free account includes one AI thread generation. After that, upgrading unlocks unlimited generations. Unlike the other tools, each generation runs a paid AI model, which is why it needs an account and has a limit.',
+        a: 'A free account includes 3 AI thread generations. After that, upgrading unlocks unlimited generations. Unlike the other tools, each generation runs a paid AI model, which is why it needs an account and has a limit.',
       },
       {
         q: 'How long can my essay be?',
@@ -175,7 +175,7 @@ export const TOOL_PAGES = [
     faq: [
       {
         q: 'Is it really free?',
-        a: 'Yes. Paste a link and preview the image for free, with no account. Downloading needs a free account; the free plan includes 3 exports a month, each with a small “made with Notes2Pic” mark. Paid removes the mark and the limits.',
+        a: 'Yes. Paste a link and preview the image for free, with no account. Downloading needs a free account; the free plan includes 5 exports a month, each with a small “made with Notes2Pic” mark. Paid removes the mark and the limits.',
       },
       {
         q: 'Why not just take a phone screenshot?',
@@ -232,7 +232,7 @@ export const TOOL_PAGES = [
     faq: [
       {
         q: 'Is it really free?',
-        a: 'Yes. You can paste your thread and preview every slide for free, with no account. Downloading the images needs a free account; the free plan includes 3 exports a month (one of which can be a full carousel), each with a small “made with Notes2Pic” mark. Paid removes the mark and the limits.',
+        a: 'Yes. You can paste your thread and preview every slide for free, with no account. Downloading the images needs a free account; the free plan includes 5 exports a month (up to 3 of which can be full carousels), each with a small “made with Notes2Pic” mark. Paid removes the mark and the limits.',
       },
       {
         q: 'Will it keep my thread’s numbering?',
