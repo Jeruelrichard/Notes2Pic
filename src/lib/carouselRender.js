@@ -34,6 +34,10 @@ export function drawSlide(ctx, opts) {
     theme = 'dark',
     username = '',
     avatar = null, // HTMLImageElement or null
+    bgImage = null, // HTMLImageElement or null
+    bgOverlay = 0.5,
+    bgOverlayColor = '#000000',
+    textAlign = 'left', // 'left' | 'center'
     index = 0,
     total = 1,
     width,
@@ -53,6 +57,38 @@ export function drawSlide(ctx, opts) {
 
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, width, height)
+
+  // Draw background image if provided (object-fit: cover)
+  if (bgImage) {
+    const imgW = bgImage.naturalWidth || bgImage.width
+    const imgH = bgImage.naturalHeight || bgImage.height
+    if (imgW && imgH) {
+      const imgRatio = imgW / imgH
+      const canvasRatio = width / height
+      let renderW, renderH, renderX, renderY
+      if (imgRatio > canvasRatio) {
+        renderH = height
+        renderW = height * imgRatio
+        renderX = (width - renderW) / 2
+        renderY = 0
+      } else {
+        renderW = width
+        renderH = width / imgRatio
+        renderX = 0
+        renderY = (height - renderH) / 2
+      }
+      ctx.drawImage(bgImage, renderX, renderY, renderW, renderH)
+
+      const overlayOpacity = Math.max(0, Math.min(1, typeof bgOverlay === 'number' ? bgOverlay : 0.5))
+      if (overlayOpacity > 0) {
+        ctx.save()
+        ctx.globalAlpha = overlayOpacity
+        ctx.fillStyle = bgOverlayColor || '#000000'
+        ctx.fillRect(0, 0, width, height)
+        ctx.restore()
+      }
+    }
+  }
 
   const margin = width * 0.1
   const contentW = width - margin * 2
@@ -77,10 +113,14 @@ export function drawSlide(ctx, opts) {
 
   ctx.fillStyle = fg
   ctx.font = `600 ${fontSize}px ${FONT_STACK}`
+  const isCenter = textAlign === 'center'
+  ctx.textAlign = isCenter ? 'center' : 'left'
+  const textX = isCenter ? width / 2 : margin
+
   const blockH = lines.length * lineHeight
   let y = contentTop + Math.max(0, (contentH - blockH) / 2)
   for (const line of lines) {
-    ctx.fillText(line, margin, y)
+    ctx.fillText(line, textX, y)
     y += lineHeight
   }
 

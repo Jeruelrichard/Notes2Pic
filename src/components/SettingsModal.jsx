@@ -1,6 +1,6 @@
-import { Check, Crown, LogOut, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Check, Crown, LogOut, Monitor, Moon, Pencil, Plus, Sun, Trash2, X } from 'lucide-react'
 
-// Settings hub: Profiles, Billing, and Logout.
+// Settings hub: Profiles, Billing, Appearance, and Logout.
 export default function SettingsModal({
   open,
   onClose,
@@ -9,6 +9,8 @@ export default function SettingsModal({
   profiles,
   activeProfileId,
   isPaid,
+  studioTheme = 'system',
+  onStudioThemeChange,
   onUseProfile,
   onNewProfile,
   onEditProfile,
@@ -113,6 +115,39 @@ export default function SettingsModal({
           {atFreeLimit ? (
             <p className="settings-hint">Free accounts can save one profile. Upgrade for unlimited profiles.</p>
           ) : null}
+        </section>
+
+        {/* Appearance */}
+        <section className="settings-section">
+          <div className="settings-section-head">
+            <h3>Appearance</h3>
+          </div>
+          <div className="theme-toggle-group">
+            <button
+              type="button"
+              className={`theme-toggle-btn ${studioTheme === 'system' ? 'active' : ''}`}
+              onClick={() => onStudioThemeChange('system')}
+            >
+              <Monitor aria-hidden="true" />
+              <span>System</span>
+            </button>
+            <button
+              type="button"
+              className={`theme-toggle-btn ${studioTheme === 'light' ? 'active' : ''}`}
+              onClick={() => onStudioThemeChange('light')}
+            >
+              <Sun aria-hidden="true" />
+              <span>Light</span>
+            </button>
+            <button
+              type="button"
+              className={`theme-toggle-btn ${studioTheme === 'dark' ? 'active' : ''}`}
+              onClick={() => onStudioThemeChange('dark')}
+            >
+              <Moon aria-hidden="true" />
+              <span>Dark</span>
+            </button>
+          </div>
         </section>
 
         {/* Logout */}

@@ -1390,3 +1390,512 @@ button:focus-visible {
   font-size: 0.95rem;
 }
 
+/* ============ Carousel Background Image Controls ============ */
+.bg-image-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bg-image-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid #e3e6ea;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.bg-image-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #d6dbe3;
+  flex-shrink: 0;
+  background: #111827;
+}
+
+.bg-image-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bg-image-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.bg-image-info strong {
+  font-size: 0.88rem;
+  color: #111827;
+}
+
+.bg-image-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  padding: 3px 8px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.bg-image-remove-btn:hover {
+  background: #fee2e2;
+}
+
+.bg-image-remove-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Range input styling */
+.bg-overlay-control input[type="range"] {
+  height: 6px;
+  border-radius: 3px;
+  background: #e2e8f0;
+  accent-color: #2f6fed;
+  padding: 0;
+  min-height: auto;
+}
+
+/* ============ Theme Toggle Group (Settings) ============ */
+.theme-toggle-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid #d6dbe3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #344054;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.theme-toggle-btn svg {
+  width: 16px;
+  height: 16px;
+  color: #667085;
+}
+
+.theme-toggle-btn:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.theme-toggle-btn.active {
+  border-color: #2f6fed;
+  background: #eff6ff;
+  color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.14);
+}
+
+.theme-toggle-btn.active svg {
+  color: #2f6fed;
+}
+
+/* ==========================================================================
+   STUDIO DARK MODE
+   ========================================================================== */
+
+.app-shell.dark-mode {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    #0c0f17;
+  background-size: 44px 44px;
+  color: #f3f4f6;
+}
+
+.app-shell.dark-mode .editor-panel {
+  background: rgba(18, 22, 31, 0.96);
+  border-right-color: #242c3d;
+}
+
+.app-shell.dark-mode h1,
+.app-shell.dark-mode h2,
+.app-shell.dark-mode h3 {
+  color: #f9fafb;
+}
+
+.app-shell.dark-mode .eyebrow {
+  color: #94a3b8;
+}
+
+.app-shell.dark-mode .field span,
+.app-shell.dark-mode .selector-group > span {
+  color: #cbd5e1;
+}
+
+.app-shell.dark-mode .helper-row {
+  color: #94a3b8;
+}
+
+.app-shell.dark-mode .helper-row button {
+  background: #1e293b;
+  color: #60a5fa;
+}
+
+.app-shell.dark-mode input,
+.app-shell.dark-mode textarea,
+.app-shell.dark-mode select {
+  background: #151a24;
+  border-color: #2b3548;
+  color: #f9fafb;
+}
+
+.app-shell.dark-mode input:focus,
+.app-shell.dark-mode textarea:focus,
+.app-shell.dark-mode select:focus {
+  border-color: #3b82f6;
+  outline-color: #3b82f6;
+}
+
+.app-shell.dark-mode .segmented button,
+.app-shell.dark-mode .swatches button {
+  background: #151a24;
+  border-color: #2b3548;
+  color: #cbd5e1;
+}
+
+.app-shell.dark-mode .segmented button:hover,
+.app-shell.dark-mode .swatches button:hover {
+  background: #1c2331;
+  color: #ffffff;
+}
+
+.app-shell.dark-mode .segmented button.active,
+.app-shell.dark-mode .swatches button.active {
+  border-color: #3b82f6;
+  background: #172554;
+  color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.app-shell.dark-mode .upload-row {
+  background: #151a24;
+  border-color: #3b465c;
+  color: #cbd5e1;
+}
+
+.app-shell.dark-mode .upload-row:hover {
+  border-color: #60a5fa;
+  background: #1a2232;
+}
+
+.app-shell.dark-mode .account-bar {
+  background: #131722;
+  border-color: #242c3d;
+}
+
+.app-shell.dark-mode .account-email {
+  color: #f9fafb;
+}
+
+.app-shell.dark-mode .account-badge.free {
+  background: #1e293b;
+  color: #94a3b8;
+}
+
+.app-shell.dark-mode .settings-link,
+.app-shell.dark-mode .signout-link {
+  background: #1c2331;
+  border-color: #2b3548;
+  color: #cbd5e1;
+}
+
+.app-shell.dark-mode .settings-link:hover,
+.app-shell.dark-mode .signout-link:hover {
+  background: #283144;
+  color: #ffffff;
+}
+
+.app-shell.dark-mode .profile-manager {
+  background: #131722;
+  border-color: #242c3d;
+}
+
+.app-shell.dark-mode .profile-actions button {
+  background: #151a24;
+  border-color: #2b3548;
+  color: #cbd5e1;
+}
+
+.app-shell.dark-mode .profile-actions button:hover {
+  background: #1c2331;
+  color: #ffffff;
+}
+
+.app-shell.dark-mode .ai-panel {
+  background: #131722;
+  border-color: #242c3d;
+}
+
+.app-shell.dark-mode .ai-panel-toggle {
+  color: #f9fafb;
+}
+
+.app-shell.dark-mode .ai-panel-hint {
+  color: #94a3b8;
+}
+
+.app-shell.dark-mode .ai-count {
+  color: #94a3b8;
+}
+
+.app-shell.dark-mode .color-swatch-btn {
+  border-color: #333d52;
+}
+
+.app-shell.dark-mode .color-swatch-btn.active {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+}
+
+.app-shell.dark-mode .preview-frame {
+  background: rgba(14, 18, 26, 0.75);
+  border-color: #242c3d;
+}
+
+.app-shell.dark-mode .notice {
+  color: #94a3b8;
+}
+
+.app-shell.dark-mode .share-button {
+  background: #2a1b14;
+  border-color: #5c3322;
+  color: #fb923c;
+}
+
+.app-shell.dark-mode .share-url {
+  color: #fb923c;
+}
+
+.app-shell.dark-mode .export-button {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.app-shell.dark-mode .export-button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+/* Studio Modals in Dark Mode */
+.app-shell.dark-mode .modal-card {
+  background: #151923;
+  color: #f9fafb;
+  border: 1px solid #283144;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+
+.app-shell.dark-mode .modal-close {
+  background: #1f2636;
+  color: #94a3b8;
+}
+
+.app-shell.dark-mode .modal-close:hover {
+  background: #2a3346;
+  color: #ffffff;
+}
+
+.app-shell.dark-mode .modal-sub {
+  color: #94a3b8;
+}
+
+.app-shell.dark-mode .modal-divider {
+  color: #64748b;
+}
+
+.app-shell.dark-mode .modal-divider::before,
+.app-shell.dark-mode .modal-divider::after {
+  background: #283144;
+}
+
+.app-shell.dark-mode .google-button {
+  background: #1a202c;
+  border-color: #2d3748;
+  color: #f9fafb;
+}
+
+.app-shell.dark-mode .google-button:hover {
+  background: #232d3f;
+}
+
+.app-shell.dark-mode .modal-card .field span {
+  color: #cbd5e1;
+}
+
+.app-shell.dark-mode .modal-card .field input,
+.app-shell.dark-mode .modal-card .field select,
+.app-shell.dark-mode .modal-card .field textarea {
+  background: #1a202c;
+  border-color: #2d3748;
+  color: #f9fafb;
+}
+
+.app-shell.dark-mode .modal-message {
+  background: #1e2535;
+  color: #e2e8f0;
+}
+
+.app-shell.dark-mode .modal-switch {
+  color: #94a3b8;
+}
+
+.app-shell.dark-mode .settings-section {
+  border-top-color: #242c3d;
+}
+
+.app-shell.dark-mode .settings-hint {
+  color: #94a3b8;
+}
+
+.app-shell.dark-mode .settings-new {
+  background: #1a202c;
+  border-color: #2d3748;
+  color: #e2e8f0;
+}
+
+.app-shell.dark-mode .settings-new:hover:not(:disabled) {
+  background: #242d3d;
+}
+
+.app-shell.dark-mode .profile-list li {
+  background: #121620;
+  border-color: #242c3d;
+}
+
+.app-shell.dark-mode .profile-list li.active {
+  border-color: #3b82f6;
+  background: #172338;
+}
+
+.app-shell.dark-mode .profile-list-meta span {
+  color: #94a3b8;
+}
+
+.app-shell.dark-mode .profile-list-actions button {
+  background: #1a202c;
+  border-color: #2d3748;
+  color: #e2e8f0;
+}
+
+.app-shell.dark-mode .profile-list-actions button:hover {
+  background: #242d3d;
+}
+
+.app-shell.dark-mode .settings-logout {
+  background: #1c2230;
+  border-color: #2d3748;
+  color: #f87171;
+}
+
+.app-shell.dark-mode .settings-logout:hover {
+  background: #291a1f;
+  border-color: #7f1d1d;
+}
+
+.app-shell.dark-mode .plan-card {
+  background: #121620;
+  border-color: #283144;
+  color: #f9fafb;
+}
+
+.app-shell.dark-mode .plan-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.app-shell.dark-mode .plan-card.featured {
+  border-color: #3b82f6;
+  background: #141c2c;
+}
+
+.app-shell.dark-mode .plan-name,
+.app-shell.dark-mode .plan-note,
+.app-shell.dark-mode .plan-price small {
+  color: #94a3b8;
+}
+
+.app-shell.dark-mode .plan-benefits li {
+  color: #cbd5e1;
+}
+
+.app-shell.dark-mode .theme-toggle-btn {
+  background: #1a202c;
+  border-color: #2d3748;
+  color: #cbd5e1;
+}
+
+.app-shell.dark-mode .theme-toggle-btn svg {
+  color: #94a3b8;
+}
+
+.app-shell.dark-mode .theme-toggle-btn:hover {
+  background: #242d3d;
+  color: #ffffff;
+}
+
+.app-shell.dark-mode .theme-toggle-btn.active {
+  border-color: #3b82f6;
+  background: #172554;
+  color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.app-shell.dark-mode .theme-toggle-btn.active svg {
+  color: #60a5fa;
+}
+
+.app-shell.dark-mode .bg-image-preview-card {
+  background: #131722;
+  border-color: #283141;
+}
+
+.app-shell.dark-mode .bg-image-thumb {
+  border-color: #283141;
+}
+
+.app-shell.dark-mode .bg-image-info strong {
+  color: #f9fafb;
+}
+
+.app-shell.dark-mode .bg-image-remove-btn {
+  background: #2a181c;
+  border-color: #5c2229;
+  color: #f87171;
+}
+
+.app-shell.dark-mode .bg-image-remove-btn:hover {
+  background: #3b1c22;
+}
+
+.app-shell.dark-mode .bg-overlay-control input[type="range"] {
+  background: #283141;
+  accent-color: #3b82f6;
+}
+
+
+

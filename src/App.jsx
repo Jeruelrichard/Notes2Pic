@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  AlignCenter,
+  AlignLeft,
   ArrowDown,
   ArrowUp,
   ChevronLeft,
@@ -98,6 +100,11 @@ const starterCarousel = {
   avatar: '',
   bgColor: '#0A0A0A',
   textColor: '#F5F5F1',
+  bgMode: 'color',
+  bgImage: null,
+  bgOverlay: 0.5,
+  bgOverlayColor: '#000000',
+  textAlign: 'left',
 }
 
 const exportTimeoutMs = 15000
@@ -224,6 +231,7 @@ function App() {
   const [carousel, setCarousel] = useState(starterCarousel)
   const [slideIndex, setSlideIndex] = useState(0)
   const [carouselAvatarImage, setCarouselAvatarImage] = useState(null)
+  const [carouselBgImage, setCarouselBgImage] = useState(null)
   const [profiles, setProfiles] = useState([])
   const [selectedProfileId, setSelectedProfileId] = useState('')
   const [aspect, setAspect] = useState('portrait')
@@ -249,6 +257,36 @@ function App() {
 
   const isPaid = usage?.paid === true
   const [country, setCountry] = useState('')
+
+  // Studio UI theme: 'system' | 'light' | 'dark'
+  const [studioTheme, setStudioTheme] = useState(() => {
+    if (typeof window === 'undefined') return 'system'
+    return localStorage.getItem('n2p.studioTheme') || 'system'
+  })
+
+  const [systemIsDark, setSystemIsDark] = useState(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return false
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = (event) => setSystemIsDark(event.matches)
+    mq.addEventListener?.('change', handler)
+    return () => mq.removeEventListener?.('change', handler)
+  }, [])
+
+  const isStudioDark = studioTheme === 'dark' || (studioTheme === 'system' && systemIsDark)
+
+  function handleStudioThemeChange(nextTheme) {
+    setStudioTheme(nextTheme)
+    try {
+      localStorage.setItem('n2p.studioTheme', nextTheme)
+    } catch {
+      // Ignore storage write failures (e.g. private browsing quota)
+    }
+  }
 
   useEffect(() => {
     // Detect country for Purchasing Power Parity discounts
@@ -441,6 +479,31 @@ function App() {
     }
   }, [carousel.avatar])
 
+  // Load the carousel background photo into an <img> the canvas can draw.
+  useEffect(() => {
+    let active = true
+    if (!carousel.bgImage || carousel.bgMode !== 'image') {
+      queueMicrotask(() => {
+        if (active) setCarouselBgImage(null)
+      })
+      return () => {
+        active = false
+      }
+    }
+    const image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.onload = () => {
+      if (active) setCarouselBgImage(image)
+    }
+    image.onerror = () => {
+      if (active) setCarouselBgImage(null)
+    }
+    image.src = carousel.bgImage
+    return () => {
+      active = false
+    }
+  }, [carousel.bgImage, carousel.bgMode])
+
   // Keep the preview canvas in sync with the current slide (WYSIWYG with export).
   useEffect(() => {
     if (!isCarouselMode) return
@@ -457,6 +520,10 @@ function App() {
       theme: carousel.theme,
       username: carousel.username,
       avatar: carouselAvatarImage,
+      bgImage: carousel.bgMode === 'image' ? carouselBgImage : null,
+      bgOverlay: carousel.bgOverlay ?? 0.5,
+      bgOverlayColor: carousel.bgOverlayColor || '#000000',
+      textAlign: carousel.textAlign || 'left',
       index: safeIndex,
       total: slides.length || 1,
       width: canvas.width,
@@ -465,7 +532,14 @@ function App() {
       bgColor: carousel.bgColor,
       textColor: carousel.textColor,
     })
-  }, [isCarouselMode, carousel, slideIndex, carouselAvatarImage, currentAspect])
+  }, [
+    isCarouselMode,
+    carousel,
+    slideIndex,
+    carouselAvatarImage,
+    carouselBgImage,
+    currentAspect,
+  ])
 
   // Fit the preview card to the visible panel so the whole image shows at once
   // (no scrolling), scaling down for tall aspects / long carousels.
@@ -603,6 +677,22 @@ function App() {
     const reader = new FileReader()
     reader.onload = () => updateCarousel('avatar', reader.result)
     reader.readAsDataURL(file)
+  }
+
+  function handleCarouselBgImageUpload(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      updateCarousel('bgImage', reader.result)
+      updateCarousel('bgMode', 'image')
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function removeCarouselBgImage() {
+    updateCarousel('bgImage', null)
+    updateCarousel('bgMode', 'color')
   }
 
   // The author identity currently in the working editor (a scratch copy — editing
@@ -949,6 +1039,10 @@ function App() {
         theme: carousel.theme,
         username: carousel.username,
         avatar: carouselAvatarImage,
+        bgImage: carousel.bgMode === 'image' ? carouselBgImage : null,
+        bgOverlay: carousel.bgOverlay ?? 0.5,
+        bgOverlayColor: carousel.bgOverlayColor || '#000000',
+        textAlign: carousel.textAlign || 'left',
         index,
         total,
         width,
@@ -986,6 +1080,10 @@ function App() {
           theme: carousel.theme,
           username: carousel.username,
           avatar: carouselAvatarImage,
+          bgImage: carousel.bgMode === 'image' ? carouselBgImage : null,
+          bgOverlay: carousel.bgOverlay ?? 0.5,
+          bgOverlayColor: carousel.bgOverlayColor || '#000000',
+          textAlign: carousel.textAlign || 'left',
           index,
           total,
           width,
@@ -1156,7 +1254,7 @@ function App() {
 
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell ${isStudioDark ? 'dark-mode' : ''}`} data-theme={isStudioDark ? 'dark' : 'light'}>
       <section className="workspace">
         <aside className="editor-panel" aria-label="Post editor">
           <div className="brand-row">
@@ -1336,61 +1434,174 @@ function App() {
                   />
                 </label>
                 <div className="field" style={{ gridColumn: 'span 2' }}>
-                  <span>Theme & Brand Colors</span>
-                  <div className="brand-palette-options" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
-                    {PALETTES.map((p) => (
-                      <button
-                        key={p.name}
-                        type="button"
-                        className={`color-swatch-btn ${carousel.theme === p.name ? 'active' : ''}`}
-                        style={{
-                          background: `linear-gradient(135deg, ${p.bg} 50%, ${p.text} 50%)`,
-                        }}
-                        title={p.label}
-                        onClick={() => {
-                          updateCarousel('theme', p.name)
-                          updateCarousel('bgColor', p.bg)
-                          updateCarousel('textColor', p.text)
-                        }}
-                      />
-                    ))}
+                  <span>Background Style</span>
+                  <div className="segmented" style={{ marginTop: '4px', marginBottom: '10px' }}>
                     <button
                       type="button"
-                      className={`color-swatch-btn custom-swatch-btn ${carousel.theme === 'custom' ? 'active' : ''}`}
-                      style={{
-                        background: 'linear-gradient(135deg, #ffffff 30%, #e2e8f0 30%, #e2e8f0 70%, #000000 70%)',
-                      }}
-                      title="Custom Colors"
-                      onClick={() => updateCarousel('theme', 'custom')}
+                      className={carousel.bgMode !== 'image' ? 'active' : ''}
+                      onClick={() => updateCarousel('bgMode', 'color')}
                     >
-                      🎨
+                      Solid / Palette
+                    </button>
+                    <button
+                      type="button"
+                      className={carousel.bgMode === 'image' ? 'active' : ''}
+                      onClick={() => updateCarousel('bgMode', 'image')}
+                    >
+                      Photo Background
                     </button>
                   </div>
 
-                  {carousel.theme === 'custom' && (
-                    <div className="custom-color-inputs" style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
-                      <label className="field" style={{ flex: 1, margin: 0 }}>
-                        <span style={{ fontSize: '0.8rem' }}>Background</span>
+                  {carousel.bgMode === 'image' ? (
+                    <div className="bg-image-controls">
+                      {carousel.bgImage ? (
+                        <div className="bg-image-preview-card">
+                          <div className="bg-image-thumb">
+                            <img src={carousel.bgImage} alt="Background preview" />
+                          </div>
+                          <div className="bg-image-info">
+                            <strong>Custom Photo</strong>
+                            <button
+                              type="button"
+                              className="bg-image-remove-btn"
+                              onClick={removeCarouselBgImage}
+                            >
+                              <Trash2 aria-hidden="true" />
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="upload-row" style={{ marginTop: '4px' }}>
+                          <ImagePlus aria-hidden="true" />
+                          <span>Upload Background Photo</span>
+                          <input type="file" accept="image/*" onChange={handleCarouselBgImageUpload} />
+                        </label>
+                      )}
+
+                      <div className="bg-overlay-control" style={{ marginTop: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>Dimmer Overlay</span>
+                          <span style={{ fontSize: '0.8rem', color: '#667085' }}>
+                            {Math.round((carousel.bgOverlay ?? 0.5) * 100)}%
+                          </span>
+                        </div>
                         <input
-                          type="color"
-                          value={carousel.bgColor || '#0A0A0A'}
-                          style={{ height: '38px', padding: '2px', cursor: 'pointer' }}
-                          onChange={(event) => updateCarousel('bgColor', event.target.value)}
+                          type="range"
+                          min="0"
+                          max="0.9"
+                          step="0.05"
+                          value={carousel.bgOverlay ?? 0.5}
+                          onChange={(e) => updateCarousel('bgOverlay', parseFloat(e.target.value))}
+                          style={{ width: '100%', cursor: 'pointer' }}
                         />
-                      </label>
-                      <label className="field" style={{ flex: 1, margin: 0 }}>
-                        <span style={{ fontSize: '0.8rem' }}>Text Color</span>
-                        <input
-                          type="color"
-                          value={carousel.textColor || '#F5F5F1'}
-                          style={{ height: '38px', padding: '2px', cursor: 'pointer' }}
-                          onChange={(event) => updateCarousel('textColor', event.target.value)}
-                        />
-                      </label>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
+                        <label className="field" style={{ flex: 1, margin: 0 }}>
+                          <span style={{ fontSize: '0.8rem' }}>Overlay Tint</span>
+                          <select
+                            value={carousel.bgOverlayColor || '#000000'}
+                            onChange={(e) => updateCarousel('bgOverlayColor', e.target.value)}
+                          >
+                            <option value="#000000">Dark (Black)</option>
+                            <option value="#ffffff">Light (White)</option>
+                            <option value="#1e1b4b">Midnight Blue</option>
+                            <option value="#18181b">Charcoal</option>
+                          </select>
+                        </label>
+                        <label className="field" style={{ flex: 1, margin: 0 }}>
+                          <span style={{ fontSize: '0.8rem' }}>Text Color</span>
+                          <input
+                            type="color"
+                            value={carousel.textColor || '#F5F5F1'}
+                            style={{ height: '44px', padding: '2px', cursor: 'pointer' }}
+                            onChange={(e) => updateCarousel('textColor', e.target.value)}
+                          />
+                        </label>
+                      </div>
                     </div>
+                  ) : (
+                    <>
+                      <div className="brand-palette-options" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
+                        {PALETTES.map((p) => (
+                          <button
+                            key={p.name}
+                            type="button"
+                            className={`color-swatch-btn ${carousel.theme === p.name ? 'active' : ''}`}
+                            style={{
+                              background: `linear-gradient(135deg, ${p.bg} 50%, ${p.text} 50%)`,
+                            }}
+                            title={p.label}
+                            onClick={() => {
+                              updateCarousel('theme', p.name)
+                              updateCarousel('bgColor', p.bg)
+                              updateCarousel('textColor', p.text)
+                            }}
+                          />
+                        ))}
+                        <button
+                          type="button"
+                          className={`color-swatch-btn custom-swatch-btn ${carousel.theme === 'custom' ? 'active' : ''}`}
+                          style={{
+                            background: 'linear-gradient(135deg, #ffffff 30%, #e2e8f0 30%, #e2e8f0 70%, #000000 70%)',
+                          }}
+                          title="Custom Colors"
+                          onClick={() => updateCarousel('theme', 'custom')}
+                        >
+                          🎨
+                        </button>
+                      </div>
+
+                      {carousel.theme === 'custom' && (
+                        <div className="custom-color-inputs" style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
+                          <label className="field" style={{ flex: 1, margin: 0 }}>
+                            <span style={{ fontSize: '0.8rem' }}>Background</span>
+                            <input
+                              type="color"
+                              value={carousel.bgColor || '#0A0A0A'}
+                              style={{ height: '38px', padding: '2px', cursor: 'pointer' }}
+                              onChange={(event) => updateCarousel('bgColor', event.target.value)}
+                            />
+                          </label>
+                          <label className="field" style={{ flex: 1, margin: 0 }}>
+                            <span style={{ fontSize: '0.8rem' }}>Text Color</span>
+                            <input
+                              type="color"
+                              value={carousel.textColor || '#F5F5F1'}
+                              style={{ height: '38px', padding: '2px', cursor: 'pointer' }}
+                              onChange={(event) => updateCarousel('textColor', event.target.value)}
+                            />
+                          </label>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
-                <label className="upload-row">
+                <div className="field full">
+                  <span>Text Alignment</span>
+                  <div className="segmented" style={{ marginTop: '4px', gridTemplateColumns: '1fr 1fr' }}>
+                    <button
+                      type="button"
+                      className={carousel.textAlign !== 'center' ? 'active' : ''}
+                      onClick={() => updateCarousel('textAlign', 'left')}
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                    >
+                      <AlignLeft size={16} aria-hidden="true" />
+                      Left
+                    </button>
+                    <button
+                      type="button"
+                      className={carousel.textAlign === 'center' ? 'active' : ''}
+                      onClick={() => updateCarousel('textAlign', 'center')}
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                    >
+                      <AlignCenter size={16} aria-hidden="true" />
+                      Center
+                    </button>
+                  </div>
+                </div>
+                <label className="upload-row full">
                   <ImagePlus aria-hidden="true" />
                   <span>Avatar</span>
                   <input type="file" accept="image/*" onChange={handleCarouselAvatarUpload} />
@@ -1816,6 +2027,8 @@ function App() {
         profiles={profiles}
         activeProfileId={selectedProfileId}
         isPaid={isPaid}
+        studioTheme={studioTheme}
+        onStudioThemeChange={handleStudioThemeChange}
         onUseProfile={(id) => {
           applyProfileById(id)
           setSettingsOpen(false)
